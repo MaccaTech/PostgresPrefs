@@ -4,8 +4,10 @@
 
 =begin html
 
+<div style="float: right; display: inline-block;">
 <img src="postgresql-mac-preferences/raw/master/PostgreSQL/elephant.png" />
 <img src="postgresql-mac-preferences/raw/master/PostgreSQL/logo.png" />
+</div>
 
 =end html
 
@@ -28,15 +30,11 @@ Right-click on the PostgreSQL icon in System Preferences, and click "Remove".
 
 Also, delete the following files if they exist:
 
-=over
+=over 4
 
-=item *
+=item C</Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
 
-C</Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
-
-=item *
-
-C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
+=item C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
 
 =back
 
