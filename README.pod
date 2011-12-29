@@ -40,10 +40,11 @@ This project provides a Mac OS X System Preferences pane for the PostgreSQL Data
 
 =head2 Install Instructions
 
-=begin html
+Download the latest release version L<here|https://github.com/downloads/mckenfra/postgresql-mac-preferences/PostgreSQL.prefPane-v1.0.zip">
 
-<p>Download and double-click this file to install in System preferences. Alternatively, download to a folder
-then drag it onto the System Preferences icon.</p>
+Once downloaded, unzip it and then either double-click the C<PostgreSQL.prefPane> file, or drag it to System Preferences to install it.
+
+When installing, you will be asked if you want to install it for this user only, or for all users. You can choose this user only, but either option is fine.
 
 =end html
 
