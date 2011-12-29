@@ -2,10 +2,47 @@
 
 =head1 PostgreSQL Mac Preferences
 
-=over 4
+=head2 Overview
 
-=item Description to follow
+This project provides a Mac OS X System Preferences pane for the PostgreSQL Database Server.
+
+=head2 Install Instructions
+
+Download and double-click this file to install in System preferences. Alternatively, download to a folder
+then drag it onto the System Preferences icon.
+
+=head2 Uninstall Instructions
+
+Right-click on the PostgreSQL icon in System Preferences, and click "Remove".
+
+Also, delete the following files if they exist:
+
+=over
+
+=item *
+
+/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*
+
+=item *
+
+~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*
 
 =back
+
+=head2 Version History
+
+=over
+
+=item *
+
+v1.0 - 29-Dec 2011 - Initial release 
+
+=back
+
+=head2 Contact
+
+Please email L<mail@hkwebentrepreneurs.com|mailto:mail@hkwebentrepreneurs.com>
+
+Or visit our website at L<www.hkwebentrepreneurs.com>
 
 =cut
