@@ -44,7 +44,11 @@ Download the latest release version L<here|https://github.com/downloads/mckenfra
 
 Once downloaded, unzip it and then either double-click the C<PostgreSQL.prefPane> file, or drag it to System Preferences to install it.
 
-When installing, you will be asked if you want to install it for this user only, or for all users. You can choose this user only, but either option is fine.
+When installing, you will be asked if you want to install it for this user only, or for all users. Choose this user only (either option is fine however).
+
+=begin html
+
+<img src="postgresql-mac-preferences/raw/master/PostgreSQL/screenshot_install.png" />
 
 =end html
 
