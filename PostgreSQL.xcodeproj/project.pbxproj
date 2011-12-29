@@ -31,6 +31,7 @@
 		20B43C8014AC8F9F00C967E1 /* checking.png in Resources */ = {isa = PBXBuildFile; fileRef = 20B43C7F14AC8F9F00C967E1 /* checking.png */; };
 		20B80A3114A893B600C9F274 /* PGPrefsPostgreSQL.sh in Resources */ = {isa = PBXBuildFile; fileRef = 20B80A3014A893B600C9F274 /* PGPrefsPostgreSQL.sh */; };
 		20B80A3314A910B100C9F274 /* PGPrefsPaneDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 20B80A3214A910B100C9F274 /* PGPrefsPaneDelegate.h */; };
+		20BBC28E14AD16D200BA0859 /* README in Resources */ = {isa = PBXBuildFile; fileRef = 20BBC28D14AD16D200BA0859 /* README */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -66,6 +67,7 @@
 		20B43C7F14AC8F9F00C967E1 /* checking.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checking.png; sourceTree = "<group>"; };
 		20B80A3014A893B600C9F274 /* PGPrefsPostgreSQL.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = PGPrefsPostgreSQL.sh; sourceTree = "<group>"; };
 		20B80A3214A910B100C9F274 /* PGPrefsPaneDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGPrefsPaneDelegate.h; sourceTree = "<group>"; };
+		20BBC28D14AD16D200BA0859 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -128,6 +130,7 @@
 		2035B197149C8B83009A2972 /* PostgreSQL */ = {
 			isa = PBXGroup;
 			children = (
+				20BBC28D14AD16D200BA0859 /* README */,
 				2035B1A3149C8B83009A2972 /* PGPrefsPane.xib */,
 				2035B19E149C8B83009A2972 /* PGPrefsPane.h */,
 				2035B19F149C8B83009A2972 /* PGPrefsPane.m */,
@@ -239,6 +242,7 @@
 				20B80A3114A893B600C9F274 /* PGPrefsPostgreSQL.sh in Resources */,
 				20B43C7D14AC878700C967E1 /* refresh.png in Resources */,
 				20B43C8014AC8F9F00C967E1 /* checking.png in Resources */,
+				20BBC28E14AD16D200BA0859 /* README in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
