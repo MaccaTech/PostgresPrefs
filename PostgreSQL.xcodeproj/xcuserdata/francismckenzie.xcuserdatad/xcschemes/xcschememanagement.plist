@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>SchemeUserState</key>
+	<dict>
+		<key>Postgres.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>0</integer>
+		</dict>
+		<key>PostgresControl.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+		<key>PostgresControlTests.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>2016459D149E68F4009ACF7A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>201645BA149E6B27009ACF7A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>201645D4149E6B28009ACF7A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>2035B18B149C8B83009A2972</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+	</dict>
+</dict>
+</plist>
