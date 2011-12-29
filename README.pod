@@ -4,8 +4,8 @@
 
 =begin html
 
-<img src="postgresql-mac-preferences/blob/master/PostgreSQL/elephant.png" />
-<img src="postgresql-mac-preferences/blob/master/PostgreSQL/logo.png" />
+<img src="postgresql-mac-preferences/raw/master/PostgreSQL/elephant.png" />
+<img src="postgresql-mac-preferences/raw/master/PostgreSQL/logo.png" />
 
 =end html
 
