@@ -2,6 +2,13 @@
 
 =head1 PostgreSQL Mac Preferences
 
+=begin html
+
+<img src="postgresql-mac-preferences/blob/master/PostgreSQL/elephant.png" />
+<img src="postgresql-mac-preferences/blob/master/PostgreSQL/logo.png" />
+
+=end html
+
 =head2 Overview
 
 This project provides a Mac OS X System Preferences pane for the PostgreSQL Database Server.
@@ -10,8 +17,6 @@ This project provides a Mac OS X System Preferences pane for the PostgreSQL Data
 
 =begin html
 
-<img src="blob/master/PostgreSQL/elephant.png" />
-<img src="blob/master/PostgreSQL/logo.png" />
 <p>Download and double-click this file to install in System preferences. Alternatively, download to a folder
 then drag it onto the System Preferences icon.</p>
 
