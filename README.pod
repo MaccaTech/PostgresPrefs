@@ -4,10 +4,9 @@
 
 =begin html
 
-<div style="float: right; display: inline-block;">
+<br />
 <img src="postgresql-mac-preferences/raw/master/PostgreSQL/elephant.png" />
 <img src="postgresql-mac-preferences/raw/master/PostgreSQL/logo.png" />
-</div>
 
 =end html
 
@@ -32,9 +31,13 @@ Also, delete the following files if they exist:
 
 =over 4
 
-=item C</Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
+=item
 
-=item C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
+C</Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
+
+=item
+
+C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
 
 =back
 
