@@ -14,6 +14,30 @@
 
 This project provides a Mac OS X System Preferences pane for the PostgreSQL Database Server.
 
+=head3 Welcome Screen
+
+=begin html
+
+<img src="postgresql-mac-preferences/raw/master/PostgreSQL/screenshot_welcome.png" />
+
+=end html
+
+=head3 Start and Stop PostgreSQL
+
+=begin html
+
+<img src="postgresql-mac-preferences/raw/master/PostgreSQL/screenshot_startstop.png" />
+
+=end html
+
+=head3 Modify Settings
+
+=begin html
+
+<img src="postgresql-mac-preferences/raw/master/PostgreSQL/screenshot_settings.png" />
+
+=end html
+
 =head2 Install Instructions
 
 =begin html
