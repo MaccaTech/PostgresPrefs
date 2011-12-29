@@ -1,6 +1,11 @@
 =pod
+
 =head1 PostgreSQL Mac Preferences
+
 =over 4
+
 =item Description to follow
+
 =back
+
 =cut
