@@ -8,8 +8,14 @@ This project provides a Mac OS X System Preferences pane for the PostgreSQL Data
 
 =head2 Install Instructions
 
-Download and double-click this file to install in System preferences. Alternatively, download to a folder
-then drag it onto the System Preferences icon.
+=begin html
+
+<img src="blob/master/PostgreSQL/elephant.png" />
+<img src="blob/master/PostgreSQL/logo.png" />
+<p>Download and double-click this file to install in System preferences. Alternatively, download to a folder
+then drag it onto the System Preferences icon.</p>
+
+=end html
 
 =head2 Uninstall Instructions
 
@@ -21,11 +27,11 @@ Also, delete the following files if they exist:
 
 =item *
 
-/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*
+C</Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
 
 =item *
 
-~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*
+C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
 
 =back
 
@@ -41,8 +47,8 @@ v1.0 - 29-Dec 2011 - Initial release
 
 =head2 Contact
 
-Please email L<mail@hkwebentrepreneurs.com|mailto:mail@hkwebentrepreneurs.com>
+Please email L<mailto:mail@hkwebentrepreneurs.com>
 
-Or visit our website at L<www.hkwebentrepreneurs.com>
+Or visit our website at L<http://www.hkwebentrepreneurs.com>
 
 =cut
