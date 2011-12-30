@@ -28,14 +28,10 @@
 
 =head2 Overview
 
-=begin html
-    
-A Mac OS X System Preferences pane for controlling the PostgreSQL Database Server.
-<br/>
-Features include:
+ A Mac OS X System Preferences pane for controlling the PostgreSQL Database Server.
 
-=end html
-    
+ Features include:
+
 =over 4
 
 =item *
@@ -151,7 +147,7 @@ Also, delete the following files if they exist:
     
 =item * PostgreSQL Preferences uses L<launchctl|http://developer.apple.com/library/mac/#documentation/Darwin/Reference/Manpages/man1/launchctl.1.html> to start, stop and schedule auto-startup of PostgreSQL. The launchctl utility logs its output to C</var/log/system.log> by default. You can monitor this logfile by executing the following code on the command line: C<tail -100f /var/log/system.log>. Also, ensure a valid Log File path is configured in the L<Settings Screen|/Modify Settings> - you can then check this logfile for more detailed error messages.
     
-    Finally, we would like to ensure this tool works as smoothly as possible, so please L<Contact Us|/"Contact Us"> if you are still having issues, or have any suggestions for improvements. 
+ Finally, we would like to ensure this tool works as smoothly as possible, so please L<Contact Us|/"Contact Us"> if you are still having issues, or have any suggestions for improvements. 
     
 
 =item * B<I have enabled auto-startup, but PostgreSQL still does not startup automatically on bootup.>
