@@ -28,7 +28,9 @@
 
 =head2 Overview
 
-A Mac OS X System Preferences pane for controlling the PostgreSQL Database Server. Features include:
+A Mac OS X System Preferences pane for controlling the PostgreSQL Database Server.
+    
+Features include:
 
 =over 4
 
