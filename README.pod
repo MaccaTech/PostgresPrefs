@@ -28,10 +28,14 @@
 
 =head2 Overview
 
-    A Mac OS X System Preferences pane for controlling the PostgreSQL Database Server.
+=begin html
     
-    Features include:
+A Mac OS X System Preferences pane for controlling the PostgreSQL Database Server.
+<br/>
+Features include:
 
+=end html
+    
 =over 4
 
 =item *
@@ -88,8 +92,6 @@ This tool was inspired by the excellent work of <a href="http://johntwang.com/bl
 
 =head2 Install Instructions
 
-=begin html
-
 Steps for installation are as follows:
     
 =over 4
@@ -120,10 +122,14 @@ When installing, you will be asked if you want to install it for this user only,
 
 =head2 Uninstall Instructions
 
+=begin html
+    
 Right-click on the PostgreSQL icon in System Preferences, and click "Remove".
-
+<br/>
 Also, delete the following files if they exist:
 
+=end html
+    
 =over 4
 
 =item * C</Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
