@@ -2,24 +2,6 @@
 
 =head1 PostgreSQL Mac Preferences
 
-=over 4
-
-=item * L<|/"Overview">
-
-=item * L<|/"Install Instructions">
-
-=item * L<|/"Uninstall Instructions">
-    
-=item * L<|/"FAQ">
-
-=item * L<|/"Version History">
-        
-=item * L<|/"Contact">
-
-C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
-    
-=back
-
 =begin html
 
 <br />
@@ -27,6 +9,22 @@ C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
 <img src="postgresql-mac-preferences/raw/master/PostgreSQL/logo.png" />
 
 =end html
+
+=over 4
+
+=item * L<Overview|/"Overview">
+
+=item * L<Install Instructions|/"Install Instructions">
+
+=item * L<Uninstall Instructions|/"Uninstall Instructions">
+    
+=item * L<FAQ|/"FAQ">
+
+=item * L<Version History|/"Version History">
+        
+=item * L<Contact|/"Contact">
+
+=back
 
 =head2 Overview
 
@@ -118,7 +116,7 @@ Also, delete the following files if they exist:
 
 =over 4
 
-=item * Can I run multiple instances of PostgreSQL on the same machine? 
+=item * B<Can I run multiple instances of PostgreSQL on the same machine?>
 
 =item * No, at present the PostgreSQL Preferences only permit one running PostgreSQL instance at a time. The PostgreSQL Preferences will attempt to stop all other running PostgreSQL instances, when the user clicks the Start button to startup PostgreSQL.
     
