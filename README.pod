@@ -30,7 +30,9 @@
 
 =begin html
 
-A Mac OS X System Preferences pane for controlling the PostgreSQL Database Server, offering the following features:
+A Mac OS X System Preferences pane for controlling the PostgreSQL Database Server
+    
+Features include:
 
 =over 4
 
@@ -52,7 +54,7 @@ Easily change PostgreSQL settings in the GUI
 
 =back
 
-This tool was inspired by the excellent work of <a href="http://johntwang.com/blog/2011/04/03/PostgreSQL-Preference-Pane/">John T Wang</a>
+This tool was inspired by the excellent work of <a href="http://johntwang.com/blog/2011/04/03/PostgreSQL-Preference-Pane/">John T Wang</a>. 
 
 =end html
 
@@ -84,14 +86,28 @@ This tool was inspired by the excellent work of <a href="http://johntwang.com/bl
 
 =begin html
 
+Installation is very simple:
+    
+=over 4
+    
+=item 1
+    
+=begin html
+    
 Download the latest release version <a href="https://github.com/downloads/mckenfra/postgresql-mac-preferences/PostgreSQL.prefPane-v1.0.zip">here</a>
 
 =end html
 
+=item 2
+    
 Once downloaded, unzip it and then either double-click the C<PostgreSQL.prefPane> file, or drag it to System Preferences to install it.
 
+=item 3
+    
 When installing, you will be asked if you want to install it for this user only, or for all users. Choose this user only (either option is fine however).
 
+=back
+    
 =begin html
 
 <img src="postgresql-mac-preferences/raw/master/PostgreSQL/screenshot_install.png" />
@@ -118,8 +134,23 @@ Also, delete the following files if they exist:
 
 =item * B<Can I run multiple instances of PostgreSQL on the same machine?>
 
-=item * No, at present the PostgreSQL Preferences only permit one running PostgreSQL instance at a time. The PostgreSQL Preferences will attempt to stop all other running PostgreSQL instances, when the user clicks the Start button to startup PostgreSQL.
+=item * No, at present the PostgreSQL Preferences only permit one running PostgreSQL instance at a time. The PostgreSQL Preferences will attempt to stop all other running PostgreSQL instances, when the user clicks the C<Start PostgreSQL> button.
+
+
+=item * B<I cannot start PostgreSQL>
     
+=item * PostgreSQL Preferences uses L<http://developer.apple.com/library/mac/#documentation/Darwin/Reference/Manpages/man1/launchctl.1.html> to start, stop and schedule auto-startup of PostgreSQL. The launchctl utility logs its output to C</var/log/system.log> by default. You can monitor this logfile by executing the following code on the command line: C<tail -100f /var/log/system.log>. Finally, we would like to ensure this tool works as smoothly as possible, so please L<Contact Us|/"Contact Us"> if you are still having issues, or have any suggestions for improvements. 
+    
+
+=item * B<I have enabled auto-startup, but PostgreSQL still does not startup automatically on bootup.>
+    
+=item * It is possible that another instance of PostgreSQL is also scheduled to start on bootup, with the same port number. To rectify this, you can change the Port setting in the <LSettings Screen|/Modify Settings> to another port. If this does not fix the problem, check the C</var/log/system.log> logfile for any error messages. Also, ensure a valid Log File path is configured in the <LSettings Screen|/Modify Settings> - you can then check this logfile for more detailed error messages.
+    
+
+=item * B<I have configured a Log File in the L<Settings Screen|/Modify Settings> but nothing is getting logged>
+        
+=item * Ensure the Log File directory exists, and the Username specified in the L<Settings Screen|/Modify Settings> has read and write access to this directory.
+
 =back    
     
 =head2 Version History
