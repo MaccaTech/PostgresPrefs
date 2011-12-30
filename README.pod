@@ -2,6 +2,24 @@
 
 =head1 PostgreSQL Mac Preferences
 
+=over 4
+
+=item * L<|/"Overview">
+
+=item * L<|/"Install Instructions">
+
+=item * L<|/"Uninstall Instructions">
+    
+=item * L<|/"FAQ">
+
+=item * L<|/"Version History">
+        
+=item * L<|/"Contact">
+
+C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
+    
+=back
+
 =begin html
 
 <br />
@@ -12,7 +30,33 @@
 
 =head2 Overview
 
-This project provides a Mac OS X System Preferences pane for the PostgreSQL Database Server.
+=begin html
+
+A Mac OS X System Preferences pane for controlling the PostgreSQL Database Server, offering the following features:
+
+=over 4
+
+=item *
+
+Compatible with all PostgreSQL installations
+
+=item *
+
+Start and stop PostgreSQL Server at the click of a button
+
+=item *
+
+Set PostgreSQL to start automatically on computer bootup
+
+=item *
+
+Easily change PostgreSQL settings in the GUI
+
+=back
+
+This tool was inspired by the excellent work of <a href="http://johntwang.com/blog/2011/04/03/PostgreSQL-Preference-Pane/">John T Wang</a>
+
+=end html
 
 =head3 Welcome Screen
 
@@ -64,29 +108,37 @@ Also, delete the following files if they exist:
 
 =over 4
 
-=item
+=item * C</Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
 
-C</Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
-
-=item
-
-C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
+=item * C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
 
 =back
 
+=head2 FAQ
+
+=over 4
+
+=item * Can I run multiple instances of PostgreSQL on the same machine? 
+
+=item * No, at present the PostgreSQL Preferences only permit one running PostgreSQL instance at a time. The PostgreSQL Preferences will attempt to stop all other running PostgreSQL instances, when the user clicks the Start button to startup PostgreSQL.
+    
+=back    
+    
 =head2 Version History
 
-=over
+=over 4
 
-=item *
-
-v1.0 - 29-Dec 2011 - Initial release 
+=item * v1.0 - 29-Dec 2011 - Initial release 
 
 =back
 
 =head2 Contact
 
-Please email L<mailto:mail@hkwebentrepreneurs.com>
+=begin html
+    
+Please email any feedback to <a href="mailto:email@hkwebentrepreneurs.com">email@hkwebentrepreneurs.com</a>
+
+=end html
 
 Or visit our website at L<http://www.hkwebentrepreneurs.com>
 
