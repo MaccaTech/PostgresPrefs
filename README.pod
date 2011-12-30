@@ -46,7 +46,7 @@ Download the latest release version <a href="https://github.com/downloads/mckenf
 
 =end html
 
-Once downloaded, unzip it and then either double-click the F<PostgreSQL.prefPane> file, or drag it to System Preferences to install it.
+Once downloaded, unzip it and then either double-click the C<PostgreSQL.prefPane> file, or drag it to System Preferences to install it.
 
 When installing, you will be asked if you want to install it for this user only, or for all users. Choose this user only (either option is fine however).
 
@@ -66,11 +66,11 @@ Also, delete the following files if they exist:
 
 =item
 
-F</Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
+C</Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
 
 =item
 
-F<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
+C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
 
 =back
 
