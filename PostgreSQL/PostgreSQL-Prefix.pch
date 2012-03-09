@@ -13,7 +13,7 @@
 // Unfortunately this doesn't work DLog(aStringVariable); you have to do this instead DLog(@"%@", aStringVariable);
 #ifdef DEBUG
 #       define LOG_FILE [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Logs/PostgreSQL/PostgreSQL.log"]
-#       define DLog(fmt, ...) { if (! [[NSFileManager defaultManager] fileExistsAtPath:LOG_FILE] ) { [[NSFileManager defaultManager] createDirectoryAtPath:[LOG_FILE stringByDeletingLastPathComponent] withIntermediateDirectories:YES attributes:nil error:NULL]; const char *PATH = [LOG_FILE fileSystemRepresentation]; freopen(PATH, "a", stderr); } NSLog((@"%s [Line %d] " fmt @"\n\n"), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
+#       define DLog(fmt, ...) { if (! [[NSFileManager defaultManager] fileExistsAtPath:LOG_FILE] ) { [[NSFileManager defaultManager] createDirectoryAtPath:[LOG_FILE stringByDeletingLastPathComponent] withIntermediateDirectories:YES attributes:nil error:NULL]; } const char *PATH = [LOG_FILE fileSystemRepresentation]; freopen(PATH, "a", stderr); NSLog((@"%s [Line %d] " fmt @"\n\n"), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
 #       define IsLogging YES
 #
 #else
