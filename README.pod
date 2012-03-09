@@ -94,9 +94,9 @@ Steps for installation are as follows:
     
 Download the latest release version
     
-=for html <a href="https://github.com/downloads/mckenfra/postgresql-mac-preferences/PostgreSQL.prefPane-v1.0.zip">here</a>
+=for html <a href="https://github.com/mckenfra/postgresql-mac-preferences/downloads">here</a>
 
-=for text here: https://github.com/downloads/mckenfra/postgresql-mac-preferences/PostgreSQL.prefPane-v1.0.zip
+=for text here: https://github.com/mckenfra/postgresql-mac-preferences/downloads
     
 =item 2
     
