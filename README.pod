@@ -156,11 +156,36 @@ We would like to ensure this tool works as smoothly as possible, so please L<Con
     
 =head2 Version History
 
-=over 4
+=begin html
 
-=item * v1.0 - 29-Dec 2011 - Initial release 
+<table>
+<thead>
+<tr>
+    <th>Version</th>
+    <th>Date</th>
+    <th>Comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+    <td>v1.0.1</td>
+    <td>10-Mar 2012</td>
+    <td>Bug-fix release
+        <ul>
+        <li>Fixed hard-coded username in start/stop script</li>
+        <li>Fixed bug where settings were getting cleared when user re-authorized</li>
+        </ul>
+    </td>
+</tr>
+<tr>
+    <td>v1.0</td>
+    <td>29-Dec 2011</td>
+    <td>Initial Release</td>
+</tr>
+</tbody>
+</table>
 
-=back
+=end html
 
 =head2 Contact
 
