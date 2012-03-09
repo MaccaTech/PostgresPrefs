@@ -450,7 +450,7 @@ createMyPostgreAgentPlistFile() {
 
         # Switch to real user if req'd
         if [ "${my_real_user}" != "${my_run_user}" ]; then
-            my_pg_result=$(trim `su francismckenzie -c "echo \"${my_pg_plist_content}\" > ${my_pg_plist_path}" 2>&1`);
+            my_pg_result=$(trim `su ${my_real_user} -c "echo \"${my_pg_plist_content}\" > ${my_pg_plist_path}" 2>&1`);
         else
             my_pg_result=$(trim `{ echo "${my_pg_plist_content}" > "${my_pg_plist_path}"; } 2>&1`);
         fi
