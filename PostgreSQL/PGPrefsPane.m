@@ -126,10 +126,11 @@
 }
 
 - (void)authorizationViewDidAuthorize:(SFAuthorizationView *)view {
+    // Reset editing settings mode first
+    editingSettings = NO;
+
+    // Delegate
     [delegate postgrePrefsDidAuthorize:self];
-    
-    // Reset editing settings mode
-    editingSettings = NO;    
 }
 
 - (void)authorizationViewDidDeauthorize:(SFAuthorizationView *)view {
