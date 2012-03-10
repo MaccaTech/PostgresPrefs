@@ -139,7 +139,7 @@ Also, delete the following files if they exist:
 
 =item * B<PostgreSQL does not start up.>
     
-=item * PostgreSQL Preferences uses L<launchctl|https://developer.apple.com/library/mac/#documentation/Darwin/Reference/ManPages/man1/launchctl.1.html> to start, stop and schedule auto-startup of PostgreSQL. The launchctl utility logs its output to C</var/log/system.log> by default. You can monitor this logfile by executing the following code on the command line: C<tail -100f /var/log/system.log>. Also, ensure a valid Log File path is configured in the L<Settings Screen|/Modify Settings> - you can then check this logfile for more detailed error messages.
+=item * PostgreSQL Preferences uses L<launchctl|https://developer.apple.com/library/mac/\#documentation/Darwin/Reference/ManPages/man1/launchctl.1.html> to start, stop and schedule auto-startup of PostgreSQL. The launchctl utility logs its output to C</var/log/system.log> by default. You can monitor this logfile by executing the following code on the command line: C<tail -100f /var/log/system.log>. Also, ensure a valid Log File path is configured in the L<Settings Screen|/Modify Settings> - you can then check this logfile for more detailed error messages.
     
 We would like to ensure this tool works as smoothly as possible, so please L<Contact Us|/Contact> if you are still having issues, or if you have any suggestions for improvements. 
     
