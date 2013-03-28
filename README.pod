@@ -5,8 +5,8 @@
 =begin html
 
 <br />
-<img src="postgresql-mac-preferences/raw/master/PostgreSQL/elephant.png" />
-<img src="postgresql-mac-preferences/raw/master/PostgreSQL/logo.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/elephant.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/logo.png" />
 
 =end html
 
@@ -64,7 +64,7 @@ Easily change PostgreSQL B<settings> in the GUI
 
 =begin html
 
-<img src="postgresql-mac-preferences/raw/master/PostgreSQL/screenshot_welcome.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_welcome.png" />
 
 =end html
 
@@ -72,7 +72,7 @@ Easily change PostgreSQL B<settings> in the GUI
 
 =begin html
 
-<img src="postgresql-mac-preferences/raw/master/PostgreSQL/screenshot_startstop.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_startstop.png" />
 
 =end html
 
@@ -80,7 +80,7 @@ Easily change PostgreSQL B<settings> in the GUI
 
 =begin html
 
-<img src="postgresql-mac-preferences/raw/master/PostgreSQL/screenshot_settings.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_settings.png" />
 
 =end html
 
@@ -110,7 +110,7 @@ When installing, you will be asked if you want to install it for this user only,
     
 =begin html
 
-<img src="postgresql-mac-preferences/raw/master/PostgreSQL/screenshot_install.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_install.png" />
 
 =end html
 
@@ -189,7 +189,7 @@ We would like to ensure this tool works as smoothly as possible, so please L<Con
 
 =head2 Contact
 
-=for html Please email any feedback to <a href="mailto:email@hkwebentrepreneurs.com">email@hkwebentrepreneurs.com</a>
+=for html Please email any feedback to <a href="mailto:info@hkwebentrepreneurs.com">info@hkwebentrepreneurs.com</a>
 
 =for text Please email any feedback to email@hkwebentrepreneurs.com
 
