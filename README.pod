@@ -168,6 +168,18 @@ We would like to ensure this tool works as smoothly as possible, so please L<Con
 </thead>
 <tbody>
 <tr>
+    <td>v1.1</td>
+    <td>17-Oct 2014</td>
+    <td>Bug-fix release
+        <ul>
+        <li>Fixed errors caused by spaces or ~ in paths</li>
+        <li>Auto-detect Postgres.app install</li>
+        <li>Fixed incompatibility with latest XCode (ARC now mandatory)</li>
+        <li><b>Note:</b> requires Mac OS X Lion or newer</li>
+        </ul>
+    </td>
+</tr>
+<tr>
     <td>v1.0.1</td>
     <td>10-Mar 2012</td>
     <td>Bug-fix release

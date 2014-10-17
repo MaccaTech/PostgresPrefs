@@ -14,18 +14,18 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 @implementation PostgrePrefsController
 
 - (NSString*)runShell:(PostgrePrefs *) prefs command:(NSArray *) command {
-    return runCommand(@"/bin/bash", [[NSArray arrayWithObjects:@"-c", nil] arrayByAddingObjectsFromArray:command], YES);
+    return runCommand(@"/bin/bash", [@[@"-c"] arrayByAddingObjectsFromArray:command], YES);
 }
 - (void)runShellNoOutput:(PostgrePrefs *) prefs command:(NSArray *) command {
-    runCommand(@"/bin/bash", [[NSArray arrayWithObjects:@"-c", nil] arrayByAddingObjectsFromArray:command], NO);
+    runCommand(@"/bin/bash", [@[@"-c"] arrayByAddingObjectsFromArray:command], NO);
 }
 - (NSString*)runAuthorizedShell:(PostgrePrefs *) prefs command:(NSArray *) command {    
     NSString *path = [[prefs bundle] pathForResource:@"PGPrefsRunAsAdmin" ofType:@"scpt"];
-    return runAuthorizedCommand(@"/usr/bin/osascript", [[NSArray arrayWithObjects:path, nil] arrayByAddingObjectsFromArray:command], [prefs authorization], YES);
+    return runAuthorizedCommand(@"/usr/bin/osascript", [@[path] arrayByAddingObjectsFromArray:command], [prefs authorization], YES);
 }
 - (void)runAuthorizedShellNoOutput:(PostgrePrefs *) prefs command:(NSArray *) command {
     NSString *path = [[prefs bundle] pathForResource:@"PGPrefsRunAsAdmin" ofType:@"scpt"];
-    runAuthorizedCommand(@"/usr/bin/osascript", [[NSArray arrayWithObjects:path, nil] arrayByAddingObjectsFromArray:command], [prefs authorization], NO);
+    runAuthorizedCommand(@"/usr/bin/osascript", [@[path] arrayByAddingObjectsFromArray:command], [prefs authorization], NO);
 }
 
 //
@@ -33,7 +33,7 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 - (NSDictionary *)detectPostgreSQLInstallationAndGenerateSettings:(PostgrePrefs *) prefs {
     NSString *path = [[prefs bundle] pathForResource:@"PGPrefsDetectDefaults" ofType:@"sh"];
-    NSString *pg_ctl = [self runAuthorizedShell:prefs command:[NSArray arrayWithObjects:path, [NSString stringWithFormat:@" --DEBUG=%@", (IsLogging ? @"Yes" : @"No") ], nil]];
+    NSString *pg_ctl = [self runAuthorizedShell:prefs command:@[path, [NSString stringWithFormat:@" --DEBUG=%@", (IsLogging ? @"Yes" : @"No") ]]];
     
     if (pg_ctl) {
         NSArray *lines = [pg_ctl componentsSeparatedByString:@"\n"];
@@ -54,15 +54,14 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
                 autoStartup = [[line substringFromIndex:[@"PGAUTO=" length]] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
             }
         }
-        return 
-        [NSDictionary dictionaryWithObjectsAndKeys:
-         username, @"Username",
-         binDir, @"BinDirectory",
-         dataDir, @"DataDirectory",
-         logFile, @"LogFile",
-         port, @"Port",
-         autoStartup, @"AutoStartup",
-         nil];
+        return @{
+            @"Username":username,
+            @"BinDirectory":binDir,
+            @"DataDirectory":dataDir,
+            @"LogFile":logFile,
+            @"Port":port,
+            @"AutoStartup":autoStartup
+        };
     } else {
         return nil;
     }
@@ -84,19 +83,19 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
     NSString *result = path;
     
     if (isNonBlankString([prefs username])) {
-        result = [result stringByAppendingString:[NSString stringWithFormat:@" --PGUSER=%@", [prefs username]]];
+        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGUSER=%@\"", [prefs username]]];
     }
     if (isNonBlankString([prefs dataDirectory])) {
-        result = [result stringByAppendingString:[NSString stringWithFormat:@" --PGDATA=%@", [prefs dataDirectory]]];
+        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGDATA=%@\"", [prefs dataDirectory]]];
     }
     if (isNonBlankString([prefs port])) {
-        result = [result stringByAppendingString:[NSString stringWithFormat:@" --PGPORT=%@", [prefs port]]];
+        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGPORT=%@\"", [prefs port]]];
     }
     if (isNonBlankString([prefs binDirectory])) {
-        result = [result stringByAppendingString:[NSString stringWithFormat:@" --PGBIN=%@", [prefs binDirectory]]];
+        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGBIN=%@\"", [prefs binDirectory]]];
     }
     if (isNonBlankString([prefs logFile])) {
-        result = [result stringByAppendingString:[NSString stringWithFormat:@" --PGLOG=%@", [prefs logFile]]];
+        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGLOG=%@\"", [prefs logFile]]];
     }
     result = [result stringByAppendingString:[NSString stringWithFormat:@" --PGAUTO=%@", ([prefs autoStartup] ? @"Yes" : @"No" ) ]];
     result = [result stringByAppendingString:[NSString stringWithFormat:@" --DEBUG=%@", (IsLogging ? @"Yes" : @"No") ]];
@@ -120,7 +119,7 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
             
             // One at a time
             @synchronized(self) {
-                result = [self runAuthorizedShell:prefs command:[NSArray arrayWithObjects:command, nil]];
+                result = [self runAuthorizedShell:prefs command:@[command]];
             }
                 
             DLog(@"PostgreSQL Status: %@", result);
@@ -166,7 +165,7 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
             
             // One at a time
             @synchronized(self) {
-                result = [self runAuthorizedShell:prefs command:[NSArray arrayWithObjects:command, nil]];
+                result = [self runAuthorizedShell:prefs command:@[command]];
             }
         }
         
@@ -199,7 +198,7 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
             
             // One at a time
             @synchronized(self) {
-                result = [self runAuthorizedShell:prefs command:[NSArray arrayWithObjects:command, nil]];
+                result = [self runAuthorizedShell:prefs command:@[command]];
             }
         }
         
@@ -302,7 +301,7 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
             
             // One at a time
             @synchronized(self) {
-                [self runAuthorizedShellNoOutput:prefs command:[NSArray arrayWithObjects:command, nil]];
+                [self runAuthorizedShellNoOutput:prefs command:@[command]];
             }
         }
         return YES;        
