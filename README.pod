@@ -94,9 +94,9 @@ Steps for installation are as follows:
     
 Download the latest release version
     
-=for html <a href="https://github.com/mckenfra/postgresql-mac-preferences/downloads">here</a>
+=for html <a href="https://github.com/mckenfra/postgresql-mac-preferences/releases">here</a>
 
-=for text here: https://github.com/mckenfra/postgresql-mac-preferences/downloads
+=for text here: https://github.com/mckenfra/postgresql-mac-preferences/releases
     
 =item 2
     
