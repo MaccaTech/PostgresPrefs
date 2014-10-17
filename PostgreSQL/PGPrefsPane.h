@@ -9,38 +9,52 @@
 #import <PreferencePanes/PreferencePanes.h>
 #import <SecurityInterface/SFAuthorizationView.h>
 
+@class PostgrePrefs;
+
+@protocol PostgrePrefsDelegate <NSObject>
+@required
+- (void)postgrePrefsDidAuthorize:(PostgrePrefs *) prefs;
+- (void)postgrePrefsDidDeauthorize:(PostgrePrefs *) prefs;
+- (void)postgrePrefsDidLoad:(PostgrePrefs *) prefs;
+- (void)postgrePrefsWillUnselect:(PostgrePrefs *) prefs;
+- (void)postgrePrefsDidClickStartStopServer:(PostgrePrefs *) prefs;
+- (void)postgrePrefsDidClickRefresh:(PostgrePrefs *) prefs;
+- (void)postgrePrefsDidClickAutoStartup:(PostgrePrefs *) prefs;
+- (void)postgrePrefsDidClickResetSettings:(PostgrePrefs *) prefs;
+- (void)postgrePrefsDidFinishEditingSettings:(PostgrePrefs *) prefs;
+@optional
+@end
+
 @interface PostgrePrefs : NSPreferencePane <NSTabViewDelegate> {
 @private
-    id delegate;
     BOOL autoStartupChangedBySystem;
     BOOL editingSettings;
 }
 
-- (id)delegate;
-- (void)setDelegate:(id)val;
+@property (nonatomic, strong) id<PostgrePrefsDelegate> delegate;
 
-@property (weak) IBOutlet NSButton *resetSettingsButton;
-@property (weak) IBOutlet NSImageView *statusImage;
-@property (weak) IBOutlet NSTextField *statusLabel;
-@property (weak) IBOutlet NSTextField *statusInfo;
-@property (weak) IBOutlet NSTextField *startStopInfo;
-@property (weak) IBOutlet NSButton *startStopButton;
-@property (weak) IBOutlet NSButton *refreshButton;
-@property (weak) IBOutlet NSProgressIndicator *spinner;
-@property (weak) IBOutlet NSButton *autoStartupCheckbox;
-@property (weak) IBOutlet NSTextField *autoStartupInfo;
-@property (weak) IBOutlet NSTextField *errorLabel;
-@property (weak) IBOutlet NSImageView *errorIcon;
-@property (weak) IBOutlet SFAuthorizationView *authView;
-@property (weak) IBOutlet NSView *unlockedView;
-@property (weak) IBOutlet NSView *lockedView;
-@property (weak) IBOutlet NSForm *settingsForm;
-@property (weak) IBOutlet NSFormCell *settingsUsername;
-@property (weak) IBOutlet NSFormCell *settingsBinDir;
-@property (weak) IBOutlet NSFormCell *settingsDataDir;
-@property (weak) IBOutlet NSFormCell *settingsLogFile;
-@property (weak) IBOutlet NSFormCell *settingsPort;
-@property (weak) IBOutlet NSTabView *unlockedTabs;
+@property (nonatomic, weak) IBOutlet NSButton *resetSettingsButton;
+@property (nonatomic, weak) IBOutlet NSImageView *statusImage;
+@property (nonatomic, weak) IBOutlet NSTextField *statusLabel;
+@property (nonatomic, weak) IBOutlet NSTextField *statusInfo;
+@property (nonatomic, weak) IBOutlet NSTextField *startStopInfo;
+@property (nonatomic, weak) IBOutlet NSButton *startStopButton;
+@property (nonatomic, weak) IBOutlet NSButton *refreshButton;
+@property (nonatomic, weak) IBOutlet NSProgressIndicator *spinner;
+@property (nonatomic, weak) IBOutlet NSButton *autoStartupCheckbox;
+@property (nonatomic, weak) IBOutlet NSTextField *autoStartupInfo;
+@property (nonatomic, weak) IBOutlet NSTextField *errorLabel;
+@property (nonatomic, weak) IBOutlet NSImageView *errorIcon;
+@property (nonatomic, weak) IBOutlet SFAuthorizationView *authView;
+@property (nonatomic, weak) IBOutlet NSView *unlockedView;
+@property (nonatomic, weak) IBOutlet NSView *lockedView;
+@property (nonatomic, weak) IBOutlet NSForm *settingsForm;
+@property (nonatomic, weak) IBOutlet NSFormCell *settingsUsername;
+@property (nonatomic, weak) IBOutlet NSFormCell *settingsBinDir;
+@property (nonatomic, weak) IBOutlet NSFormCell *settingsDataDir;
+@property (nonatomic, weak) IBOutlet NSFormCell *settingsLogFile;
+@property (nonatomic, weak) IBOutlet NSFormCell *settingsPort;
+@property (nonatomic, weak) IBOutlet NSTabView *unlockedTabs;
 
 - (NSDictionary *)guiPreferences;
 - (void)setGuiPreferences:(NSDictionary *) prefs;

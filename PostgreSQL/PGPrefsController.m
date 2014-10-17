@@ -280,7 +280,7 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 // User clicked button to start/stop server - calls start/stop command
 //
 - (void)postgrePrefsDidClickStartStopServer:(PostgrePrefs *)prefs {
-    if (_status == @"Started") {
+    if ([_status isEqualToString:@"Started"]) {
         [prefs displayStopping];
         [self performSelector:@selector(stopServer:) withObject:prefs afterDelay:0.2];
     } else {

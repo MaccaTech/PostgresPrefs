@@ -12,37 +12,6 @@
 
 @implementation PostgrePrefs
 
-@synthesize authView = _authView;
-@synthesize unlockedView = _unlockedView;
-@synthesize lockedView = _lockedView;
-@synthesize settingsForm = _settingsForm;
-@synthesize unlockedTabs = _unlockedTabs;
-@synthesize startStopInfo = _startStopInfo;
-@synthesize resetSettingsButton = _resetSettingsButton;
-@synthesize statusImage = _statusImage;
-@synthesize statusLabel = _statusLabel;
-@synthesize statusInfo = _statusInfo;
-@synthesize settingsUsername = _settingsUsername;
-@synthesize settingsBinDir = _settingsBinDir;
-@synthesize settingsDataDir = _settingsDataDir;
-@synthesize settingsLogFile = _settingsLogFile;
-@synthesize settingsPort = _settingsPort;
-@synthesize startStopButton = _startStopButton;
-@synthesize refreshButton = _refreshButton;
-@synthesize spinner = _spinner;
-@synthesize autoStartupCheckbox = _autoStartupCheckbox;
-@synthesize autoStartupInfo = _autoStartupInfo;
-@synthesize errorIcon = _errorIcon;
-@synthesize errorLabel = _errorLabel;
-
-- (id)delegate {
-    return delegate;
-}
-
-- (void)setDelegate:(id)val {
-    delegate = val;
-}
-
 - (NSString *)username {
     return [self.settingsUsername stringValue];
 }
@@ -130,11 +99,11 @@
     editingSettings = NO;
 
     // Delegate
-    [delegate postgrePrefsDidAuthorize:self];
+    [self.delegate postgrePrefsDidAuthorize:self];
 }
 
 - (void)authorizationViewDidDeauthorize:(SFAuthorizationView *)view {
-    [delegate postgrePrefsDidDeauthorize:self];
+    [self.delegate postgrePrefsDidDeauthorize:self];
     
     // Reset editing settings mode
     editingSettings = NO;    
@@ -148,7 +117,7 @@
     if ([tabView indexOfTabViewItem:tabViewItem] == 0) {
         if (editingSettings) {
             [self postponeAuthorizationTimeout];
-            [delegate postgrePrefsDidFinishEditingSettings:self];
+            [self.delegate postgrePrefsDidFinishEditingSettings:self];
         }
         editingSettings = NO;
     } else {
@@ -160,9 +129,7 @@
     // Remove existing delegate
     if ([self delegate]) {
         DLog(@"Warning - delegate already exists! Removing existing delegate...");
-        id existingDelegate = [self delegate];
         [self setDelegate:nil];
-        [existingDelegate release];
     }
     
     // Set new delegate
@@ -175,11 +142,11 @@
     self.unlockedTabs.delegate = self;
     
     // Call delegate DidLoad method
-    [delegate postgrePrefsDidLoad:self];
+    [self.delegate postgrePrefsDidLoad:self];
 }
 
 - (void)willUnselect {
-    [delegate postgrePrefsWillUnselect:self];
+    [self.delegate postgrePrefsWillUnselect:self];
 
     // Reset editing settings mode
     editingSettings = NO;
@@ -259,8 +226,6 @@
     [self.refreshButton setEnabled:YES];
     [self.autoStartupCheckbox setEnabled:YES];
     [self.spinner stopAnimation:self];
-    
-    [started release];
 }
 
 - (void)displayStopped {
@@ -278,8 +243,6 @@
     [self.refreshButton setEnabled:YES];
     [self.autoStartupCheckbox setEnabled:YES];
     [self.spinner stopAnimation:self];
-    
-    [stopped release];
 }
 
 - (void)displayStarting {
@@ -291,7 +254,6 @@
     [self.startStopButton setEnabled:NO];
     [self.refreshButton setEnabled:NO];
     [self.spinner startAnimation:self];
-    [checking release];
 }
 
 - (void)displayStopping {
@@ -303,7 +265,6 @@
     [self.startStopButton setEnabled:NO];
     [self.refreshButton setEnabled:NO];
     [self.spinner startAnimation:self];
-    [checking release];
 }
 
 - (void)displayChecking {
@@ -323,8 +284,6 @@
     
     [self displayAutoStartupNoError];
     [self.autoStartupCheckbox setEnabled:NO];
-    
-    [checking release];
 }
 
 - (void)displayUnknown {
@@ -342,8 +301,6 @@
     [self.startStopButton setEnabled:NO];
     [self.refreshButton setEnabled:YES];
     [self.spinner stopAnimation:self];
-    
-    [stopped release];
 }
 
 - (void)displayLocked {
@@ -385,11 +342,6 @@
     [self.autoStartupInfo setTitleWithMnemonic:@"Select this option if you would like the PostgreSQL server to start automatically whenever your computer starts up."];    
 }
 
-- (void)dealloc {
-    [delegate release];
-    [super dealloc];
-}
-
 - (void)displayUpdatingSettings {
     [self.resetSettingsButton setEnabled:NO];
 }
@@ -401,22 +353,22 @@
 - (IBAction)toggleAutoStartup:(id)sender {
     [self postponeAuthorizationTimeout];
     if (!autoStartupChangedBySystem) {
-        [delegate postgrePrefsDidClickAutoStartup:self];
+        [self.delegate postgrePrefsDidClickAutoStartup:self];
     }
 }
 
 - (IBAction)startStopServer:(id)sender {
     [self postponeAuthorizationTimeout];
-    [delegate postgrePrefsDidClickStartStopServer:self];
+    [self.delegate postgrePrefsDidClickStartStopServer:self];
 }
 
 - (IBAction)resetSettings:(id)sender {
     [self postponeAuthorizationTimeout];
-    [delegate postgrePrefsDidClickResetSettings:self];
+    [self.delegate postgrePrefsDidClickResetSettings:self];
 }
 
 - (IBAction)refreshButton:(id)sender {
     [self postponeAuthorizationTimeout];
-    [delegate postgrePrefsDidClickRefresh:self];
+    [self.delegate postgrePrefsDidClickRefresh:self];
 }
 @end

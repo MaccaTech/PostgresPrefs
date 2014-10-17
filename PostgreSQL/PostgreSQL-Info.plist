@@ -17,17 +17,15 @@
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.1</string>
-	<key>CFBundleSignature</key>
-	<string>????</string>
+	<string>1.1</string>
 	<key>CFBundleVersion</key>
-	<string>1.0.1</string>
+	<string>1.1</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2011 HK Web Entrepreneurs. All rights reserved.</string>
 	<key>NSMainNibFile</key>
 	<string>PGPrefsPane</string>
 	<key>NSPrefPaneIconFile</key>
-	<string>elephant.png</string>
+	<string>elephant</string>
 	<key>NSPrefPaneIconLabel</key>
 	<string>PostgreSQL</string>
 	<key>NSPrincipalClass</key>

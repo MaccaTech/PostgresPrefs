@@ -39,18 +39,11 @@ NSString* runCommand(NSString *command, NSArray *args, BOOL waitForOutput) {
         [task waitUntilExit];
     }
      
-    NSData *data;
-    data = [file readDataToEndOfFile];
+    NSData *data = [file readDataToEndOfFile];
     
-    NSString *string;
-    string = [[NSString alloc] initWithData: data
-                                   encoding: NSUTF8StringEncoding];
+    NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
     
-    NSString *result;
-    result = [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-
-    [string release];
-    [task release];
+    NSString *result = [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     
     if ([result length] == 0) {
         result = nil;
@@ -89,10 +82,10 @@ NSString* runAuthorizedCommand(NSString *command, NSArray *args, AuthorizationRe
     OSStatus processError = AuthorizationExecuteWithPrivileges(authorization, commandArg, kAuthorizationFlagDefaults, (char *const *)argv, processOutputRef);
 
     // Release command and args
-    free(commandArg);
+    free((char*)commandArg);
     if (args) {
         for (int i = 0; i < argvIndex; i++) {
-            free(argv[i]);
+            free((char*)argv[i]);
         }
     }
     free(argv);
@@ -119,7 +112,6 @@ NSString* runAuthorizedCommand(NSString *command, NSArray *args, AuthorizationRe
              length:charsRead
              encoding:NSUTF8StringEncoding];
             [processOutputString appendString:bufferString];
-            [bufferString release];
         }
         
         // Trim output
@@ -147,7 +139,7 @@ NSString* runAuthorizedCommand(NSString *command, NSArray *args, AuthorizationRe
 NSDictionary* mergeDictionaries(NSDictionary *dictionary, NSDictionary *other) {
     
     // Create empty dictionary for results
-    NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
     
     // Add dictionaries - notice order
     if (other) {
@@ -158,7 +150,6 @@ NSDictionary* mergeDictionaries(NSDictionary *dictionary, NSDictionary *other) {
     }
     
     // Return result
-    [result autorelease];
     return result;
 }
 

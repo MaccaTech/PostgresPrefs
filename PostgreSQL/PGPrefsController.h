@@ -8,7 +8,6 @@
 
 #import <Foundation/Foundation.h>
 #import "PGPrefsPane.h"
-#import "PGPrefsPaneDelegate.h"
 
 extern NSString * const LAUNCH_AGENT_PLIST_FILENAME;
 
