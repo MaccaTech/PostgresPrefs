@@ -216,7 +216,7 @@
     NSImage *started = [[NSImage alloc] initWithContentsOfFile:startedPath];
     
     [self.startStopButton setTitle:@"Stop PostgreSQL"];
-    [self.statusInfo setTitleWithMnemonic:@"The PostgreSQL Database Server is started and ready for client connections. To shut down the server, use the \"Stop PostgreSQL Server\" button."];
+    [self.statusInfo setTitleWithMnemonic:@"The PostgreSQL Database Server is started and ready for client connections.\nTo shut down the server, use the \"Stop PostgreSQL Server\" button."];
     [self.statusLabel setTitleWithMnemonic:@"Running"];
     [self.statusLabel setTextColor:[NSColor greenColor]];
     [self.startStopInfo setTitleWithMnemonic:@"If you stop the server, you and your applications will not be able to use PostgreSQL and all current connections will be closed."];
