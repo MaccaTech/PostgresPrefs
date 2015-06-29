@@ -51,13 +51,21 @@
 # ==============================================================
 
 
+#
+# ==============================================================
+#
 # Utility functions
+#
+# ==============================================================
+#
 
 # To plain, trimmed string
 to_string() {
-    unset ___tmp;
-    read -rd '' ___tmp <<< "$*";
-    printf %s "$___tmp";
+    local return_code=$?; # Pass-through nested return code
+    local args;
+    read -rd '' args <<< "$*";
+    printf "%s" "${args}";
+    return "${return_code}";
 }
 # To string with all variables substituted
 to_absolute() {
@@ -71,108 +79,173 @@ to_lowercase() {
 to_uppercase() {
     to_string $(echo "$*" | tr "[:lower:]" "[:upper:]");
 }
-
-# Logging
-unset MY_APP_NAME; MY_APP_NAME="PGPrefsPostgreSQL.sh";
-unset MY_APP_LOG;  MY_APP_LOG="PostgreSQL/Helpers.log";
-
-DEBUG=$(to_lowercase "${DEBUG}");
-
-log() {
+# Get user that owns file
+file_owner() {
+    to_string `stat -f "%Su" "$*"`;
+}
+# Print a message to debug log
+debug() {
     # Check for logging env variable
     if [ "${DEBUG}" == "yes" ]; then
-        if [ $# -ge 1 ]; then
+        local msg=$(to_string "$*");
+        if [ -n "${msg}" ]; then
             if [ -e "${HOME}/Library/Logs" ]; then
 
-                # Create log dir & file if not exist
+                # Create debug dir & file if not exist
                 if [ ! -e "${HOME}/Library/Logs/${MY_APP_LOG}" ]; then
-                    su `stat -f "%Su" ${HOME}` -c "mkdir -p `dirname ${HOME}/Library/Logs/${MY_APP_LOG}`";
-                    su `stat -f "%Su" ${HOME}` -c "echo `date` >> ${HOME}/Library/Logs/${MY_APP_LOG}";
+                    su "${MY_RUN_USER}" -c "mkdir -p `dirname ${HOME}/Library/Logs/${MY_APP_LOG}`";
+                    su "${MY_RUN_USER}" -c "echo `date` >> ${HOME}/Library/Logs/${MY_APP_LOG}";
                 fi
 
                 # Log
-                dt=`date "+%F %H:%M:%S"`;
-                echo "\n[$dt ${MY_APP_NAME}]\n$*" >> ${HOME}/Library/Logs/${MY_APP_LOG};
+                local datestring=`date "+%F %H:%M:%S"`;
+                printf "
+---------------------------------------------------------------------------------
+[${datestring} ${MY_APP_NAME}]
+---------------------------------------------------------------------------------
+
+${msg}
+" >> ${HOME}/Library/Logs/${MY_APP_LOG};
             fi
         fi
     fi
 }
-error() {
+# Print success message and exit 0
+finished() {
     if [ -n "$*" ]; then
-        log $*;
-        echo "$*";
-    fi
-    exit 1;
-}
-ok() {
-    if [ -n "$*" ]; then
-        log $*;
+        debug "$*\n\n[OK]";
         echo "$*";
     fi
     exit 0;
 }
+# Print error message and exit 1
+fatal() {
+    if [ -n "$*" ]; then
+        debug "$*\n\n[FATAL]";
+        echo "$*";
+    fi
+    exit 1;
+}
+# Execute shell command, debug results and abort on failure
+do_cmd() {
+    local output;
+    local return_code;
+
+    debug "Running command...
+
+$*";
+
+    output=`set -e; eval { "$*;" } 2>&1`;
+    return_code=$?;
+
+    # Succeeded
+    if [ "${return_code}" -eq 0 ]; then
+        debug "${output}\n\n[OK]";
+
+    # Failed
+    else
+        debug "${output}\n\n[FATAL]";
+    fi
+
+    # Trim result before printing
+    to_string "${output}";
+    return "${return_code}";
+}
+# Execute shell command as specified user, debug results and abort on failure
+do_cmd_as_user() {
+    local user=$(to_string "$1");
+    if [ -z "${user}" ]; then
+        user="${MY_RUN_USER}";
+    fi
+    shift;
+
+    local cmd="$*";
+    if [ "${user}" == "root" ]; then
+        cmd="sudo ${cmd}";
+    elif [ "${user}" != "${MY_RUN_USER}" ]; then
+        cmd=${cmd//\"/\\\"};
+        cmd="su ${user} -c \"${cmd}\"";
+    fi
+
+    do_cmd "${cmd}";
+}
+# Program error
+program_error() {
+    fatal "this tool has a bug, please install the latest version!";
+}
+# Program error if missing variables
+assert_not_null() {
+    local name;
+    local value;
+    for name; do
+        value=$(eval "echo \$$name");
+        if [ -z "${value}" ]; then
+            debug "Variable is missing: \${${name}}";
+            program_error;
+        fi
+    done
+}
+
 
 #
-# RESET
-# 
+# ==============================================================
+#
+# Globals
+#
+# ==============================================================
+#
+
+unset MY_REAL_USER; MY_REAL_USER=$(file_owner "${HOME}");
+unset MY_RUN_USER;  MY_RUN_USER=`id -u -n`;
+unset MY_APP_NAME;  MY_APP_NAME="PGPrefsPostgreSQL.sh";
+unset MY_APP_LOG;   MY_APP_LOG="PostgreSQL/Helpers.log";
+unset MY_APP_PLIST; MY_APP_PLIST="com.hkwebentrepreneurs.postgresql";
+
+DEBUG=$(to_lowercase "${DEBUG}");
+
+
+#
+# ==============================================================
+#
+# Clear all variables that will be used in script
+#
+# ==============================================================
+#
 resetVariables() {
     unset my_pg_command;         my_pg_command="";
-    unset my_pg_full_command;    my_pg_full_command="";
-    unset my_pg_log_arg;         my_pg_log_arg="";
-    unset my_pg_result;          my_pg_result="";
 
     unset my_pg_bin;             my_pg_bin="";
     unset my_pg_ctl;             my_pg_ctl="";
     unset my_pg_postgres;        my_pg_postgres="";
     unset my_pg_data;            my_pg_data="";
     unset my_pg_user;            my_pg_user="";
-    unset my_pg_user_check;      my_pg_user_check="";
     unset my_pg_log;             my_pg_log="";
     unset my_pg_port;            my_pg_port="";
-    unset my_pg_auto;            my_pg_auto="No";
+    unset my_pg_auto;            my_pg_auto="no";
 
-    unset my_pg_bin_abs;         my_pg_bin_abs="";
-    unset my_pg_ctl_abs;         my_pg_ctl_abs="";
     unset my_pg_postgres_abs;    my_pg_postgres_abs="";
     unset my_pg_data_abs;        my_pg_data_abs="";
     unset my_pg_log_abs;         my_pg_log_abs="";
     unset my_pg_log_dir_abs;     my_pg_log_dir_abs="";
 
-    unset my_pg_plist;           my_pg_plist="com.hkwebentrepreneurs.postgresql";
-    unset my_pg_plist_path;      my_pg_plist_path="";
-    unset my_pg_plist_content;   my_pg_plist_content="";
-    unset my_pg_log_partA;       my_pg_log_partA="";
-    unset my_pg_log_partB;       my_pg_log_partB="";
-    unset my_pg_port_part;       my_pg_port_part="";
-    unset my_pg_auto_bool;       my_pg_port_auto_bool="";
-    unset my_pg_ctl_arg;         my_pg_ctl_arg="";
-    unset my_pg_ctl_command;     my_pg_ctl_command="";
-    
-    unset my_pg_launchctl_user;  my_pg_launchctl_user="";
-    unset my_run_user;           my_run_user="";
-    unset my_real_user;          my_real_user="";
-
-    unset my_pg_process_keyword; my_pg_process_keyword="";
-    unset my_pg_processes;       my_pg_processes="";
-    unset my_pg_process;         my_pg_process="";
-    unset my_pg_process_pid;     my_pg_process_pid="";
-    unset my_pg_process_ppid;    my_pg_process_ppid="";
-    unset my_pg_process_user;    my_pg_process_user="";
-    unset my_pg_process_command; my_pg_process_command="";
-    unset my_pg_process_args;    my_pg_process_args="";
-    unset my_pg_process_bin;     my_pg_process_bin="";
-    unset my_pg_process_pg_ctl;  my_pg_process_pg_ctl="";
+    unset my_pg_plist;           my_pg_plist="";
 }
 
+
 #
-# VALIDATE COMMAND LINE ARGS
-# 
+# ==============================================================
+#
+# Ensure command line args are correct, or else abort
+#
+# ==============================================================
+#
 validateCommandLineArgs() {
-    for ARG in "$@"; do
-        opt=$(to_uppercase "${ARG%%=*}");
-        val=$(to_string "${ARG#*=}");
-        lval=$(to_lowercase "$val");
-        larg=$(to_lowercase "$ARG");
+    local ARG;
+    for ARG; do
+        local opt=$(to_uppercase "${ARG%%=*}");
+        local val=$(to_string "${ARG#*=}");
+        local lval=$(to_lowercase "$val");
+        local larg=$(to_lowercase "$ARG");
         case "${opt}" in
             --PGBIN)     export PGBIN=${val};;
             --PGDATA)    export PGDATA=${val};;
@@ -184,84 +257,123 @@ validateCommandLineArgs() {
             *)           my_pg_command=${larg};;
         esac
     done
-    log "${MY_APP_NAME} $*";
+
+    debug "Checking command line args...
+
+${MY_APP_NAME} $*";
+
     if [ -z "${my_pg_command}" ]; then
-        error "Required args: ${MY_APP_NAME} [Options] Command";
+        fatal "Required args: ${MY_APP_NAME} [Options] Command";
     fi
 }
 
+
 #
-# VALIDATE ENV VARIABLES
-# 
+# ==============================================================
+#
+# Ensure have PGBIN and PGDATA (either from command line or
+# environment variables.
+#
+# Also check that these are valid, or else abort.
+#
+# ==============================================================
+#
 validateEnvVariables() {
-    my_real_user=`stat -f "%Su" ${HOME}`;
-    my_run_user=`id -u -n`;
+    local check_user;
 
-    log "REALUSER=${my_real_user}"\
-        "\nRUNUSER=${my_run_user}"\
-        "\nPGBIN=${PGBIN}"\
-        "\nPGDATA=${PGDATA}"\
-        "\nPGUSER=${PGUSER}"\
-        "\nPGLOG=${PGLOG}"\
-        "\nPGPORT=${PGPORT}"\
-        "\nPGAUTO=${PGAUTO}";
+    debug "Checking environment variables...
 
+REALUSER | ${MY_REAL_USER}
+RUNUSER  | ${MY_RUN_USER}
+PGBIN    | ${PGBIN}
+PGDATA   | ${PGDATA}
+PGUSER   | ${PGUSER}
+PGLOG    | ${PGLOG}
+PGPORT   | ${PGPORT}
+PGAUTO   | ${PGAUTO}";
+
+    # Check PGBIN
     my_pg_bin=$(to_string "${PGBIN}");
-    my_pg_bin_abs=$(to_absolute "${my_pg_bin}");
     if [ -z "${my_pg_bin}" ]; then
-        error "PGBIN is missing!";
+        fatal "PGBIN is missing!";
     else
-        my_pg_ctl="${my_pg_bin}/pg_ctl";
+        my_pg_ctl=$(to_absolute "${my_pg_bin}/pg_ctl");
         my_pg_postgres="${my_pg_bin}/postgres";
 
-        my_pg_ctl_abs=$(to_absolute "${my_pg_ctl}");
         my_pg_postgres_abs=$(to_absolute "${my_pg_postgres}");
 
-        if [ ! \( -e "${my_pg_ctl_abs}" \) -o ! \( -e "${my_pg_postgres_abs}" \) ]; then
-            error "PGBIN is invalid - ${my_pg_bin}";
+        if [ ! -e "${my_pg_ctl}" ] || [ ! -e "${my_pg_postgres_abs}" ]; then
+            fatal "PGBIN is invalid - ${my_pg_bin}";
         fi
     fi
 
+    # Check PGDATA
     my_pg_data=$(to_string "${PGDATA}");
     my_pg_data_abs=$(to_absolute "${my_pg_data}");
     if [ -z "${my_pg_data}" ]; then
-        error "PGDATA is missing!";
+        fatal "PGDATA is missing!";
     elif [ ! \( -e "${my_pg_data_abs}" \) ]; then
-        error "PGDATA is invalid - ${my_pg_data}";
+        fatal "PGDATA is invalid - ${my_pg_data}";
     fi
 
+    # Check PGLOG
     my_pg_log=$(to_string "${PGLOG}");
     my_pg_log_abs=$(to_absolute "${my_pg_log}");
     my_pg_log_dir_abs=$(dirname "${my_pg_log_abs}");
-
     if [ -n "${my_pg_log}" -a ! \( -e "${my_pg_log_dir_abs}" \) ]; then
-        error "PGLOG is invalid - ${my_pg_log}";
+        fatal "PGLOG is invalid - ${my_pg_log}";
     fi
 
+    # Check PGUSER
     my_pg_user=$(to_string "${PGUSER}");
     if [ -n "${my_pg_user}" ]; then
-        my_pg_user_check=`id -u -n ${my_pg_user}`;
+        check_user=`id -u -n ${my_pg_user}`;
         if [ "${my_pg_user}" != "${my_pg_user_check}" ]; then
-            error "PGUSER is invalid - ${my_pg_user}";
+            fatal "PGUSER is invalid - ${my_pg_user}";
         fi
     else
-        my_pg_user="${my_real_user}";
+        my_pg_user="${MY_REAL_USER}";
     fi    
 
+    # Optional variables
     my_pg_port=$(to_string "${PGPORT}");
-
     my_pg_auto=$(to_lowercase "${PGAUTO}");
+
+    # Plist path
+    # Check if pg_user is same as real user
+    # If so, agent located in ~/Library/LaunchAgents
+    if [ "${my_pg_user}" == "${MY_REAL_USER}" ]; then
+        my_pg_plist="${HOME}/Library/LaunchAgents/${MY_APP_PLIST}.plist";
+
+    # Otherwise in /Library/LaunchAgents
+    else
+        my_pg_plist="/Library/LaunchAgents/${my_pg_plist}.plist";
+    fi
 }
 
+
 #
-# Generate Postgre Agent Plist file, to be used with launchctl
-# 
+# ==============================================================
+#
+# Print Postgre Agent Plist file, to be used with launchctl
+#
+# ==============================================================
+#
 generateMyPostgreAgentPlistContent() {
+    local pg_port_xml;
+    local pg_log_program_args_xml;
+    local pg_log_stderr_xml;
+    local runatload;
+    local disabled;
+    local result;
+
+    assert_not_null "my_pg_data_abs" "my_pg_postgres" "my_pg_user" "MY_APP_PLIST";
 
     # Optional - PGPORT
+    pg_port_xml="";
     if [ -n "${my_pg_port}" ]; then
 
-        my_pg_port_part=$(cat <<EOF
+        pg_port_xml=$(cat <<EOF
 
     <key>PGPORT</key>
     <string>${my_pg_port}</string>
@@ -271,16 +383,18 @@ EOF
     fi
 
     # Optional - PGLOG
+    pg_log_program_args_xml="";
+    pg_log_stderr_xml="";
     if [ -n "${my_pg_log}" ]; then
 
-        my_pg_log_partA=$(cat <<EOF
+        pg_log_program_args_xml=$(cat <<EOF
 
     <string>-r</string>
     <string>${my_pg_log_abs}</string>
 EOF
         );
 
-        my_pg_log_partB=$(cat <<EOF
+        pg_log_stderr_xml=$(cat <<EOF
 
   <key>StandardErrorPath</key>
   <string>${my_pg_log_abs}</string>
@@ -290,173 +404,230 @@ EOF
 
     # Optional - PGAUTO
     if [ "${my_pg_auto}" == "yes" ]; then
-        my_pg_auto_bool="true";
+        runatload="true";
+        disabled="false";
     else
-        my_pg_auto_bool="false";
+        runatload="false";
+        disabled="true";
     fi
 
     # Generate Plist
-    my_pg_plist_content=$(cat <<EOF
+    result=$(cat <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>${my_pg_plist}</string>
+  <string>${MY_APP_PLIST}</string>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PGDATA</key>
-    <string>${my_pg_data_abs}</string>${my_pg_port_part}
+    <string>${my_pg_data_abs}</string>${pg_port_xml}
   </dict>
   <key>ProgramArguments</key>
   <array>
-    <string>${my_pg_postgres}</string>${my_pg_log_partA}
+    <string>${my_pg_postgres}</string>${pg_log_program_args_xml}
   </array>
   <key>UserName</key>
   <string>${my_pg_user}</string>
   <key>WorkingDirectory</key>
-  <string>${my_pg_data_abs}</string>${my_pg_log_partB}
+  <string>${my_pg_data_abs}</string>${pg_log_stderr_xml}
+  <key>Disabled</key>
+  <${disabled}/>
   <key>RunAtLoad</key>
-  <${my_pg_auto_bool}/>
+  <${runatload}/>
   <key>KeepAlive</key>
   <true/>
 </dict>
 </plist>
 EOF
     );
+
+    echo "${result}";
 }
 
-#
-# Generate pg_ctl command, to which start/stop/status can be appended
-# 
-generatePgCtlCommand() {
-    my_pg_ctl_arg=$1;
 
-    my_pg_ctl_command="export PGDATA=\"${my_pg_data_abs}\"; ";
+#
+# ==============================================================
+#
+# Execute pg_ctl command using pre-prepared global variables
+# and appending specified action parameter
+#
+# @params [start/stop/status]
+#
+# ==============================================================
+#
+pgCtl() {
+    local action;
+    local cmd;
+    local output;
+    local return_code;
+
+    action=$(to_string "$1");
+    cmd="";
+
+    # PGDATA required
+    cmd="${cmd}export PGDATA=\"${my_pg_data_abs}\"; ";
+
+    # PGPORT optional
     if [ -n "${my_pg_port}" ]; then
-        my_pg_ctl_command="${my_pg_ctl_command}export PGPORT=\"${my_pg_port}\"; ";
+        cmd="${cmd}export PGPORT=\"${my_pg_port}\"; ";
     fi
-    my_pg_ctl_command="${my_pg_ctl_command}\"${my_pg_ctl_abs}\" ";
+
+    # pg_ctl executable
+    cmd="${cmd}\"${my_pg_ctl}\" ";
+
+    # PGLOG optional
     if [ -n "${my_pg_log}" ]; then
-        my_pg_ctl_command="${my_pg_ctl_command}-l \"${my_pg_log_abs}\" ";
+        cmd="${cmd}-l \"${my_pg_log_abs}\" ";
     fi
-    my_pg_ctl_command="${my_pg_ctl_command}-m fast ${my_pg_ctl_arg}";
+
+    # Action param
+    cmd="${cmd}-m fast ${action}";
 
     # For start and stop, we don't want the start/stop process hanging around for ages.
     # So we get rid of STDOUT to stop it hanging.
-    if [ "${my_pg_ctl_arg}" == "start" -o "${my_pg_ctl_arg}" == "stop" ]; then
-        my_pg_ctl_command="${my_pg_ctl_command} >/dev/null";
+    if [ "${action}" == "start" ] || [ "${action}" == "stop" ]; then
+        cmd="${cmd} >/dev/null";
     fi
 
-    if [ "${my_pg_user}" != "${my_run_user}" ]; then
-        my_pg_ctl_command="su ${my_pg_user} -c '${my_pg_ctl_command}'";
-    fi
-    my_pg_ctl_command="${my_pg_ctl_command} 2>&1";
+    # Execute
+    result=$(do_cmd_as_user "${my_pg_user}" "${cmd}");
+    return_code=$?;
 
-    log "${my_pg_ctl_command}";
+    echo "${result}";
+    return "${return_code}";
 }
 
 
 #
-# Unload all launchctl agents with 'postgresql' in name for specified user
+# ==============================================================
+#
+# Unload all launchctl agents with 'postgresql' in name for
+# specified user
+#
+# ==============================================================
 #
 launchctlUnloadAllPostgreAgentsFor() {
-    my_pg_launchctl_user=$(to_string "$1");
+    local user;
+    local launchagents;
+    local launchagent;
+
+    user=$(to_string "$1");
+
+    debug "Unloading launchagents for ${user} ...";
 
     # Find all entries in launchctl with 'postgresql' in name
-    if [ "${my_pg_launchctl_user}" == "root" ]; then
-        my_pg_launchagents=$(to_string `sudo launchctl list | grep postgresql | cut -f 3`);
-    elif [ "${my_pg_launchctl_user}" == "${my_run_user}" ]; then
-        my_pg_launchagents=$(to_string `launchctl list | grep postgresql | cut -f 3`);
-    else
-        my_pg_launchagents=$(to_string `su ${my_pg_launchctl_user} -c "launchctl list | grep postgresql | cut -f 3"`);
-    fi
-    
-    # Unload each one
-    for my_pg_launchagent in ${my_pg_launchagents}; do
-        log "Unloading launchagent: ${my_pg_launchagent}...";
-        if [ "${my_pg_launchctl_user}" == "root" ]; then
-            my_pg_result=`sudo launchctl remove ${my_pg_launchagent}`;
-        elif [ "${my_pg_launchctl_user}" == "${my_run_user}" ]; then
-            my_pg_result=`launchctl remove ${my_pg_launchagent}`;
-        else
-            my_pg_result=`su ${my_pg_launchctl_user} -c "launchctl remove ${my_pg_launchagent}"`;
-        fi
-        if [ -n "${my_pg_result}" ]; then
-            error "ERROR: unable to unload ${my_pg_launchagent} from launchctl!\n${my_pg_result}";
-        fi
-    done
+    launchagents=$(do_cmd_as_user "${user}" "launchctl list | grep postgresql | cut -f 3");
+
+    # Must have some existing agents
+    if [ -n "${launchagents}" ]; then
+
+        # Unload each one
+        for launchagent in ${launchagents}; do
+            debug "Unloading launchagent: ${launchagent}...";
+
+            $(do_cmd_as_user "${user}" "launchctl remove ${launchagent}") || fatal "ERROR: unable to unload launch agent ${launchagent}";
+        done
 
 
-    # Wait until fully unloaded - max 5 seconds
-    for i in {0..50}
-    do
-        if [ "${my_pg_launchctl_user}" == "root" ]; then
-            my_pg_launchagents=$(to_string `sudo launchctl list | grep postgresql | cut -f 3`);
-        elif [ "${my_pg_launchctl_user}" == "${my_run_user}" ]; then
-            my_pg_launchagents=$(to_string `launchctl list | grep postgresql | cut -f 3`);
-        else
-            my_pg_launchagents=$(to_string `su ${my_pg_launchctl_user} -c "launchctl list | grep postgresql | cut -f 3"`);
-        fi
-        if [ -z "${my_pg_launchagents}" ]; then
-            my_pg_launchagents="";
-            break;
-        fi
-        sleep 0.1;
-    done
+        # Wait until fully unloaded - max 5 seconds
+        for i in {0..50}
+        do
+            launchagents=$(do_cmd_as_user "${user}" "launchctl list | grep postgresql | cut -f 3");
 
-    # Ensure fully unloaded
-    if [ -n "${my_pg_launchagents}" ]; then
-        error "ERROR: unable to unload existing postgresql daemons from launchctl!\n${my_pg_launchagents}"
+            if [ -z "${launchagents}" ]; then
+                launchagents="";
+                break;
+            fi
+            sleep 0.1;
+        done
+
+        # Ensure fully unloaded
+        if [ -n "${launchagents}" ]; then
+            debug "Loaded agents: ${launchagents}";
+            fatal "ERROR: unable to unload existing postgresql agents in launchctl!";
+        fi
     fi
 }
 
+
 #
-# Unload all launchctl agents with 'postgresql' in name
+# ==============================================================
+#
+# Unload all launchctl agents with 'postgresql' in name for
+# root user and current user
+#
+# ==============================================================
 #
 launchctlUnloadAllPostgreAgents() {
+    assert_not_null "MY_REAL_USER";
+
     launchctlUnloadAllPostgreAgentsFor "root";
-    launchctlUnloadAllPostgreAgentsFor "${my_real_user}";
+    launchctlUnloadAllPostgreAgentsFor "${MY_REAL_USER}";
 }
 
+
+#
+# ==============================================================
 #
 # Delete any of my launchctl agent plist files that exist
 #
+# ==============================================================
+#
 deleteMyPostgreAgentPlistFilesInDir() {
-    # Ensure dir exists - silently ignore if not
-    my_pg_launchagent_dir=$1;
-    if [ -e "${my_pg_launchagent_dir}" ]; then
+    local plist_dir;
+    local plist_name;
+    local plist_name_length;
+    local plist_found_files;
+    local plist_user;
 
-        # Safety check before any delete - ensure ${my_pg_plist} is long enough
-        my_pg_plist_length=$(( `echo ${my_pg_plist} | wc -c` - 1 ));
-        if [ ${my_pg_plist_length} -lt 10 ]; then
-            error "Program error - this tool is corrupted, please reinstall it!\nAgent name too short: '${my_pg_plist}'";
+    assert_not_null "MY_APP_PLIST";
+
+    # Ensure dir exists - silently ignore if not
+    plist_dir="$1";
+    if [ -e "${plist_dir}" ]; then
+
+        # Safety-check before any delete - ensure plist name is long enough
+        plist_name=$(to_string "${MY_APP_PLIST}");
+        plist_name=${plist_name//\*/}; # Safety - remove "*" characters from filename
+        plist_name_length=$(( `echo ${plist_name} | wc -c` - 1 ));
+        if [ "${plist_name_length}" -lt 10 ]; then
+            debug "Plist name too short: '${plist_name}'";
+            program_error;
+
+        # Plist name has at least 10 characters, so we can be sure we're not going
+        # to delete everything by accident
         else
             # Delete
-            my_pg_result=`find ${my_pg_launchagent_dir} -name "${my_pg_plist}.plist*"`;
-            if [ -n "${my_pg_result}" ]; then
-                log "Deleting postgresql agent plist file(s)\n${my_pg_result} ...";
+            plist_found_files=`find ${plist_dir} -maxdepth 1 -name "${plist_name}*.plist"`;
+            if [ -n "${plist_found_files}" ]; then
 
-                # Check if we need to sudo
-                my_pg_launchctl_user=`stat -f %Su ${my_pg_launchagent_dir}`;
-                if [ "${my_pg_launchctl_user}" != "${my_run_user}" ]; then
-                    `find ${my_pg_launchagent_dir} -name "${my_pg_plist}.plist*" -exec sudo rm {} \;`;
-                else
-                    `find ${my_pg_launchagent_dir} -name "${my_pg_plist}.plist*" -exec rm {} \;`;
+                debug "Deleting postgresql agent plist file(s)...\n\n${plist_found_files}";
+
+                # May need to execute delete as a different user
+                plist_user=$(file_owner "${plist_dir}");
+                do_cmd_as_user "${plist_user}" "find ${plist_dir} -maxdepth 1 -name \"${plist_name}*.plist\" -exec rm {} \;";
+
+                # Ensure deleted
+                plist_found_files=`find ${plist_dir} -maxdepth 1 -name "${plist_name}*.plist"`;
+                if [ -n "${plist_found_files}" ]; then
+                    plist_found_files=(${plist_found_files}); # Convert to array
+                    debug "Failed to delete postgresql agent plist file:\n\n${plist_found_files}";
+                    fatal "ERROR: unable to delete ${plist_found_files[0]}";
                 fi
-            fi
-
-            # Ensure deleted
-            my_pg_result=`find ${my_pg_launchagent_dir} -name "${my_pg_plist}.plist*"`;
-            if [ -n "${my_pg_result}" ]; then
-                error "ERROR: Unable to delete own .plist files!\n${my_pg_result}"
             fi
         fi
     fi
 }
 
+
+#
+# ==============================================================
 #
 # Delete any of my launchctl agent plist files that exist
+#
+# ==============================================================
 #
 deleteMyPostgreAgentPlistFiles() {
     deleteMyPostgreAgentPlistFilesInDir "/Library/LaunchDaemons";
@@ -464,188 +635,315 @@ deleteMyPostgreAgentPlistFiles() {
     deleteMyPostgreAgentPlistFilesInDir "${HOME}/Library/LaunchAgents";
 }
 
+
 #
-# Generate my launchctl agent plist, and save to appropriate directory
+# ==============================================================
+#
+# Generate my launchctl agent plist, and save to appropriate
+# directory
+#
+# ==============================================================
 #
 createMyPostgreAgentPlistFile() {
-    # Generate content
-    generateMyPostgreAgentPlistContent;
-    
-    # Check if pg_user is same as real user
-    # If so, save agent in ~/Library/LaunchAgents
-    if [ "${my_pg_user}" == "${my_real_user}" ]; then
-        my_pg_plist_path="${HOME}/Library/LaunchAgents/${my_pg_plist}.plist";
-        log "Creating ${my_pg_plist_path} ...";
+    local plist_xml;
 
-        # Switch to real user if req'd
-        if [ "${my_real_user}" != "${my_run_user}" ]; then
-            my_pg_result=$(to_string `su ${my_real_user} -c "echo \"${my_pg_plist_content}\" > ${my_pg_plist_path}" 2>&1`);
-        else
-            my_pg_result=$(to_string `{ echo "${my_pg_plist_content}" > "${my_pg_plist_path}"; } 2>&1`);
-        fi
+    assert_not_null "my_pg_plist" "my_pg_user";
 
+    debug "Creating ${my_pg_plist} ...";
 
-    # Otherwise in /Library/LaunchAgents
-    else
-        my_pg_plist_path="/Library/LaunchAgents/${my_pg_plist}.plist";
-        log "Creating ${my_pg_plist_path} ...";
-        my_pg_result=$(to_string `{ sudo echo "${my_pg_plist_content}" > "${my_pg_plist_path}"; } 2>&1`);
-    fi
-
-    # Throw any error returned
-    if [ -n "${my_pg_result}" ]; then
-        error "${my_pg_result}";
-    else
-        log "${my_pg_plist_path}\n${my_pg_plist_content}";
-    fi
+    plist_xml=$(generateMyPostgreAgentPlistContent);
+    $(do_cmd_as_user "${my_pg_user}" "echo \"${plist_xml}\" > \"${my_pg_plist}\"") || fatal "unable to create launch agent ${my_pg_plist}";
 }
 
+
 #
-# Load my agent plist file in launchctl. Note: plist must be generated beforehand.
+# ==============================================================
+#
+# Load my agent plist file in launchctl.
+#
+# Note: plist must be generated beforehand.
+#
+# ==============================================================
 #
 launchctlLoadMyPostgreAgent() {
-    # Load
-    log "Loading ${my_pg_plist_path} ...";
-    if [ "${my_pg_user}" != "${my_real_user}" ]; then
-        my_pg_result=$(to_string `sudo launchctl load -w ${my_pg_plist_path}`);
-    elif [ "${my_real_user}" != "${my_run_user}" ]; then
-        my_pg_result=$(to_string `su ${my_real_user} -c "launchctl load -w ${my_pg_plist_path}"`);
+    local disabled_flag;
+    local result;
+
+    assert_not_null "my_pg_plist" "my_pg_user" "my_pg_auto" "MY_APP_PLIST";
+
+    debug "Loading ${my_pg_plist} ...";
+
+    # When loading in launchctl, can optionally specify '-w' flag,
+    # which gets agent added to overrides list so it is ALWAYS LOADED
+    # regardless of Disabled setting in .plist file
+    if [ "${my_pg_auto}" == "yes" ]; then
+        disabled_flag="w";
     else
-        my_pg_result=$(to_string `launchctl load -w ${my_pg_plist_path}`);
+        disabled_flag="";
     fi
 
-    # Throw error if returned
-    if [ -n "${my_pg_result}" ]; then
-        error "${my_pg_result}";
+    # Load
+    result=$(do_cmd_as_user "${my_pg_user}" "launchctl load -${disabled_flag}F ${my_pg_plist}") || fatal "${result}";
 
-    # Otherwise, ensure now loaded - may be some delay
+    # Wait until fully loaded - max 5 seconds
+    for i in {0..50}
+    do
+        result=$(do_cmd_as_user "${my_pg_user}" "launchctl list | cut -f 3 | grep ^${MY_APP_PLIST}$");
+
+        if [ $? -eq 0 ] && [ -n "${result}" ]; then
+            break;
+        fi
+        sleep 0.1;
+    done
+
+    # Ensure fully loaded
+    if [ "${result}" != "${MY_APP_PLIST}" ]; then
+        fatal "Unable to load launchctl agent!";
+    fi
+}
+
+
+#
+# ==============================================================
+#
+# Unload my agent plist file in launchctl.
+#
+# Note: plist must be generated beforehand.
+#
+# ==============================================================
+#
+launchctlUnloadMyPostgreAgent() {
+    local disabled_flag;
+    local result;
+
+    assert_not_null "my_pg_plist" "my_pg_user" "my_pg_auto" "MY_APP_PLIST";
+
+    debug "Unloading ${my_pg_plist} ...";
+
+    # When unloading in launchctl, can optionally specify '-w' flag,
+    # which gets agent added to overrides list so it is NEVER LOADED
+    # regardless of Disabled setting in .plist file
+    if [ "${my_pg_auto}" == "no" ]; then
+        disabled_flag="w";
+    else
+        disabled_flag="";
+    fi
+
+    # Unload
+    result=$(do_cmd_as_user "${my_pg_user}" "launchctl unload -${disabled_flag}F ${my_pg_plist}") || fatal "${result}";
+
+    # Wait until fully unloaded - max 5 seconds
+    for i in {0..50}
+    do
+        result=$(do_cmd_as_user "${my_pg_user}" "launchctl list | cut -f 3 | grep ^${MY_APP_PLIST}$");
+
+        if [ -z "${result}" ]; then
+            result="";
+            break;
+        fi
+        sleep 0.1;
+    done
+
+    # Ensure fully unloaded
+    if [ -n "${result}" ]; then
+        fatal "Unable to unload launchctl agent!";
+    fi
+}
+
+
+#
+# ==============================================================
+#
+# Set value in plist file
+#
+# @params [plist-file] [key] [type] [value]
+#
+# ==============================================================
+#
+setValueForKeyInPlistFile() {
+    local plist_file;
+    local plist_key;
+    local plist_type;
+    local plist_value;
+    local plist_value_lc;
+    local current_value;
+    local current_value_lc;
+    local current_value_return_code;
+    local plist_buddy_user;
+    local plist_buddy_cmd;
+
+    plist_file=$(to_absolute $1);
+    plist_key=$(to_string $2);
+    plist_type=$(to_string $3);
+    plist_value=$(to_string $4);
+    plist_value_lc=$(to_lowercase "${plist_value}");
+
+    # Invalid args
+    if [ ! -e "${plist_file}" ] || [ -z "${plist_key}" ] || [ -z "${plist_type}" ] || [ -z "${plist_value}" ]; then
+        fatal "ERROR: unable to set ${plist_key}=${plist_value} in ${plist_file}";
+
+    # Args are valid
     else
 
-        # Wait until fully loaded - max 5 seconds
-        for i in {0..50}
-        do
-            if [ "${my_pg_user}" != "${my_real_user}" ]; then
-                my_pg_result=`sudo launchctl list | cut -f 3 | grep ^${my_pg_plist}$`;
-            elif [ "${my_real_user}" != "${my_run_user}" ]; then
-                my_pg_result=`su ${my_real_user} -c "launchctl list | cut -f 3 | grep ^${my_pg_plist}$"`;
-            else
-                my_pg_result=`launchctl list | cut -f 3 | grep ^${my_pg_plist}$`;
-            fi
-            if [ -n "${my_pg_result}" ]; then
-                break;
-            fi
-            sleep 0.1;
-        done
+        # Ensure needs changing
+        current_value=`/usr/libexec/PlistBuddy ${plist_file} -c Print:${plist_key} 2>/dev/null`;
+        current_value_return_code=$?; # Exit status is 1 if the key doesn't exist
+        current_value_lc=$(to_lowercase "${current_value}");
+        if [ "${current_value_return_code}" -eq 1 ] || [ "${current_value_lc}" != "${plist_value_lc}" ]; then
 
-        # Ensure fully loaded
-        if [ "${my_pg_result}" != "${my_pg_plist}" ]; then
-            error "Unable to load launchctl agent!";
+            # Detect plist file owner
+            plist_buddy_user=$(file_owner "${plist_file}");
+
+            # Key doesn't exist - use 'Add' command
+            if [ ${current_value_return_code} -eq 1 ]; then
+                plist_buddy_cmd="Add:${plist_key} ${plist_type} ${plist_value}";
+
+            # Key exists - use 'Set' command
+            else
+                plist_buddy_cmd="Set:${plist_key} ${plist_value}";
+            fi
+
+            # Execute
+            $(do_cmd_as_user "${plist_buddy_user}" "/usr/libexec/PlistBuddy ${plist_file} -c \"${plist_buddy_cmd}\"") || fatal "ERROR: unable to set ${plist_key}=${plist_value} in ${plist_file}";
+
+            # Check succeeded
+            current_value=`/usr/libexec/PlistBuddy ${plist_file} -c Print:${plist_key} 2>/dev/null`;
+            current_value_return_code=$?; # Exit status is 0 if the key exists
+            current_value_lc=$(to_lowercase "${current_value}");
+            if [ "${current_value_return_code}" -eq 1 ] || [ "${current_value_lc}" != "${plist_value_lc}" ]; then
+                fatal "ERROR: unable to set ${plist_key}=${plist_value} in ${plist_file}";
+            fi
         fi
     fi
 }
 
+
 #
-# Disable RunAtLoad setting in all launchctl plist files with 'postgresql' in name, in specified dir
-# 
-disableRunAtLoadInPostgreAgentPlistFilesInDir() {
+# ==============================================================
+#
+# In specified dir:
+#
+# Disable RunAtLoad setting in all launchctl plist files
+# with 'postgresql' in name
+#
+# ==============================================================
+#
+disablePostgreAgentPlistFilesInDir() {
+    local plist_dir;
+    local plist_files;
+    local plist_file;
+
     # Ensure dir exists - silently ignore if not
-    my_pg_launchagent_dir=$1;
-    if [ -e "${my_pg_launchagent_dir}" ]; then
+    plist_dir=$1;
+    if [ -e "${plist_dir}" ]; then
 
         # Find all .plist files in dir with 'postgresql' in name
-        my_pg_launchagents=`find ${my_pg_launchagent_dir} -name "*postgresql*" | grep \.plist$`;
+        plist_files=`find ${plist_dir} -name "*postgresql*" | grep \.plist$`;
 
         # Loop .plist files
-        for my_pg_launchagent in ${my_pg_launchagents}; do
+        for plist_file in ${plist_files}; do
 
-        # Check needs disabling
-        my_pg_result=$(to_string `/usr/libexec/PlistBuddy ${my_pg_launchagent} -c Print:RunAtLoad 2>&1`);
-        if [ "${my_pg_result}" == "true" ]; then
+            # Disable .plist file
+            setValueForKeyInPlistFile "${plist_file}" "RunAtLoad" "bool" "false";
+            setValueForKeyInPlistFile "${plist_file}" "Disabled" "bool" "true";
 
-            # Disable
-            log "Disabling RunAtLoad: for ${my_pg_launchagent}...";
-            if [ `stat -f %Su ${my_pg_launchagent}` != "${my_run_user}" ]; then
-                my_pg_result=$(to_string `sudo /usr/libexec/PlistBuddy ${my_pg_launchagent} -c "Set:RunAtLoad false" >/dev/null 2>&1`);
-            else
-                my_pg_result=$(to_string `/usr/libexec/PlistBuddy ${my_pg_launchagent} -c "Set:RunAtLoad false" >/dev/null 2>&1`);
-            fi
-
-            # Throw any error
-            if [ -n "${my_pg_result}" ]; then
-                error "${my_pg_result}";
-
-            # Otherwise, check succeeded
-            else
-                my_pg_result=`/usr/libexec/PlistBuddy ${my_pg_launchagent} -c Print:RunAtLoad`;
-                if [ "${my_pg_result}" == "true" ]; then
-                    error "ERROR: unable to disable ${my_pg_launchagent}"
-                fi
-            fi
-        fi
         done
     fi
 }
 
-#
-# Disable RunAtLoad setting in all launchctl plist files with 'postgresql' in name
-# 
-disableRunAtLoadInAllPostgreAgentPlistFiles() {
-    disableRunAtLoadInPostgreAgentPlistFilesInDir "/Library/LaunchDaemons"
-    disableRunAtLoadInPostgreAgentPlistFilesInDir "/Library/LaunchAgents"
-    disableRunAtLoadInPostgreAgentPlistFilesInDir "${HOME}/Library/LaunchAgents"
-}
 
 #
-# Tries to detect running postgresql processes using 'ps', and grepping for specified keyword.
-# 
-# For each process returned, tries to deduce PGBIN, PGDATA and PGUSER so that it can stop
-# the server cleanly.
+# ==============================================================
 #
-# If PGBIN & PGDATA are valid, but it is not possible to stop the process cleanly,
-# then it exits with an error.
+# In all relevant launchagent dirs:
+#
+# Disable RunAtLoad setting in all launchctl plist files
+# with 'postgresql' in name
+#
+# ==============================================================
+#
+disableAllPostgreAgentPlistFiles() {
+    disablePostgreAgentPlistFilesInDir "/Library/LaunchDaemons"
+    disablePostgreAgentPlistFilesInDir "/Library/LaunchAgents"
+    disablePostgreAgentPlistFilesInDir "${HOME}/Library/LaunchAgents"
+}
+
+
+#
+# ==============================================================
+#
+# Tries to detect running postgresql processes using 'ps', and
+# grepping for specified keyword.
+# 
+# For each process returned, tries to deduce PGBIN, PGDATA
+# and PGUSER so that it can stop the server cleanly.
+#
+# If PGBIN & PGDATA are valid, but it is not possible to stop
+# the process cleanly, then it exits with an error.
+#
+# ==============================================================
 #
 detectAndManuallyStopRunningPostgreProcessesWithKeyword() {
-    my_pg_process_keyword=$1;
-    if [ -n "${my_pg_process_keyword}" ]; then
-        my_pg_processes=`ps -eao pid,ppid,user,command | grep ${my_pg_process_keyword} | grep -v grep`;
+    local keyword;
+    local processes;
+    local process;
+    local process_pid;
+    local process_ppid;
+    local process_user;
+    local process_cmd;
+    local process_args;
+    local process_dir;
+    local pg_ctl;
+    local output;
+
+    keyword=$1;
+    if [ -n "${keyword}" ]; then
+        processes=`ps -eao pid,ppid,user,command | grep ${keyword} | grep -v grep`;
 
         # In order to loop line-by-line (instead of word-by-word) we have to use read.
         # But any exit call within the loop will only exit the loop, not the script.
         # So we have to check the exit status after the loop, and re-throw any errors.
-        my_pg_result=$(echo "${my_pg_processes}" | while read my_pg_process
+        output=$(echo "${processes}" | while read process
         do
-            my_process=$(to_string "${my_pg_process}");
-            if [ -n "${my_pg_process}" ]; then
+            process=$(to_string "${process}");
+            if [ -n "${process}" ]; then
                 # Log
-                log "Already Running: ${my_pg_process}";
+                debug "Already Running: ${process}";
 
                 # Extract process fields
-                my_pg_process_pid=`echo ${my_pg_process} | awk '{ print $1 }'`;
-                my_pg_process_ppid=`echo ${my_pg_process} | awk '{ print $2 }'`;
-                my_pg_process_user=`echo ${my_pg_process} | awk '{ print $3 }'`;
-                my_pg_process_command=`echo ${my_pg_process} | awk '{ print $4 }'`;
-                my_pg_process_args=`echo ${my_pg_process} | awk '{ for (x=5; x<=NF; x++) {  printf "%s%s", $x, FS; } print ""; }'`;
+                process_pid=`echo ${process} | awk '{ print $1 }'`;
+                process_ppid=`echo ${process} | awk '{ print $2 }'`;
+                process_user=`echo ${process} | awk '{ print $3 }'`;
+                process_cmd=`echo ${process} | awk '{ print $4 }'`;
+                process_args=`echo ${process} | awk '{ for (x=5; x<=NF; x++) {  printf "%s%s", $x, FS; } print ""; }'`;
 
-                # Try to deduce PGBIN
-                my_pg_process_bin=`dirname ${my_pg_process_command}`;
-                if [ -e "${my_pg_process_bin}" -a -e "${my_pg_process_bin}/postgres" -a -e "${my_pg_process_bin}/pg_ctl" ]; then
-                    my_pg_process_pg_ctl="${my_pg_process_bin}/pg_ctl";
+                # Look for Postgres scripts in process directory
+                process_dir=`dirname ${process_cmd}`;
+                if [ -e "${process_dir}" ] && [ -e "${process_dir}/postgres" ] && [ -e "${process_dir}/pg_ctl" ]; then
+
+                    pg_ctl="${process_dir}/pg_ctl";
 
                     # Just fail with error - don't try to stop.
-                    error "Another PostgreSQL instance is already running!\nUser: ${my_pg_process_user} PID: ${my_pg_process_pid}";
+                    fatal "Another PostgreSQL instance is already running!\nUser: ${process_user} PID: ${process_pid}";
                 fi
             fi
         done);
 
         # Exited with error
         if [ $? -gt 0 ]; then
-            error "${my_pg_result}";
+            fatal "${output}";
         fi
     fi
 }
 
+
 #
-# Calls detectAndManuallyStopRunningPostgreProcesses with different keywords, e.g. 'postgres'.
+# ==============================================================
+#
+# Calls detectAndManuallyStopRunningPostgreProcesses with
+# different keywords, e.g. 'postgres'.
+#
+# ==============================================================
 #
 detectAndManuallyStopRunningPostgreProcesses() {
     detectAndManuallyStopRunningPostgreProcessesWithKeyword "/postgres";
@@ -653,9 +951,14 @@ detectAndManuallyStopRunningPostgreProcesses() {
     detectAndManuallyStopRunningPostgreProcessesWithKeyword "/postmaster";
 }
 
+
+#
+# ==============================================================
 #
 # Start PostgreSQL using launchctl
-# 
+#
+# ==============================================================
+#
 pgStart() {
     launchctlUnloadAllPostgreAgents;
 
@@ -664,79 +967,115 @@ pgStart() {
 
     deleteMyPostgreAgentPlistFiles;
     createMyPostgreAgentPlistFile;
+
     launchctlLoadMyPostgreAgent;
 }
 
+
+#
+# ==============================================================
 #
 # Stop PostgreSQL using launchctl
-# 
+#
+# ==============================================================
+#
 pgStop() {
     launchctlUnloadAllPostgreAgents;
+
+    deleteMyPostgreAgentPlistFiles;
+    createMyPostgreAgentPlistFile;
+
+    launchctlUnloadMyPostgreAgent;
 }
 
+
+#
+# ==============================================================
 #
 # Get PostgreSQL status
-# 
+#
+# ==============================================================
+#
 pgStatus() {
-    generatePgCtlCommand "status";
-    my_pg_result=`eval ${my_pg_ctl_command}`;
-    ok "${my_pg_result}";
+    pgCtl "status";
 }
 
+
+#
+# ==============================================================
 #
 # Enable auto startup of PostgreSQL on computer bootup
+#
 # NOTE: this will restart PostgreSQL
-# 
+#
+# ==============================================================
+#
 pgAutoOn() {
-    disableRunAtLoadInAllPostgreAgentPlistFiles;
+    disableAllPostgreAgentPlistFiles;
+
     my_pg_auto="yes";
     pgStart;
 }
 
+
+#
+# ==============================================================
 #
 # Disable auto startup of PostgreSQL on computer bootup
-# 
+#
+# ==============================================================
+#
 pgAutoOff() {
-    disableRunAtLoadInAllPostgreAgentPlistFiles;
+    disableAllPostgreAgentPlistFiles;
+
+    my_pg_auto="no";
+    pgStop;
 }
 
+
+#
+# ==============================================================
 #
 # Start PostgreSQL using pg_ctl
-# 
+#
+# ==============================================================
+#
 pgStartManual() {
-    generatePgCtlCommand "start";
-    my_pg_result=$(to_string `eval ${my_pg_ctl_command}`);
-    if [ -n "${my_pg_result}" ]; then
-        error "${my_pg_result}";
-    else
-        ok;
-    fi
+    pgCtl "start";
 }
 
+
+#
+# ==============================================================
 #
 # Stop PostgreSQL using pg_ctl
-# 
+#
+# ==============================================================
+#
 pgStopManual() {
-    generatePgCtlCommand "stop";
-    my_pg_result=$(to_string `eval ${my_pg_ctl_command}`);
-    if [ -n "${my_pg_result}" ]; then
-        error "${my_pg_result}";
-    else
-        ok;
-    fi
+    pgCtl "stop";
 }
 
+
+#
+# ==============================================================
 #
 # Printout plist file to be used with launchctl
-# 
+#
+# ==============================================================
+#
 pgPlist() {
     generateMyPostgreAgentPlistContent;
-    ok "${my_pg_plist_content}";
 }
 
+
 #
-# RUN POSTGRESQL COMMAND
-# 
+# ==============================================================
+#
+# Runs PostgreSQL command as specified on command line
+#
+# ==============================================================
+#
 runPostgreSQLCommand() {
     case ${my_pg_command} in
         start)       pgStart;;
@@ -751,8 +1090,13 @@ runPostgreSQLCommand() {
     esac
 }
 
+
 #
-# MAIN
+# ==============================================================
+#
+# Main
+#
+# ==============================================================
 #
 resetVariables
 validateCommandLineArgs "$@"
