@@ -89,7 +89,7 @@ debug() {
     if [ "${DEBUG}" == "yes" ]; then
         local msg=$(to_string "$*");
         if [ -n "${msg}" ]; then
-            if [ -e "${HOME}/Library/Logs" ]; then
+            if [ -d "${HOME}/Library/Logs" ]; then
 
                 # Create debug dir & file if not exist
                 if [ ! -e "${HOME}/Library/Logs/${MY_APP_LOG}" ]; then
@@ -199,7 +199,7 @@ unset MY_REAL_USER; MY_REAL_USER=$(file_owner "${HOME}");
 unset MY_RUN_USER;  MY_RUN_USER=`id -u -n`;
 unset MY_APP_NAME;  MY_APP_NAME="PGPrefsPostgreSQL.sh";
 unset MY_APP_LOG;   MY_APP_LOG="PostgreSQL/Helpers.log";
-unset MY_APP_PLIST; MY_APP_PLIST="com.hkwebentrepreneurs.postgresql";
+unset MY_APP_ID;    MY_APP_ID="com.hkwebentrepreneurs.postgresql";
 
 DEBUG=$(to_lowercase "${DEBUG}");
 
@@ -302,7 +302,7 @@ PGAUTO   | ${PGAUTO}";
 
         my_pg_postgres_abs=$(to_absolute "${my_pg_postgres}");
 
-        if [ ! -e "${my_pg_ctl}" ] || [ ! -e "${my_pg_postgres_abs}" ]; then
+        if [ ! \( -f "${my_pg_ctl}" \) ] || [ ! \( -f "${my_pg_postgres_abs}" \) ]; then
             fatal "PGBIN is invalid - ${my_pg_bin}";
         fi
     fi
@@ -312,7 +312,7 @@ PGAUTO   | ${PGAUTO}";
     my_pg_data_abs=$(to_absolute "${my_pg_data}");
     if [ -z "${my_pg_data}" ]; then
         fatal "PGDATA is missing!";
-    elif [ ! \( -e "${my_pg_data_abs}" \) ]; then
+    elif [ ! \( -d "${my_pg_data_abs}" \) ]; then
         fatal "PGDATA is invalid - ${my_pg_data}";
     fi
 
@@ -320,7 +320,7 @@ PGAUTO   | ${PGAUTO}";
     my_pg_log=$(to_string "${PGLOG}");
     my_pg_log_abs=$(to_absolute "${my_pg_log}");
     my_pg_log_dir_abs=$(dirname "${my_pg_log_abs}");
-    if [ -n "${my_pg_log}" -a ! \( -e "${my_pg_log_dir_abs}" \) ]; then
+    if [ -n "${my_pg_log}" ] && [ ! \( -d "${my_pg_log_dir_abs}" \) ]; then
         fatal "PGLOG is invalid - ${my_pg_log}";
     fi
 
@@ -343,11 +343,11 @@ PGAUTO   | ${PGAUTO}";
     # Check if pg_user is same as real user
     # If so, agent located in ~/Library/LaunchAgents
     if [ "${my_pg_user}" == "${MY_REAL_USER}" ]; then
-        my_pg_plist="${HOME}/Library/LaunchAgents/${MY_APP_PLIST}.plist";
+        my_pg_plist="${HOME}/Library/LaunchAgents/${MY_APP_ID}.plist";
 
     # Otherwise in /Library/LaunchAgents
     else
-        my_pg_plist="/Library/LaunchAgents/${my_pg_plist}.plist";
+        my_pg_plist="/Library/LaunchAgents/${MY_APP_ID}.plist";
     fi
 }
 
@@ -367,7 +367,7 @@ generateMyPostgreAgentPlistContent() {
     local disabled;
     local result;
 
-    assert_not_null "my_pg_data_abs" "my_pg_postgres" "my_pg_user" "MY_APP_PLIST";
+    assert_not_null "my_pg_data_abs" "my_pg_postgres" "my_pg_user" "MY_APP_ID";
 
     # Optional - PGPORT
     pg_port_xml="";
@@ -418,7 +418,7 @@ EOF
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>${MY_APP_PLIST}</string>
+  <string>${MY_APP_ID}</string>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PGDATA</key>
@@ -582,14 +582,14 @@ deleteMyPostgreAgentPlistFilesInDir() {
     local plist_found_files;
     local plist_user;
 
-    assert_not_null "MY_APP_PLIST";
+    assert_not_null "MY_APP_ID";
 
     # Ensure dir exists - silently ignore if not
     plist_dir="$1";
-    if [ -e "${plist_dir}" ]; then
+    if [ -d "${plist_dir}" ]; then
 
         # Safety-check before any delete - ensure plist name is long enough
-        plist_name=$(to_string "${MY_APP_PLIST}");
+        plist_name=$(to_string "${MY_APP_ID}");
         plist_name=${plist_name//\*/}; # Safety - remove "*" characters from filename
         plist_name_length=$(( `echo ${plist_name} | wc -c` - 1 ));
         if [ "${plist_name_length}" -lt 10 ]; then
@@ -666,29 +666,19 @@ createMyPostgreAgentPlistFile() {
 # ==============================================================
 #
 launchctlLoadMyPostgreAgent() {
-    local disabled_flag;
     local result;
 
-    assert_not_null "my_pg_plist" "my_pg_user" "my_pg_auto" "MY_APP_PLIST";
+    assert_not_null "my_pg_plist" "my_pg_user" "my_pg_auto" "MY_APP_ID";
 
     debug "Loading ${my_pg_plist} ...";
 
-    # When loading in launchctl, can optionally specify '-w' flag,
-    # which gets agent added to overrides list so it is ALWAYS LOADED
-    # regardless of Disabled setting in .plist file
-    if [ "${my_pg_auto}" == "yes" ]; then
-        disabled_flag="w";
-    else
-        disabled_flag="";
-    fi
-
     # Load
-    result=$(do_cmd_as_user "${my_pg_user}" "launchctl load -${disabled_flag}F ${my_pg_plist}") || fatal "${result}";
+    result=$(do_cmd_as_user "${my_pg_user}" "launchctl load -F ${my_pg_plist}") || fatal "${result}";
 
     # Wait until fully loaded - max 5 seconds
     for i in {0..50}
     do
-        result=$(do_cmd_as_user "${my_pg_user}" "launchctl list | cut -f 3 | grep ^${MY_APP_PLIST}$");
+        result=$(do_cmd_as_user "${my_pg_user}" "launchctl list | cut -f 3 | grep ^${MY_APP_ID}$");
 
         if [ $? -eq 0 ] && [ -n "${result}" ]; then
             break;
@@ -697,7 +687,7 @@ launchctlLoadMyPostgreAgent() {
     done
 
     # Ensure fully loaded
-    if [ "${result}" != "${MY_APP_PLIST}" ]; then
+    if [ "${result}" != "${MY_APP_ID}" ]; then
         fatal "Unable to load launchctl agent!";
     fi
 }
@@ -706,47 +696,36 @@ launchctlLoadMyPostgreAgent() {
 #
 # ==============================================================
 #
-# Unload my agent plist file in launchctl.
-#
-# Note: plist must be generated beforehand.
+# Removes any entries for this tool in /var/db/launch.db
 #
 # ==============================================================
 #
-launchctlUnloadMyPostgreAgent() {
-    local disabled_flag;
+launchctlRemoveOverrideForMyPostgreAgent() {
     local result;
 
-    assert_not_null "my_pg_plist" "my_pg_user" "my_pg_auto" "MY_APP_PLIST";
+    assert_not_null "MY_APP_ID";
 
-    debug "Unloading ${my_pg_plist} ...";
+    # Overrides directory must exist
+    if [ -d "/var/db/launchd.db" ]; then
 
-    # When unloading in launchctl, can optionally specify '-w' flag,
-    # which gets agent added to overrides list so it is NEVER LOADED
-    # regardless of Disabled setting in .plist file
-    if [ "${my_pg_auto}" == "no" ]; then
-        disabled_flag="w";
-    else
-        disabled_flag="";
-    fi
+        debug "Checking for launchctl overrides for ${MY_APP_ID} ...";
 
-    # Unload
-    result=$(do_cmd_as_user "${my_pg_user}" "launchctl unload -${disabled_flag}F ${my_pg_plist}") || fatal "${result}";
+        # Check if any overrides exist
+        result=$(do_cmd_as_user "root" "find /var/db/launchd.db -name \"overrides.plist\" -exec /usr/libexec/Plistbuddy {} -c Print:${MY_APP_ID} \; 2>/dev/null | grep -v \"Error\"");
+        if [ -n "${result}" ]; then
 
-    # Wait until fully unloaded - max 5 seconds
-    for i in {0..50}
-    do
-        result=$(do_cmd_as_user "${my_pg_user}" "launchctl list | cut -f 3 | grep ^${MY_APP_PLIST}$");
+            debug "Removing launchctl overrides for ${MY_APP_ID} ...";
 
-        if [ -z "${result}" ]; then
-            result="";
-            break;
+            # Remove overrides
+            $(do_cmd_as_user "root" "find /var/db/launchd.db -name \"overrides.plist\" -exec /usr/libexec/Plistbuddy {} -c Delete:${MY_APP_ID} \; 2>/dev/null | grep -v \"Error\"");
+
+            # Check removed successfully
+            result=$(do_cmd_as_user "root" "find /var/db/launchd.db -name \"overrides.plist\" -exec /usr/libexec/Plistbuddy {} -c Print:${MY_APP_ID} \; 2>/dev/null | grep -v \"Error\"");
+            if [ -n "${result}" ]; then
+                debug "Launchctl overrides still exist after removing!\n\n${result}";
+                fatal "Unable to remove launchctl overrides for ${MY_APP_ID}";
+            fi
         fi
-        sleep 0.1;
-    done
-
-    # Ensure fully unloaded
-    if [ -n "${result}" ]; then
-        fatal "Unable to unload launchctl agent!";
     fi
 }
 
@@ -779,7 +758,7 @@ setValueForKeyInPlistFile() {
     plist_value_lc=$(to_lowercase "${plist_value}");
 
     # Invalid args
-    if [ ! -e "${plist_file}" ] || [ -z "${plist_key}" ] || [ -z "${plist_type}" ] || [ -z "${plist_value}" ]; then
+    if [ ! -f "${plist_file}" ] || [ -z "${plist_key}" ] || [ -z "${plist_type}" ] || [ -z "${plist_value}" ]; then
         fatal "ERROR: unable to set ${plist_key}=${plist_value} in ${plist_file}";
 
     # Args are valid
@@ -823,8 +802,7 @@ setValueForKeyInPlistFile() {
 #
 # In specified dir:
 #
-# Disable RunAtLoad setting in all launchctl plist files
-# with 'postgresql' in name
+# Disable all launchctl plist files with 'postgresql' in name
 #
 # ==============================================================
 #
@@ -835,7 +813,7 @@ disablePostgreAgentPlistFilesInDir() {
 
     # Ensure dir exists - silently ignore if not
     plist_dir=$1;
-    if [ -e "${plist_dir}" ]; then
+    if [ -d "${plist_dir}" ]; then
 
         # Find all .plist files in dir with 'postgresql' in name
         plist_files=`find ${plist_dir} -name "*postgresql*" | grep \.plist$`;
@@ -857,8 +835,7 @@ disablePostgreAgentPlistFilesInDir() {
 #
 # In all relevant launchagent dirs:
 #
-# Disable RunAtLoad setting in all launchctl plist files
-# with 'postgresql' in name
+# Disable all launchctl plist files with 'postgresql' in name
 #
 # ==============================================================
 #
@@ -919,7 +896,7 @@ detectAndManuallyStopRunningPostgreProcessesWithKeyword() {
 
                 # Look for Postgres scripts in process directory
                 process_dir=`dirname ${process_cmd}`;
-                if [ -e "${process_dir}" ] && [ -e "${process_dir}/postgres" ] && [ -e "${process_dir}/pg_ctl" ]; then
+                if [ -d "${process_dir}" ] && [ -f "${process_dir}/postgres" ] && [ -f "${process_dir}/pg_ctl" ]; then
 
                     pg_ctl="${process_dir}/pg_ctl";
 
@@ -981,11 +958,6 @@ pgStart() {
 #
 pgStop() {
     launchctlUnloadAllPostgreAgents;
-
-    deleteMyPostgreAgentPlistFiles;
-    createMyPostgreAgentPlistFile;
-
-    launchctlUnloadMyPostgreAgent;
 }
 
 
@@ -1011,9 +983,11 @@ pgStatus() {
 # ==============================================================
 #
 pgAutoOn() {
-    disableAllPostgreAgentPlistFiles;
-
     my_pg_auto="yes";
+
+    disableAllPostgreAgentPlistFiles;
+    launchctlRemoveOverrideForMyPostgreAgent;
+
     pgStart;
 }
 
@@ -1026,10 +1000,10 @@ pgAutoOn() {
 # ==============================================================
 #
 pgAutoOff() {
-    disableAllPostgreAgentPlistFiles;
-
     my_pg_auto="no";
-    pgStop;
+
+    disableAllPostgreAgentPlistFiles;
+    launchctlRemoveOverrideForMyPostgreAgent;
 }
 
 
