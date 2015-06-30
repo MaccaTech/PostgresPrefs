@@ -696,37 +696,62 @@ launchctlLoadMyPostgreAgent() {
 #
 # ==============================================================
 #
-# Removes any entries for this tool in /var/db/launch.db
+# Removes any entries for this tool in specified launchd
+# overrides dir below /var/db, with specified plist name
+# pattern.
+#
+# @params [overrides_dir] [plist_name_pattern]
 #
 # ==============================================================
 #
-launchctlRemoveOverrideForMyPostgreAgent() {
+launchctlRemoveOverrideForMyPostgreAgentInOverridesDir() {
+    local dir;
+    local name;
     local result;
 
     assert_not_null "MY_APP_ID";
 
-    # Overrides directory must exist
-    if [ -d "/var/db/launchd.db" ]; then
+    dir="/var/db/$1";
+    name="$2.plist";
 
-        debug "Checking for launchctl overrides for ${MY_APP_ID} ...";
+    # Overrides directory must exist - silently ignore if not
+    if [ -d "${dir}" ]; then
+
+        debug "Checking for launchctl overrides for ${MY_APP_ID} in ${dir} ...";
 
         # Check if any overrides exist
-        result=$(do_cmd_as_user "root" "find /var/db/launchd.db -name \"overrides.plist\" -exec /usr/libexec/Plistbuddy {} -c Print:${MY_APP_ID} \; 2>/dev/null | grep -v \"Error\"");
+        result=$(do_cmd_as_user "root" "find ${dir} -name \"${name}\" -exec /usr/libexec/Plistbuddy {} -c Print:${MY_APP_ID} \; 2>/dev/null | grep -v \"Error\"");
         if [ -n "${result}" ]; then
 
-            debug "Removing launchctl overrides for ${MY_APP_ID} ...";
+            debug "Removing launchctl overrides for ${MY_APP_ID} in ${dir} ...";
 
             # Remove overrides
-            $(do_cmd_as_user "root" "find /var/db/launchd.db -name \"overrides.plist\" -exec /usr/libexec/Plistbuddy {} -c Delete:${MY_APP_ID} \; 2>/dev/null | grep -v \"Error\"");
+            $(do_cmd_as_user "root" "find ${dir} -name \"${name}\" -exec /usr/libexec/Plistbuddy {} -c Delete:${MY_APP_ID} \; 2>/dev/null | grep -v \"Error\"");
 
             # Check removed successfully
-            result=$(do_cmd_as_user "root" "find /var/db/launchd.db -name \"overrides.plist\" -exec /usr/libexec/Plistbuddy {} -c Print:${MY_APP_ID} \; 2>/dev/null | grep -v \"Error\"");
+            result=$(do_cmd_as_user "root" "find ${dir} -name \"${name}\" -exec /usr/libexec/Plistbuddy {} -c Print:${MY_APP_ID} \; 2>/dev/null | grep -v \"Error\"");
             if [ -n "${result}" ]; then
                 debug "Launchctl overrides still exist after removing!\n\n${result}";
                 fatal "Unable to remove launchctl overrides for ${MY_APP_ID}";
             fi
         fi
     fi
+}
+
+
+#
+# ==============================================================
+#
+# Removes any entries for this tool in launchd overrides dirs
+# underneath /var/db
+#
+# ==============================================================
+#
+launchctlRemoveOverrideForMyPostgreAgent() {
+    # OS X 10.9
+    launchctlRemoveOverrideForMyPostgreAgentInOverridesDir "launchd.db" "overrides";
+    # OS X 10.10
+    launchctlRemoveOverrideForMyPostgreAgentInOverridesDir "com.apple.xpc.launchd" "disabled.*";
 }
 
 
