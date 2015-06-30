@@ -19,8 +19,8 @@
 #   Start       - Starts PostgreSQL using launchctl
 #   Stop        - Stops PostgreSQL using launchctl
 #   Status      - Gets running status of PostgreSQL
-#   AutoOn      - Enables automatic startup of PostgreSQL on computer bootup
-#   AutoOff     - Disables automatic startup of PostgreSQL on computer bootup
+#   AutoOn      - Enables automatic startup of PostgreSQL on user login
+#   AutoOff     - Disables automatic startup of PostgreSQL on user login
 #   StartManual - Starts PostgreSQL using pg_ctl
 #   StopManual  - Stops PostgreSQL using pg_ctl
 #   Plist       - Generates plist file for use with launchctl
@@ -1001,7 +1001,7 @@ pgStatus() {
 #
 # ==============================================================
 #
-# Enable auto startup of PostgreSQL on computer bootup
+# Enable auto startup of PostgreSQL on user login
 #
 # NOTE: this will restart PostgreSQL
 #
@@ -1020,7 +1020,7 @@ pgAutoOn() {
 #
 # ==============================================================
 #
-# Disable auto startup of PostgreSQL on computer bootup
+# Disable auto startup of PostgreSQL on user login
 #
 # ==============================================================
 #

@@ -48,7 +48,7 @@ Start and stop PostgreSQL Server at the B<click of a button> - no need for obscu
 
 =item *
 
-Set PostgreSQL to B<start automatically> on computer bootup
+Set PostgreSQL to B<start automatically> on user login
 
 =item *
 
@@ -144,9 +144,9 @@ Also, delete the following files if they exist:
 We would like to ensure this tool works as smoothly as possible, so please L<Contact Us|/Contact> if you are still having issues, or if you have any suggestions for improvements. 
     
 
-=item * B<I have enabled auto-startup, but PostgreSQL still does not startup automatically on bootup.>
+=item * B<I have enabled auto-startup, but PostgreSQL still does not startup automatically on user login.>
     
-=item * It is possible that another instance of PostgreSQL is also scheduled to start on bootup, with the same port number. To rectify this, you can change the Port setting in the L<Settings Screen|/Modify Settings> to another port. If this does not fix the problem, check C</var/log/system.log> and the logfile for your PostgreSQL instance for any error messages.
+=item * It is possible that another instance of PostgreSQL is also scheduled to start on computer bootup or user login, with the same port number. To rectify this, you can change the Port setting in the L<Settings Screen|/Modify Settings> to another port. If this does not fix the problem, check C</var/log/system.log> and the logfile for your PostgreSQL instance for any error messages.
 
 =item * B<I have configured a Log File in the Settings Screen but nothing is getting logged.>
         
@@ -168,11 +168,22 @@ We would like to ensure this tool works as smoothly as possible, so please L<Con
 </thead>
 <tbody>
 <tr>
+    <td>v1.3</td>
+    <td>30-Jun 2015</td>
+    <td>Bug-fix release
+        <ul>
+        <li>Fixed auto-start PostgreSQL on login (OS X 10.10+)</li>
+        <li>Fixed description of auto-start function in interface</li>
+        <li>Detect errors relating to auto-start and show in interface</li>
+        </ul>
+    </td>
+</tr>
+<tr>
     <td>v1.2</td>
     <td>30-Jun 2015</td>
     <td>Bug-fix release
         <ul>
-        <li>Fixed auto-start PostgreSQL on boot</li>
+        <li>Fixed auto-start PostgreSQL on login (OS X 10.9)</li>
         </ul>
     </td>
 </tr>

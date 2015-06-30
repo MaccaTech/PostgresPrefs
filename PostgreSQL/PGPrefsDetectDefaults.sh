@@ -17,7 +17,7 @@
 #   PGUSER  - User that will run postgresql server
 #   PGLOG   - Log file for postgresql server
 #   PGPORT  - Port for postgresql server
-#   PGAUTO  - Whether or not postgresql server starts automatically on computer bootup
+#   PGAUTO  - Whether or not postgresql server starts automatically on user login
 #
 #
 # LOGIC:
