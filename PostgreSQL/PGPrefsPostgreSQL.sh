@@ -122,7 +122,7 @@ finished() {
 fatal() {
     if [ -n "$*" ]; then
         debug "$*\n\n[FATAL]";
-        echo "$*";
+        >&2 echo "$*";
     fi
     exit 1;
 }

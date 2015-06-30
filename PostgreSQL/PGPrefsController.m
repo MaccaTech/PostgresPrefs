@@ -292,6 +292,7 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 // Adds or removes postgresql launch agent in launchctl
 //
 - (BOOL)setPostgreLaunchAgent:(PostgrePrefs *) prefs enabled:(BOOL)enabled {
+    NSString *result = nil;
     @try {
         
         // Ensure not already deauthorised
@@ -301,14 +302,21 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
             
             // One at a time
             @synchronized(self) {
-                [self runAuthorizedShellNoOutput:prefs command:@[command]];
+                result = [self runAuthorizedShell:prefs command:@[command]];
             }
         }
         return YES;        
     }
     @catch (NSException *err) {
-        [prefs displayAutoStartupError:[NSString stringWithFormat:@"Error: %@\n%@", [err name], [err reason]]];
-        return NO;
+        result = [NSString stringWithFormat:@"Error: %@\n%@", [err name], [err reason]];
+    }
+    @finally {
+        if (result) {
+            [prefs displayAutoStartupError:result];
+            return NO;
+        } else {
+            return YES;
+        }
     }
 }
 

@@ -320,26 +320,26 @@
 
 - (void)displayError:(NSString *)errMsg {
     [self.errorLabel setTitleWithMnemonic:errMsg];
-    [self.errorLabel setHidden:NO];
-    [self.errorIcon setHidden:NO];
+    [self.errorView setHidden:NO];
     [self.startStopInfo setHidden:YES];
 }
 
 - (void)displayNoError {
     [self.errorLabel setTitleWithMnemonic:@""];
-    [self.errorLabel setHidden:YES];
-    [self.errorIcon setHidden:YES];
+    [self.errorView setHidden:YES];
     [self.startStopInfo setHidden:NO];
 }
 
 - (void)displayAutoStartupError:(NSString *) errMsg {
-    [self.autoStartupInfo setTextColor:[NSColor redColor]];
-    [self.autoStartupInfo setTitleWithMnemonic:errMsg];
+    [self.autoStartupErrorLabel setTitleWithMnemonic:errMsg];
+    [self.autoStartupErrorView setHidden:NO];
+    [self.autoStartupInfo setHidden:YES];
 }
 
 - (void)displayAutoStartupNoError {
-    [self.autoStartupInfo setTextColor:[NSColor blackColor]];
-    [self.autoStartupInfo setTitleWithMnemonic:@"Select this option if you would like the PostgreSQL server to start automatically whenever your computer starts up."];    
+    [self.autoStartupErrorLabel setTitleWithMnemonic:@""];
+    [self.autoStartupErrorView setHidden:YES];
+    [self.autoStartupInfo setHidden:NO];
 }
 
 - (void)displayUpdatingSettings {

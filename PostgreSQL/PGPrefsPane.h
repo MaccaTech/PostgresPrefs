@@ -42,9 +42,11 @@
 @property (nonatomic, weak) IBOutlet NSButton *refreshButton;
 @property (nonatomic, weak) IBOutlet NSProgressIndicator *spinner;
 @property (nonatomic, weak) IBOutlet NSButton *autoStartupCheckbox;
+@property (nonatomic, weak) IBOutlet NSView *autoStartupErrorView;
+@property (nonatomic, weak) IBOutlet NSTextField *autoStartupErrorLabel;
 @property (nonatomic, weak) IBOutlet NSTextField *autoStartupInfo;
+@property (nonatomic, weak) IBOutlet NSView *errorView;
 @property (nonatomic, weak) IBOutlet NSTextField *errorLabel;
-@property (nonatomic, weak) IBOutlet NSImageView *errorIcon;
 @property (nonatomic, weak) IBOutlet SFAuthorizationView *authView;
 @property (nonatomic, weak) IBOutlet NSView *unlockedView;
 @property (nonatomic, weak) IBOutlet NSView *lockedView;
