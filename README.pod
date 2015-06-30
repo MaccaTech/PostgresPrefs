@@ -168,6 +168,15 @@ We would like to ensure this tool works as smoothly as possible, so please L<Con
 </thead>
 <tbody>
 <tr>
+    <td>v1.2</td>
+    <td>30-Jun 2015</td>
+    <td>Bug-fix release
+        <ul>
+        <li>Fixed auto-start PostgreSQL on boot</li>
+        </ul>
+    </td>
+</tr>
+<tr>
     <td>v1.1</td>
     <td>17-Oct 2014</td>
     <td>Bug-fix release
