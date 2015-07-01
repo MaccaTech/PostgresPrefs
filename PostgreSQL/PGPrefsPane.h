@@ -33,6 +33,9 @@
 
 @property (nonatomic, strong) id<PostgrePrefsDelegate> delegate;
 
+@property (nonatomic, weak) IBOutlet SFAuthorizationView *authView;
+@property (nonatomic, weak) IBOutlet NSTabView *authTabs;
+@property (nonatomic, weak) IBOutlet NSTabView *mainTabs;
 @property (nonatomic, weak) IBOutlet NSButton *resetSettingsButton;
 @property (nonatomic, weak) IBOutlet NSImageView *statusImage;
 @property (nonatomic, weak) IBOutlet NSTextField *statusLabel;
@@ -47,16 +50,12 @@
 @property (nonatomic, weak) IBOutlet NSTextField *autoStartupInfo;
 @property (nonatomic, weak) IBOutlet NSView *errorView;
 @property (nonatomic, weak) IBOutlet NSTextField *errorLabel;
-@property (nonatomic, weak) IBOutlet SFAuthorizationView *authView;
-@property (nonatomic, weak) IBOutlet NSView *unlockedView;
-@property (nonatomic, weak) IBOutlet NSView *lockedView;
 @property (nonatomic, weak) IBOutlet NSForm *settingsForm;
 @property (nonatomic, weak) IBOutlet NSFormCell *settingsUsername;
 @property (nonatomic, weak) IBOutlet NSFormCell *settingsBinDir;
 @property (nonatomic, weak) IBOutlet NSFormCell *settingsDataDir;
 @property (nonatomic, weak) IBOutlet NSFormCell *settingsLogFile;
 @property (nonatomic, weak) IBOutlet NSFormCell *settingsPort;
-@property (nonatomic, weak) IBOutlet NSTabView *unlockedTabs;
 
 - (NSDictionary *)guiPreferences;
 - (void)setGuiPreferences:(NSDictionary *) prefs;

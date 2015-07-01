@@ -139,7 +139,7 @@
     editingSettings = NO;
 
     // Listen for tab changes
-    self.unlockedTabs.delegate = self;
+    self.mainTabs.delegate = self;
     
     // Call delegate DidLoad method
     [self.delegate postgrePrefsDidLoad:self];
@@ -304,14 +304,13 @@
 }
 
 - (void)displayLocked {
-    [self.unlockedView setHidden: ![self isAuthorized]];
-    [self.lockedView setHidden: [self isAuthorized]];
+    [self.authTabs selectTabViewItemWithIdentifier:@"locked"];
 }
 
 - (void)displayUnlocked {
-    [self.unlockedView setHidden: ![self isAuthorized]];
-    [self.lockedView setHidden: [self isAuthorized]];
-    [self.unlockedTabs selectTabViewItemAtIndex:0];
+    NSString *identifier = [self isAuthorized] ? @"unlocked" : @"locked";
+    [self.authTabs selectTabViewItemWithIdentifier:identifier];
+    [self.mainTabs selectTabViewItemAtIndex:0];
 }
 
 - (bool)isError {
