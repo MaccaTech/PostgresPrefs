@@ -10,6 +10,12 @@
 #import "PGPrefsController.h"
 #import "PGPrefsUtilities.h"
 
+@interface PostgrePrefs()
+    @property (nonatomic, readwrite) BOOL autoStartupChangedBySystem;
+    @property (nonatomic, readwrite) BOOL editingSettings;
+    @property (nonatomic, readwrite) BOOL invalidSettings;
+@end
+
 @implementation PostgrePrefs
 
 - (NSString *)username {
@@ -57,13 +63,13 @@
 }
 
 - (void)setAutoStartup:(BOOL)enabled {
-    autoStartupChangedBySystem = YES;
+    self.autoStartupChangedBySystem = YES;
     if( enabled  ) {
         [self.autoStartupCheckbox setState:NSOnState];
     } else {
         [self.autoStartupCheckbox setState:NSOffState];
     }
-    autoStartupChangedBySystem = NO;
+    self.autoStartupChangedBySystem = NO;
 }
 
 - (BOOL)isAuthorized {
@@ -96,7 +102,7 @@
 
 - (void)authorizationViewDidAuthorize:(SFAuthorizationView *)view {
     // Reset editing settings mode first
-    editingSettings = NO;
+    self.editingSettings = NO;
 
     // Delegate
     [self.delegate postgrePrefsDidAuthorize:self];
@@ -106,22 +112,22 @@
     [self.delegate postgrePrefsDidDeauthorize:self];
     
     // Reset editing settings mode
-    editingSettings = NO;    
+    self.editingSettings = NO;
 }
 
 - (BOOL)wasEditingSettings {
-    return editingSettings;
+    return self.editingSettings;
 }
 
 - (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     if ([tabView indexOfTabViewItem:tabViewItem] == 0) {
-        if (editingSettings) {
+        if (self.editingSettings) {
             [self postponeAuthorizationTimeout];
             [self.delegate postgrePrefsDidFinishEditingSettings:self];
         }
-        editingSettings = NO;
+        self.editingSettings = NO;
     } else {
-        editingSettings = YES;        
+        self.editingSettings = YES;
     }
 }
 
@@ -136,20 +142,25 @@
     [self setDelegate:[[PostgrePrefsController alloc] init]];
 
     // Reset editing settings mode
-    editingSettings = NO;
+    self.editingSettings = NO;
 
     // Listen for tab changes
     self.mainTabs.delegate = self;
     
     // Call delegate DidLoad method
     [self.delegate postgrePrefsDidLoad:self];
+    
+    _invalidSettings = NO;
+    _canStartStop = YES;
+    _canRefresh = YES;
+    _canChangeAutoStartup = YES;
 }
 
 - (void)willUnselect {
     [self.delegate postgrePrefsWillUnselect:self];
 
     // Reset editing settings mode
-    editingSettings = NO;
+    self.editingSettings = NO;
 }
 
 - (NSDictionary *)persistedPreferences {
@@ -202,13 +213,41 @@
     [self setGuiPreference:prefs key:@"DataDirectory" gui:self.settingsDataDir];
     [self setGuiPreference:prefs key:@"LogFile" gui:self.settingsLogFile];
     [self setGuiPreference:prefs key:@"Port" gui:self.settingsPort];
-    autoStartupChangedBySystem = YES;
+    self.autoStartupChangedBySystem = YES;
     [self.autoStartupCheckbox setState:([[prefs objectForKey:@"AutoStartup"] isEqualToString:@"Yes"] || [[prefs objectForKey:@"AutoStartup"] isEqualToString:@"true"] ? NSOnState : NSOffState)];
-    autoStartupChangedBySystem = NO;
+    self.autoStartupChangedBySystem = NO;
 }
 
 - (void)setGuiPreferences:(NSDictionary *) prefs {
     [self setGuiPreferences:prefs defaults:nil];
+}
+
+- (void)setCanStartStop:(BOOL)canStartStop
+{
+    if (canStartStop == _canStartStop) return;
+    
+    if (canStartStop && self.invalidSettings) return;
+    
+    _canStartStop = canStartStop;
+    
+    self.startStopButton.enabled = canStartStop;
+}
+- (void)setCanRefresh:(BOOL)canRefresh
+{
+    if (canRefresh == _canRefresh) return;
+    _canRefresh = canRefresh;
+    
+    self.refreshButton.enabled = canRefresh;
+}
+- (void)setCanChangeAutoStartup:(BOOL)canChangeAutoStartup
+{
+    if (canChangeAutoStartup == _canChangeAutoStartup) return;
+    
+    if (canChangeAutoStartup && self.invalidSettings) return;
+    
+    _canChangeAutoStartup = canChangeAutoStartup;
+    
+    self.autoStartupCheckbox.enabled = canChangeAutoStartup;
 }
 
 - (void)displayStarted {
@@ -222,9 +261,11 @@
     [self.startStopInfo setTitleWithMnemonic:@"If you stop the server, you and your applications will not be able to use PostgreSQL and all current connections will be closed."];
     [self.statusImage setImage:started];        
     
-    [self.startStopButton setEnabled:YES];
-    [self.refreshButton setEnabled:YES];
-    [self.autoStartupCheckbox setEnabled:YES];
+    self.invalidSettings = NO;
+    self.canStartStop = YES;
+    self.canRefresh = YES;
+    self.canChangeAutoStartup = YES;
+    
     [self.spinner stopAnimation:self];
 }
 
@@ -239,9 +280,11 @@
     [self.startStopInfo setTitleWithMnemonic:@""];
     [self.statusImage setImage:stopped];
     
-    [self.startStopButton setEnabled:YES];
-    [self.refreshButton setEnabled:YES];
-    [self.autoStartupCheckbox setEnabled:YES];
+    self.invalidSettings = NO;
+    self.canStartStop = YES;
+    self.canRefresh = YES;
+    self.canChangeAutoStartup = YES;
+    
     [self.spinner stopAnimation:self];
 }
 
@@ -251,8 +294,11 @@
     [self.statusLabel setTitleWithMnemonic:@"Starting..."];
     [self.statusLabel setTextColor:[NSColor blueColor]];
     [self.statusImage setImage:checking];
-    [self.startStopButton setEnabled:NO];
-    [self.refreshButton setEnabled:NO];
+    
+    self.canStartStop = NO;
+    self.canRefresh = NO;
+    self.canChangeAutoStartup = NO;
+    
     [self.spinner startAnimation:self];
 }
 
@@ -262,8 +308,11 @@
     [self.statusLabel setTitleWithMnemonic:@"Stopping..."];
     [self.statusLabel setTextColor:[NSColor blueColor]];
     [self.statusImage setImage:checking];
-    [self.startStopButton setEnabled:NO];
-    [self.refreshButton setEnabled:NO];
+    
+    self.canStartStop = NO;
+    self.canRefresh = NO;
+    self.canChangeAutoStartup = NO;
+    
     [self.spinner startAnimation:self];
 }
 
@@ -278,12 +327,13 @@
     [self.startStopInfo setTitleWithMnemonic:@""];
     [self.statusImage setImage:checking];
     
-    [self.startStopButton setEnabled:NO];
-    [self.refreshButton setEnabled:NO];
+    self.canStartStop = NO;
+    self.canRefresh = NO;
+    self.canChangeAutoStartup = NO;
+    
     [self.spinner startAnimation:self];
     
     [self displayAutoStartupNoError];
-    [self.autoStartupCheckbox setEnabled:NO];
 }
 
 - (void)displayUnknown {
@@ -298,8 +348,12 @@
     if (isBlankString([self.startStopInfo stringValue])) {
         [self.startStopInfo setTitleWithMnemonic:@"Please check the values in the Settings tab and try again."];
     }
-    [self.startStopButton setEnabled:NO];
-    [self.refreshButton setEnabled:YES];
+    
+    self.invalidSettings = YES;
+    self.canStartStop = NO;
+    self.canRefresh = YES;
+    self.canChangeAutoStartup = NO;
+    
     [self.spinner stopAnimation:self];
 }
 
@@ -311,6 +365,24 @@
     NSString *identifier = [self isAuthorized] ? @"unlocked" : @"locked";
     [self.authTabs selectTabViewItemWithIdentifier:identifier];
     [self.mainTabs selectTabViewItemAtIndex:0];
+}
+
+- (void)displayWillChangeAutoStartup
+{
+    self.canChangeAutoStartup = NO;
+    self.canRefresh = NO;
+    self.canStartStop = NO;
+    
+    [self.autoStartupSpinner startAnimation:self];
+}
+
+- (void)displayDidChangeAutoStartup
+{
+    self.canChangeAutoStartup = YES;
+    self.canRefresh = YES;
+    self.canStartStop = YES;
+
+    [self.autoStartupSpinner stopAnimation:self];
 }
 
 - (bool)isError {
@@ -351,7 +423,7 @@
 
 - (IBAction)toggleAutoStartup:(id)sender {
     [self postponeAuthorizationTimeout];
-    if (!autoStartupChangedBySystem) {
+    if (!self.autoStartupChangedBySystem) {
         [self.delegate postgrePrefsDidClickAutoStartup:self];
     }
 }

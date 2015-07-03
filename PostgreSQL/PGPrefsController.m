@@ -335,7 +335,22 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
         [prefs setAutoStartup:NO];
     }
     [prefs setPersistedPreferences:[prefs guiPreferences]];
+}
+
+//
+// Apply auto-startup and trigger check status afterwards
+//
+- (void)applyAutoStartupAndCheckStatus:(PostgrePrefs *) prefs {
+    [self applyAutoStartup:prefs];
     [self performSelector:@selector(checkServerStatus:) withObject:prefs afterDelay:3.0];
+}
+
+//
+// Apply auto-startup and re-enable checkbox
+//
+- (void)applyAutoStartupAndNotifyCompleted:(PostgrePrefs *) prefs {
+    [self applyAutoStartup:prefs];
+    [prefs displayDidChangeAutoStartup];
 }
 
 //
@@ -344,14 +359,15 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 - (void)applyUpdatedSettings:(PostgrePrefs *) prefs {
     [prefs displayChecking];
     [prefs setPersistedPreferences:[prefs guiPreferences]];
-    [self performSelector:@selector(applyAutoStartup:) withObject:prefs afterDelay:0.2];    
+    [self performSelector:@selector(applyAutoStartupAndCheckStatus:) withObject:prefs afterDelay:0.2];
 }
 
 //
 // User changed auto-startup
 //
 - (void)postgrePrefsDidClickAutoStartup:(PostgrePrefs *) prefs {
-    [self applyUpdatedSettings:prefs];
+    [prefs displayWillChangeAutoStartup];
+    [self performSelectorInBackground:@selector(applyAutoStartupAndNotifyCompleted:) withObject:prefs];
 }
 
 //

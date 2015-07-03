@@ -144,7 +144,7 @@ $*";
 
     # Failed
     else
-        debug "${output}\n\n[FATAL]";
+        debug "${output}\n\n[FAILED]";
     fi
 
     # Trim result before printing
@@ -190,28 +190,30 @@ assert_not_null() {
 #
 # ==============================================================
 #
-# Globals
+# Initialise Constants
 #
 # ==============================================================
 #
+resetConstants() {
+    unset MY_REAL_USER; MY_REAL_USER=$(file_owner "${HOME}");
+    unset MY_REAL_UID;  MY_REAL_UID=`id -u "${MY_REAL_USER}"`;
+    unset MY_RUN_USER;  MY_RUN_USER=`id -u -n`;
+    unset MY_APP_NAME;  MY_APP_NAME="PGPrefsPostgreSQL.sh";
+    unset MY_APP_LOG;   MY_APP_LOG="PostgreSQL/Helpers.log";
+    unset MY_APP_ID;    MY_APP_ID="com.hkwebentrepreneurs.postgresql";
 
-unset MY_REAL_USER; MY_REAL_USER=$(file_owner "${HOME}");
-unset MY_RUN_USER;  MY_RUN_USER=`id -u -n`;
-unset MY_APP_NAME;  MY_APP_NAME="PGPrefsPostgreSQL.sh";
-unset MY_APP_LOG;   MY_APP_LOG="PostgreSQL/Helpers.log";
-unset MY_APP_ID;    MY_APP_ID="com.hkwebentrepreneurs.postgresql";
-
-DEBUG=$(to_lowercase "${DEBUG}");
+    DEBUG=$(to_lowercase "${DEBUG}");
+}
 
 
 #
 # ==============================================================
 #
-# Clear all variables that will be used in script
+# Initialise Global Variables
 #
 # ==============================================================
 #
-resetVariables() {
+resetGlobals() {
     unset my_pg_command;         my_pg_command="";
 
     unset my_pg_bin;             my_pg_bin="";
@@ -280,6 +282,8 @@ ${MY_APP_NAME} $*";
 #
 validateEnvVariables() {
     local check_user;
+
+    assert_not_null "MY_APP_ID";
 
     debug "Checking environment variables...
 
@@ -403,13 +407,8 @@ EOF
     fi
 
     # Optional - PGAUTO
-    if [ "${my_pg_auto}" == "yes" ]; then
-        runatload="true";
-        disabled="false";
-    else
-        runatload="false";
-        disabled="true";
-    fi
+    [ "${my_pg_auto}" == "yes" ] && runatload="true" || runatload="false";
+    [ "${my_pg_auto}" == "yes" ] && disabled="false" || disabled="true";
 
     # Generate Plist
     result=$(cat <<EOF
@@ -503,6 +502,22 @@ pgCtl() {
 #
 # ==============================================================
 #
+# Enable or disable auto-startup
+#
+# @params [yes/no]
+#
+# ==============================================================
+#
+pgAutoStartup() {
+    [ "$1" == "yes" ] && my_pg_auto="yes" || my_pg_auto="no";
+
+    disableAutoStartupForAllPostgreAgentPlistFiles;
+    refreshAutoStartupForMyPostgreAgent;
+}
+
+#
+# ==============================================================
+#
 # Unload all launchctl agents with 'postgresql' in name for
 # specified user
 #
@@ -546,7 +561,7 @@ launchctlUnloadAllPostgreAgentsFor() {
         # Ensure fully unloaded
         if [ -n "${launchagents}" ]; then
             debug "Loaded agents: ${launchagents}";
-            fatal "ERROR: unable to unload existing postgresql agents in launchctl!";
+            fatal "ERROR: unable to unload existing postgresql agents in launchd!";
         fi
     fi
 }
@@ -653,6 +668,8 @@ createMyPostgreAgentPlistFile() {
 
     plist_xml=$(generateMyPostgreAgentPlistContent);
     $(do_cmd_as_user "${my_pg_user}" "echo \"${plist_xml}\" > \"${my_pg_plist}\"") || fatal "unable to create launch agent ${my_pg_plist}";
+
+    [ -f "${my_pg_plist}" ] || fatal "unable to create launch agent ${my_pg_plist}";
 }
 
 
@@ -688,7 +705,7 @@ launchctlLoadMyPostgreAgent() {
 
     # Ensure fully loaded
     if [ "${result}" != "${MY_APP_ID}" ]; then
-        fatal "Unable to load launchctl agent!";
+        fatal "Unable to load launchd agent!";
     fi
 }
 
@@ -704,7 +721,7 @@ launchctlLoadMyPostgreAgent() {
 #
 # ==============================================================
 #
-launchctlRemoveOverrideForMyPostgreAgentInOverridesDir() {
+launchctlDeleteDisabledOverrideForMyPostgreAgentInOverridesDir() {
     local dir;
     local name;
     local result;
@@ -717,13 +734,13 @@ launchctlRemoveOverrideForMyPostgreAgentInOverridesDir() {
     # Overrides directory must exist - silently ignore if not
     if [ -d "${dir}" ]; then
 
-        debug "Checking for launchctl overrides for ${MY_APP_ID} in ${dir} ...";
+        debug "Checking for launchd overrides for ${MY_APP_ID} in ${dir} ...";
 
         # Check if any overrides exist
         result=$(do_cmd_as_user "root" "find ${dir} -name \"${name}\" -exec /usr/libexec/Plistbuddy {} -c Print:${MY_APP_ID} \; 2>/dev/null | grep -v \"Error\"");
         if [ -n "${result}" ]; then
 
-            debug "Removing launchctl overrides for ${MY_APP_ID} in ${dir} ...";
+            debug "Removing launchd overrides for ${MY_APP_ID} in ${dir} ...";
 
             # Remove overrides
             $(do_cmd_as_user "root" "find ${dir} -name \"${name}\" -exec /usr/libexec/Plistbuddy {} -c Delete:${MY_APP_ID} \; 2>/dev/null | grep -v \"Error\"");
@@ -731,8 +748,55 @@ launchctlRemoveOverrideForMyPostgreAgentInOverridesDir() {
             # Check removed successfully
             result=$(do_cmd_as_user "root" "find ${dir} -name \"${name}\" -exec /usr/libexec/Plistbuddy {} -c Print:${MY_APP_ID} \; 2>/dev/null | grep -v \"Error\"");
             if [ -n "${result}" ]; then
-                debug "Launchctl overrides still exist after removing!\n\n${result}";
-                fatal "Unable to remove launchctl overrides for ${MY_APP_ID}";
+                debug "Launchd overrides still exist after removing!\n\n${result}";
+                fatal "Unable to remove launchd overrides for ${MY_APP_ID}";
+            fi
+        fi
+    fi
+}
+
+
+#
+# ==============================================================
+#
+# On Yosemite, once permanent disabled override is in place,
+# impossible to remove. So always set it.
+#
+# ==============================================================
+#
+launchctlAddDisabledOverrideForMyPostgreAgentOnYosemite() {
+    local result;
+    local disabled;
+    local enableOrDisable;
+
+    assert_not_null "my_pg_plist" "my_pg_auto" "MY_REAL_UID";
+
+    debug "Checking if launchctl supports enable/disable ...";
+
+    # Check if launchctl supports enable/disable (i.e. on Yosemite)
+    result=$(do_cmd_as_user "root" "launchctl print-disabled user/0");
+    if [ $? -eq 0 ]; then
+
+        # Calculate desired value
+        [ "${my_pg_auto}" == "yes" ] && disabled="false" || disabled="true";
+        [ "${my_pg_auto}" == "yes" ] && enableOrDisable="enable" || enableOrDisable="disable";
+
+        debug "Checking if ${MY_APP_ID} is already ${enableOrDisable}d in launchd ...";
+
+        # Check if need to change
+        result=$(do_cmd_as_user "root" "launchctl print-disabled user/${MY_REAL_UID} | grep ${MY_APP_ID} | cut -d\  -f3");
+        if [ "${result}" != "${disabled}" ]; then
+
+            debug "Changing ${MY_APP_ID} to ${enableOrDisable}d in launchd ...";
+
+            # Enable/disable
+            $(do_cmd_as_user "root" "launchctl ${enableOrDisable} user/${MY_REAL_UID}/${MY_APP_ID}");
+
+            # Check if need to change
+            result=$(do_cmd_as_user "root" "launchctl print-disabled user/${MY_REAL_UID} | grep ${MY_APP_ID} | cut -d\  -f3");
+            if [ "${result}" != "${disabled}" ]; then
+                debug "After running ${enableOrDisable} command, launchd disabled override is ${result}";
+                fatal "unable to ${enableOrDisable} ${MY_APP_ID} in launchd";
             fi
         fi
     fi
@@ -747,11 +811,25 @@ launchctlRemoveOverrideForMyPostgreAgentInOverridesDir() {
 #
 # ==============================================================
 #
-launchctlRemoveOverrideForMyPostgreAgent() {
-    # OS X 10.9
-    launchctlRemoveOverrideForMyPostgreAgentInOverridesDir "launchd.db" "overrides";
-    # OS X 10.10
-    launchctlRemoveOverrideForMyPostgreAgentInOverridesDir "com.apple.xpc.launchd" "disabled.*";
+refreshAutoStartupForMyPostgreAgent() {
+    assert_not_null "my_pg_plist" "my_pg_auto";
+
+    # Enable / disable the plist
+    if [ -f "${my_pg_plist}" ]; then
+        enableAutoStartupForPlistFile "${my_pg_plist}" "${my_pg_auto}";
+
+    # Plist doesn't exist yet - so create it
+    else
+        createMyPostgreAgentPlistFile;
+    fi
+
+    # Handle permanent disabled override:
+
+    # OS X 10.9 - remove the permanent override
+    launchctlDeleteDisabledOverrideForMyPostgreAgentInOverridesDir "launchd.db" "overrides";
+
+    # OS X 10.10 - set the permanent override, since removing is impossible
+    launchctlAddDisabledOverrideForMyPostgreAgentOnYosemite;
 }
 
 
@@ -825,13 +903,45 @@ setValueForKeyInPlistFile() {
 #
 # ==============================================================
 #
-# In specified dir:
+# Enable auto-startup for specified launchctl plist file.
 #
-# Disable all launchctl plist files with 'postgresql' in name
+# @params [plist] [yes=enable/no=disable]
 #
 # ==============================================================
 #
-disablePostgreAgentPlistFilesInDir() {
+enableAutoStartupForPlistFile() {
+    local plist_file;
+    local auto_startup;
+    local runatload;
+    local disabled;
+
+    plist_file="$1";
+    auto_startup=$(to_lowercase "$2");
+
+    # Ensure plist exists - else abort
+    [ -f "${plist_file}" ] || fatal "unable to set autostartup=${auto_startup}, file not found: ${plist_file}";
+
+    # Calculate values
+    [ "${auto_startup}" == "yes" ] && runatload="true" || runatload="false";
+    [ "${auto_startup}" == "yes" ] && disabled="false" || disabled="true";
+
+    # Update .plist file
+    setValueForKeyInPlistFile "${plist_file}" "RunAtLoad" "bool" "${runatload}";
+    setValueForKeyInPlistFile "${plist_file}" "Disabled" "bool" "${disabled}";
+}
+
+
+#
+# ==============================================================
+#
+# In specified dir:
+#
+# Disable auto-startup for all launchctl plist files with
+# 'postgresql' in name
+#
+# ==============================================================
+#
+disableAutoStartupForAllPostgreAgentPlistFilesInDir() {
     local plist_dir;
     local plist_files;
     local plist_file;
@@ -843,13 +953,9 @@ disablePostgreAgentPlistFilesInDir() {
         # Find all .plist files in dir with 'postgresql' in name
         plist_files=`find ${plist_dir} -name "*postgresql*" | grep \.plist$`;
 
-        # Loop .plist files
+        # Disable autostartup for each .plist file
         for plist_file in ${plist_files}; do
-
-            # Disable .plist file
-            setValueForKeyInPlistFile "${plist_file}" "RunAtLoad" "bool" "false";
-            setValueForKeyInPlistFile "${plist_file}" "Disabled" "bool" "true";
-
+            enableAutoStartupForPlistFile "${plist_file}" "no";
         done
     fi
 }
@@ -860,14 +966,15 @@ disablePostgreAgentPlistFilesInDir() {
 #
 # In all relevant launchagent dirs:
 #
-# Disable all launchctl plist files with 'postgresql' in name
+# Disable auto-startup for all launchctl plist files with
+# 'postgresql' in name
 #
 # ==============================================================
 #
-disableAllPostgreAgentPlistFiles() {
-    disablePostgreAgentPlistFilesInDir "/Library/LaunchDaemons"
-    disablePostgreAgentPlistFilesInDir "/Library/LaunchAgents"
-    disablePostgreAgentPlistFilesInDir "${HOME}/Library/LaunchAgents"
+disableAutoStartupForAllPostgreAgentPlistFiles() {
+    disableAutoStartupForAllPostgreAgentPlistFilesInDir "/Library/LaunchDaemons";
+    disableAutoStartupForAllPostgreAgentPlistFilesInDir "/Library/LaunchAgents";
+    disableAutoStartupForAllPostgreAgentPlistFilesInDir "${HOME}/Library/LaunchAgents";
 }
 
 
@@ -1003,17 +1110,10 @@ pgStatus() {
 #
 # Enable auto startup of PostgreSQL on user login
 #
-# NOTE: this will restart PostgreSQL
-#
 # ==============================================================
 #
 pgAutoOn() {
-    my_pg_auto="yes";
-
-    disableAllPostgreAgentPlistFiles;
-    launchctlRemoveOverrideForMyPostgreAgent;
-
-    pgStart;
+    pgAutoStartup "yes";
 }
 
 
@@ -1025,10 +1125,7 @@ pgAutoOn() {
 # ==============================================================
 #
 pgAutoOff() {
-    my_pg_auto="no";
-
-    disableAllPostgreAgentPlistFiles;
-    launchctlRemoveOverrideForMyPostgreAgent;
+    pgAutoStartup "no";
 }
 
 
@@ -1097,8 +1194,9 @@ runPostgreSQLCommand() {
 #
 # ==============================================================
 #
-resetVariables
-validateCommandLineArgs "$@"
-validateEnvVariables
+resetConstants;
+resetGlobals;
+validateCommandLineArgs "$@";
+validateEnvVariables;
 
-runPostgreSQLCommand
+runPostgreSQLCommand;

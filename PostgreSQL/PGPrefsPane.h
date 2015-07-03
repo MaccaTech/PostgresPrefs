@@ -25,11 +25,14 @@
 @optional
 @end
 
-@interface PostgrePrefs : NSPreferencePane <NSTabViewDelegate> {
-@private
-    BOOL autoStartupChangedBySystem;
-    BOOL editingSettings;
-}
+@interface PostgrePrefs : NSPreferencePane <NSTabViewDelegate>
+
+@property (nonatomic, readonly) BOOL autoStartupChangedBySystem;
+@property (nonatomic, readonly) BOOL editingSettings;
+@property (nonatomic, readonly) BOOL invalidSettings;
+@property (nonatomic, readonly) BOOL canStartStop;
+@property (nonatomic, readonly) BOOL canRefresh;
+@property (nonatomic, readonly) BOOL canChangeAutoStartup;
 
 @property (nonatomic, strong) id<PostgrePrefsDelegate> delegate;
 
@@ -45,6 +48,7 @@
 @property (nonatomic, weak) IBOutlet NSButton *refreshButton;
 @property (nonatomic, weak) IBOutlet NSProgressIndicator *spinner;
 @property (nonatomic, weak) IBOutlet NSButton *autoStartupCheckbox;
+@property (nonatomic, weak) IBOutlet NSProgressIndicator *autoStartupSpinner;
 @property (nonatomic, weak) IBOutlet NSView *autoStartupErrorView;
 @property (nonatomic, weak) IBOutlet NSTextField *autoStartupErrorLabel;
 @property (nonatomic, weak) IBOutlet NSTextField *autoStartupInfo;
@@ -95,6 +99,8 @@
 - (void)displayUnknown;
 - (void)displayLocked;
 - (void)displayUnlocked;
+- (void)displayWillChangeAutoStartup;
+- (void)displayDidChangeAutoStartup;
 - (void)displayError:(NSString *) errMsg;
 - (void)displayNoError;
 - (void)displayUpdatingSettings;
