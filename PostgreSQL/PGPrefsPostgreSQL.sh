@@ -93,8 +93,8 @@ debug() {
 
                 # Create debug dir & file if not exist
                 if [ ! -e "${HOME}/Library/Logs/${MY_APP_LOG}" ]; then
-                    su "${MY_RUN_USER}" -c "mkdir -p `dirname ${HOME}/Library/Logs/${MY_APP_LOG}`";
-                    su "${MY_RUN_USER}" -c "echo `date` >> ${HOME}/Library/Logs/${MY_APP_LOG}";
+                    su "${MY_REAL_USER}" -c "mkdir -p `dirname ${HOME}/Library/Logs/${MY_APP_LOG}`";
+                    su "${MY_REAL_USER}" -c "echo `date` >> ${HOME}/Library/Logs/${MY_APP_LOG}";
                 fi
 
                 # Log
