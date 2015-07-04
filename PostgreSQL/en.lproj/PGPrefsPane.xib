@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="8.00">
 	<data>
-		<int key="IBDocument.SystemTarget">1070</int>
+		<int key="IBDocument.SystemTarget">101000</int>
 		<string key="IBDocument.SystemVersion">13F1077</string>
 		<string key="IBDocument.InterfaceBuilderVersion">6751</string>
 		<string key="IBDocument.AppKitVersion">1265.21</string>
@@ -37,7 +37,7 @@
 		</object>
 		<array class="NSMutableArray" key="IBDocument.RootObjects" id="409411428">
 			<object class="NSCustomObject" id="294453543">
-				<string key="NSClassName">PostgrePrefs</string>
+				<string key="NSClassName">PGPrefsPane</string>
 			</object>
 			<object class="NSCustomObject" id="308860122">
 				<string key="NSClassName">FirstResponder</string>
@@ -66,7 +66,6 @@
 							<int key="NSvFlags">268</int>
 							<string key="NSFrame">{{7, 39}, {653, 266}}</string>
 							<reference key="NSSuperview" ref="1037298196"/>
-							<reference key="NSNextKeyView" ref="473984876"/>
 							<string key="NSReuseIdentifierKey">_NS:9</string>
 							<array class="NSMutableArray" key="NSTabViewItems">
 								<object class="NSTabViewItem" id="391929353">
@@ -275,7 +274,6 @@
 												<int key="NSvFlags">268</int>
 												<string key="NSFrameSize">{653, 266}</string>
 												<reference key="NSSuperview" ref="473984876"/>
-												<reference key="NSNextKeyView" ref="606951441"/>
 												<string key="NSReuseIdentifierKey">_NS:608</string>
 												<array class="NSMutableArray" key="NSTabViewItems">
 													<object class="NSTabViewItem" id="1022237790">

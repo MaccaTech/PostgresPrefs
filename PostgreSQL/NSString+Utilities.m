@@ -1,21 +1,33 @@
 //
-//  PGPrefsUtilities.m
+//  NSString+Utilities.m
 //  PostgreSQL
 //
-//  Created by Francis McKenzie on 20/12/11.
-//  Copyright (c) 2011 HK Web Entrepeneurs. All rights reserved.
+//  Created by Francis McKenzie on 4/7/15.
+//  Copyright (c) 2015 HK Web Entrepreneurs. All rights reserved.
 //
 
-#import "PGPrefsUtilities.h"
+#import "NSString+Utilities.h"
 
-//
-// Runs a command with no authorization and either returns output or returns immediately with no output
-//
-NSString* runCommand(NSString *command, NSArray *args, BOOL waitForOutput) {
-    
+#pragma mark - NSString (Private)
+
+@interface NSString (Private)
+/**
+ * Runs a command with no authorization and either returns output or returns immediately with no output
+ */
+- (NSString *)runWithArgs:(NSArray *)args waitForOutput:(BOOL)waitForOutput;
+/**
+ * Runs a shell command with authorization and either returns output or returns immediately with no output
+ */
+- (NSString *)runWithArgs:(NSArray *)args authorization:(AuthorizationRef)authorization  waitForOutput:(BOOL)waitForOutput;
+@end
+
+@implementation NSString (Private)
+
+- (NSString *)runWithArgs:(NSArray *)args waitForOutput:(BOOL)waitForOutput
+{
     NSTask *task;
     task = [[NSTask alloc] init];
-    [task setLaunchPath:command];
+    [task setLaunchPath:self];
     if (args) {
         [task setArguments:args];
     }
@@ -30,15 +42,15 @@ NSString* runCommand(NSString *command, NSArray *args, BOOL waitForOutput) {
     file = [pipe fileHandleForReading];
     
     // Log
-    DLog(@"Running: %@", [[[NSArray arrayWithObjects:command, nil] arrayByAddingObjectsFromArray:args] componentsJoinedByString:@" "]);
-
+    if (IsLogging) DLog(@"Running: %@", [[@[self] arrayByAddingObjectsFromArray:args] componentsJoinedByString:@" "]);
+    
     // Run
     [task launch];
     
     if (waitForOutput) {
         [task waitUntilExit];
     }
-     
+    
     NSData *data = [file readDataToEndOfFile];
     
     NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
@@ -50,13 +62,10 @@ NSString* runCommand(NSString *command, NSArray *args, BOOL waitForOutput) {
     }
     return result;
 }
-
-//
-// Runs a shell command with authorization and either returns output or returns immediately with no output
-//
-NSString* runAuthorizedCommand(NSString *command, NSArray *args, AuthorizationRef authorization, BOOL waitForOutput) {
+- (NSString *)runWithArgs:(NSArray *)args authorization:(AuthorizationRef)authorization waitForOutput:(BOOL)waitForOutput
+{
     // Convert command into const char*;
-    const char *commandArg = strdup([command UTF8String]);
+    const char *commandArg = strdup([self UTF8String]);
     
     // Convert args array into void-* array.
     const char **argv = (const char **)malloc(sizeof(char *) * [args count] + 1);
@@ -75,12 +84,12 @@ NSString* runAuthorizedCommand(NSString *command, NSArray *args, AuthorizationRe
     processOutput = NULL;
     
     // Log
-    DLog(@"Running Authorized: %@", [[[NSArray arrayWithObjects:command, nil] arrayByAddingObjectsFromArray:args] componentsJoinedByString:@" "]);
+    if (IsLogging) DLog(@"Running Authorized: %@", [[@[self] arrayByAddingObjectsFromArray:args] componentsJoinedByString:@" "]);
     
     // Run command with authorization
     FILE **processOutputRef = waitForOutput ? &processOutput : NULL;
     OSStatus processError = AuthorizationExecuteWithPrivileges(authorization, commandArg, kAuthorizationFlagDefaults, (char *const *)argv, processOutputRef);
-
+    
     // Release command and args
     free((char*)commandArg);
     if (args) {
@@ -96,10 +105,10 @@ NSString* runAuthorizedCommand(NSString *command, NSArray *args, AuthorizationRe
     // Check for errors
     if (processError != errAuthorizationSuccess) {
         DLog(@"Error: %d", processError);
-
-    // Only return output if no errors
+        
+        // Only return output if no errors
     } else if (waitForOutput) {
-            
+        
         // Read the output from the FILE pipe up to EOF (or other error).
 #define READ_BUFFER_SIZE 64
         char readBuffer[READ_BUFFER_SIZE];
@@ -122,7 +131,7 @@ NSString* runAuthorizedCommand(NSString *command, NSArray *args, AuthorizationRe
     }
     
     // Close pipe
-	fclose(processOutput);
+    fclose(processOutput);
     
     // Log
     if (waitForOutput) {
@@ -134,24 +143,46 @@ NSString* runAuthorizedCommand(NSString *command, NSArray *args, AuthorizationRe
     return result;
 }
 
-// Utility method - combine two dictionaries by adding contents of second if missing in first
-//
-NSDictionary* mergeDictionaries(NSDictionary *dictionary, NSDictionary *other) {
-    
-    // Create empty dictionary for results
-    NSMutableDictionary *result = [NSMutableDictionary dictionary];
-    
-    // Add dictionaries - notice order
-    if (other) {
-        [result addEntriesFromDictionary:other];
-    }
-    if (dictionary) {
-        [result addEntriesFromDictionary:dictionary];
-    }
-    
-    // Return result
-    return result;
+@end
+
+
+
+#pragma mark - NSString (Utilities)
+
+@implementation NSString (Utilities)
+
+- (BOOL)nonBlank
+{
+    static NSCharacterSet *nonBlanks;
+    if (!nonBlanks) nonBlanks = [[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet];
+    return [self rangeOfCharacterFromSet:nonBlanks].location != NSNotFound;
 }
+- (NSString *)trimToNil
+{
+    NSString *trimmed = [self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    return [trimmed length] > 0 ? trimmed : nil;
+}
+
+- (void)startWithArgs:(NSArray *)args
+{
+    [self runWithArgs:args waitForOutput:NO];
+}
+- (NSString *)runWithArgs:(NSArray *)args
+{
+    return [self runWithArgs:args waitForOutput:YES];
+}
+- (void)startWithArgs:(NSArray *)args authorization:(AuthorizationRef)authorization
+{
+    [self runWithArgs:args authorization:authorization waitForOutput:NO];
+}
+- (NSString *)runWithArgs:(NSArray *)args authorization:(AuthorizationRef)authorization
+{
+    return [self runWithArgs:args authorization:authorization waitForOutput:YES];
+}
+
+@end
+
+/*
 
 //
 // Utility method - check if NSString is blank
@@ -166,7 +197,7 @@ BOOL isBlankString(id string) {
     }
     return YES;
 }
-    
+
 //
 // Utility method - check if NSString is non-blank
 //
@@ -174,42 +205,4 @@ BOOL isNonBlankString(id value) {
     return (value && value != [NSNull null] && [value isKindOfClass:[NSString class]] && [value length] > 0);
 }
 
-//
-// Utility method - check if dictionary is blank
-//
-BOOL isBlankDictionary(NSDictionary *dictionary) {
-    if (dictionary) {
-        for (id key in dictionary) {
-            id value = [dictionary valueForKey:key];
-            if (! isBlankString(value)) {
-                return NO;
-            }
-        }
-    }
-    
-    return YES;
-}
-
-//
-// Utility method - check if dictionaries have equal string keys and values
-//
-BOOL isEqualStringDictionary(NSDictionary *a, NSDictionary *b) {
-    if (!a || !b) {
-        return (!a || !b ? YES : NO);
-    } else {
-        for (id key in a) {
-            id aVal = [a valueForKey:key];
-            id bVal = [b valueForKey:key];
-            BOOL aIsStr = isNonBlankString(aVal);
-            BOOL bIsStr = isNonBlankString(bVal);
-            if (!aIsStr || !bIsStr) {
-                return (!aIsStr && !bIsStr ? [aVal isEqual:bVal] : NO);
-            } if (![aVal isEqualToString:bVal]) {
-                return NO;
-            }
-        }
-    }
-    
-    return YES;
-}
-
+*/

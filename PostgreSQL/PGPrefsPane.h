@@ -8,33 +8,46 @@
 
 #import <PreferencePanes/PreferencePanes.h>
 #import <SecurityInterface/SFAuthorizationView.h>
+#import "NSString+Utilities.h"
+#import "NSDictionary+Utilities.h"
 
-@class PostgrePrefs;
+@class PGPrefsPane;
 
-@protocol PostgrePrefsDelegate <NSObject>
+#pragma mark - Constants
+
+extern NSString *const PGPrefsUsernameKey;
+extern NSString *const PGPrefsBinDirectoryKey;
+extern NSString *const PGPrefsDataDirectoryKey;
+extern NSString *const PGPrefsLogFileKey;
+extern NSString *const PGPrefsPortKey;
+extern NSString *const PGPrefsAutoStartupKey;
+
+
+
+#pragma mark - PGPrefsPaneDelegate
+
+@protocol PGPrefsPaneDelegate <NSObject>
 @required
-- (void)postgrePrefsDidAuthorize:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidDeauthorize:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidLoad:(PostgrePrefs *) prefs;
-- (void)postgrePrefsWillUnselect:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidClickStartStopServer:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidClickRefresh:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidClickAutoStartup:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidClickResetSettings:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidFinishEditingSettings:(PostgrePrefs *) prefs;
+- (void)postgrePrefsDidAuthorize:(PGPrefsPane *)prefs;
+- (void)postgrePrefsDidDeauthorize:(PGPrefsPane *)prefs;
+- (void)postgrePrefsDidLoad:(PGPrefsPane *)prefs;
+- (void)postgrePrefsWillUnselect:(PGPrefsPane *)prefs;
+- (void)postgrePrefsDidClickStartStopServer:(PGPrefsPane *)prefs;
+- (void)postgrePrefsDidClickRefresh:(PGPrefsPane *)prefs;
+- (void)postgrePrefsDidClickAutoStartup:(PGPrefsPane *)prefs;
+- (void)postgrePrefsDidClickResetSettings:(PGPrefsPane *)prefs;
+- (void)postgrePrefsDidFinishEditingSettings:(PGPrefsPane *)prefs;
 @optional
+// None
 @end
 
-@interface PostgrePrefs : NSPreferencePane <NSTabViewDelegate>
 
-@property (nonatomic, readonly) BOOL autoStartupChangedBySystem;
-@property (nonatomic, readonly) BOOL editingSettings;
-@property (nonatomic, readonly) BOOL invalidSettings;
-@property (nonatomic, readonly) BOOL canStartStop;
-@property (nonatomic, readonly) BOOL canRefresh;
-@property (nonatomic, readonly) BOOL canChangeAutoStartup;
 
-@property (nonatomic, strong) id<PostgrePrefsDelegate> delegate;
+#pragma mark - PGPrefsPane
+
+@interface PGPrefsPane : NSPreferencePane <NSTabViewDelegate>
+
+@property (nonatomic, strong) id<PGPrefsPaneDelegate> delegate;
 
 @property (nonatomic, weak) IBOutlet SFAuthorizationView *authView;
 @property (nonatomic, weak) IBOutlet NSTabView *authTabs;
@@ -61,23 +74,14 @@
 @property (nonatomic, weak) IBOutlet NSFormCell *settingsLogFile;
 @property (nonatomic, weak) IBOutlet NSFormCell *settingsPort;
 
-- (NSDictionary *)guiPreferences;
-- (void)setGuiPreferences:(NSDictionary *) prefs;
-- (NSDictionary *)persistedPreferences;
-- (void)setPersistedPreferences:(NSDictionary *) prefs;
-
-- (NSString *)username;
-- (void)setUsername:(NSString *)val;
-- (NSString *)binDirectory;
-- (void)setBinDirectory:(NSString *)val;
-- (NSString *)dataDirectory;
-- (void)setDataDirectory:(NSString *)val;
-- (NSString *)logFile;
-- (void)setLogFile:(NSString *)val;
-- (NSString *)port;
-- (void)setPort:(NSString *)val;
-- (BOOL)autoStartup;
-- (void)setAutoStartup:(BOOL)enabled;
+@property (nonatomic, strong) NSDictionary *guiPreferences;
+@property (nonatomic, strong) NSDictionary *savedPreferences;
+@property (nonatomic, strong) NSString *username;
+@property (nonatomic, strong) NSString *binDirectory;
+@property (nonatomic, strong) NSString *dataDirectory;
+@property (nonatomic, strong) NSString *logFile;
+@property (nonatomic, strong) NSString *port;
+@property (nonatomic) BOOL autoStartup;
 
 - (IBAction)startStopServer:(id)sender;
 - (IBAction)refreshButton:(id)sender;
@@ -88,7 +92,7 @@
 
 - (void)initAuthorization;
 - (void)destroyAuthorization;
-- (BOOL)isAuthorized;
+- (BOOL)authorized;
 - (AuthorizationRef)authorization;
 
 - (void)displayStarted;
@@ -101,11 +105,11 @@
 - (void)displayUnlocked;
 - (void)displayWillChangeAutoStartup;
 - (void)displayDidChangeAutoStartup;
-- (void)displayError:(NSString *) errMsg;
+- (void)displayError:(NSString *)errMsg;
 - (void)displayNoError;
 - (void)displayUpdatingSettings;
 - (void)displayUpdatedSettings;
-- (void)displayAutoStartupError:(NSString *) errMsg;
+- (void)displayAutoStartupError:(NSString *)errMsg;
 - (void)displayAutoStartupNoError;
 
 @end

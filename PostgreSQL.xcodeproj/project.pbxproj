@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		20079E511B47DFDC00521807 /* NSString+Utilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 20079E4F1B47DFDC00521807 /* NSString+Utilities.h */; };
+		20079E521B47DFDC00521807 /* NSString+Utilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 20079E501B47DFDC00521807 /* NSString+Utilities.m */; };
+		20079E551B47E3F900521807 /* NSDictionary+Utilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 20079E531B47E3F800521807 /* NSDictionary+Utilities.h */; };
+		20079E561B47E3F900521807 /* NSDictionary+Utilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 20079E541B47E3F900521807 /* NSDictionary+Utilities.m */; };
 		2013DA9C149E956D00579DFF /* PGPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 2013DA9A149E956D00579DFF /* PGPrefsController.h */; };
 		2013DA9D149E956D00579DFF /* PGPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2013DA9B149E956D00579DFF /* PGPrefsController.m */; };
 		20164595149DFFBA009ACF7A /* AppleScriptObjC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20164594149DFFBA009ACF7A /* AppleScriptObjC.framework */; };
@@ -23,8 +27,6 @@
 		2035B1BD149C8BD9009A2972 /* started.png in Resources */ = {isa = PBXBuildFile; fileRef = 2035B1B9149C8BD9009A2972 /* started.png */; };
 		2035B1BE149C8BD9009A2972 /* stopped.png in Resources */ = {isa = PBXBuildFile; fileRef = 2035B1BA149C8BD9009A2972 /* stopped.png */; };
 		2035B202149DD7A3009A2972 /* PGPrefsRunAsAdmin.applescript in Sources */ = {isa = PBXBuildFile; fileRef = 2035B201149DD7A3009A2972 /* PGPrefsRunAsAdmin.applescript */; };
-		20372B9114A12996003DEA23 /* PGPrefsUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 20372B8F14A12996003DEA23 /* PGPrefsUtilities.h */; };
-		20372B9214A12996003DEA23 /* PGPrefsUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 20372B9014A12996003DEA23 /* PGPrefsUtilities.m */; };
 		20372B9414A23070003DEA23 /* PGPrefsDetectDefaults.sh in Resources */ = {isa = PBXBuildFile; fileRef = 20372B9314A23070003DEA23 /* PGPrefsDetectDefaults.sh */; };
 		20381A8319F0F10A00559533 /* PostgreSQL.iconset in Resources */ = {isa = PBXBuildFile; fileRef = 20381A8219F0F10A00559533 /* PostgreSQL.iconset */; };
 		20B43C7D14AC878700C967E1 /* refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = 20B43C7C14AC878700C967E1 /* refresh.png */; };
@@ -35,6 +37,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		20079E4E1B47DC2500521807 /* Common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
+		20079E4F1B47DFDC00521807 /* NSString+Utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+Utilities.h"; sourceTree = "<group>"; };
+		20079E501B47DFDC00521807 /* NSString+Utilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+Utilities.m"; sourceTree = "<group>"; };
+		20079E531B47E3F800521807 /* NSDictionary+Utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+Utilities.h"; sourceTree = "<group>"; };
+		20079E541B47E3F900521807 /* NSDictionary+Utilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+Utilities.m"; sourceTree = "<group>"; };
 		2013DA9A149E956D00579DFF /* PGPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGPrefsController.h; sourceTree = "<group>"; };
 		2013DA9B149E956D00579DFF /* PGPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGPrefsController.m; sourceTree = "<group>"; };
 		20164594149DFFBA009ACF7A /* AppleScriptObjC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppleScriptObjC.framework; path = System/Library/Frameworks/AppleScriptObjC.framework; sourceTree = SDKROOT; };
@@ -59,8 +66,6 @@
 		2035B1B9149C8BD9009A2972 /* started.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = started.png; sourceTree = "<group>"; };
 		2035B1BA149C8BD9009A2972 /* stopped.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = stopped.png; sourceTree = "<group>"; };
 		2035B201149DD7A3009A2972 /* PGPrefsRunAsAdmin.applescript */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.applescript; path = PGPrefsRunAsAdmin.applescript; sourceTree = "<group>"; };
-		20372B8F14A12996003DEA23 /* PGPrefsUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGPrefsUtilities.h; sourceTree = "<group>"; };
-		20372B9014A12996003DEA23 /* PGPrefsUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGPrefsUtilities.m; sourceTree = "<group>"; };
 		20372B9314A23070003DEA23 /* PGPrefsDetectDefaults.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = PGPrefsDetectDefaults.sh; sourceTree = "<group>"; };
 		20381A8219F0F10A00559533 /* PostgreSQL.iconset */ = {isa = PBXFileReference; lastKnownFileType = folder.iconset; path = PostgreSQL.iconset; sourceTree = "<group>"; };
 		20B43C7C14AC878700C967E1 /* refresh.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = refresh.png; sourceTree = "<group>"; };
@@ -137,8 +142,11 @@
 				2035B19F149C8B83009A2972 /* PGPrefsPane.m */,
 				2013DA9A149E956D00579DFF /* PGPrefsController.h */,
 				2013DA9B149E956D00579DFF /* PGPrefsController.m */,
-				20372B8F14A12996003DEA23 /* PGPrefsUtilities.h */,
-				20372B9014A12996003DEA23 /* PGPrefsUtilities.m */,
+				20079E4F1B47DFDC00521807 /* NSString+Utilities.h */,
+				20079E501B47DFDC00521807 /* NSString+Utilities.m */,
+				20079E531B47E3F800521807 /* NSDictionary+Utilities.h */,
+				20079E541B47E3F900521807 /* NSDictionary+Utilities.m */,
+				20079E4E1B47DC2500521807 /* Common.h */,
 				2035B198149C8B83009A2972 /* Supporting Files */,
 			);
 			path = PostgreSQL;
@@ -172,8 +180,9 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				20079E551B47E3F900521807 /* NSDictionary+Utilities.h in Headers */,
 				2013DA9C149E956D00579DFF /* PGPrefsController.h in Headers */,
-				20372B9114A12996003DEA23 /* PGPrefsUtilities.h in Headers */,
+				20079E511B47DFDC00521807 /* NSString+Utilities.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -264,9 +273,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				2035B1A0149C8B83009A2972 /* PGPrefsPane.m in Sources */,
+				20079E521B47DFDC00521807 /* NSString+Utilities.m in Sources */,
 				2035B202149DD7A3009A2972 /* PGPrefsRunAsAdmin.applescript in Sources */,
+				20079E561B47E3F900521807 /* NSDictionary+Utilities.m in Sources */,
 				2013DA9D149E956D00579DFF /* PGPrefsController.m in Sources */,
-				20372B9214A12996003DEA23 /* PGPrefsUtilities.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

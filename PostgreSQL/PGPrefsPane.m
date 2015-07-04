@@ -8,79 +8,98 @@
 
 #import "PGPrefsPane.h"
 #import "PGPrefsController.h"
-#import "PGPrefsUtilities.h"
 
-@interface PostgrePrefs()
-    @property (nonatomic, readwrite) BOOL autoStartupChangedBySystem;
-    @property (nonatomic, readwrite) BOOL editingSettings;
-    @property (nonatomic, readwrite) BOOL invalidSettings;
+#pragma mark - Constants
+
+NSString *const PGPrefsUsernameKey      = @"Username";
+NSString *const PGPrefsBinDirectoryKey  = @"BinDirectory";
+NSString *const PGPrefsDataDirectoryKey = @"DataDirectory";
+NSString *const PGPrefsLogFileKey       = @"LogFile";
+NSString *const PGPrefsPortKey          = @"Port";
+NSString *const PGPrefsAutoStartupKey   = @"AutoStartup";
+
+
+
+#pragma mark - Interfaces
+
+@interface PGPrefsPane()
+    @property (nonatomic) BOOL autoStartupChangedBySystem;
+    @property (nonatomic) BOOL editingSettings;
+    @property (nonatomic) BOOL invalidSettings;
+    @property (nonatomic) BOOL canStartStop;
+    @property (nonatomic) BOOL canRefresh;
+    @property (nonatomic) BOOL canChangeAutoStartup;
 @end
 
-@implementation PostgrePrefs
 
-- (NSString *)username {
+
+#pragma mark - PGPrefsPane
+
+@implementation PGPrefsPane
+
+- (NSString *)username
+{
     return [self.settingsUsername stringValue];
 }
-
-- (void)setUsername:(NSString *)val {
-    [self.settingsUsername setStringValue:val];
+- (void)setUsername:(NSString *)val
+{
+    [self.settingsUsername setStringValue:[val trimToNil]?:@""];
 }
-
-- (NSString *)binDirectory {
+- (NSString *)binDirectory
+{
     return [self.settingsBinDir stringValue];
 }
-
-- (void)setBinDirectory:(NSString *)val {
-    [self.settingsBinDir setStringValue:val];
+- (void)setBinDirectory:(NSString *)val
+{
+    [self.settingsBinDir setStringValue:[val trimToNil]?:@""];
 }
-
-- (NSString *)dataDirectory {
+- (NSString *)dataDirectory
+{
     return [self.settingsDataDir stringValue];
 }
-
-- (void)setDataDirectory:(NSString *)val {
-    [self.settingsDataDir setStringValue:val];
+- (void)setDataDirectory:(NSString *)val
+{
+    [self.settingsDataDir setStringValue:[val trimToNil]?:@""];
 }
-
-- (NSString *)logFile {
+- (NSString *)logFile
+{
     return [self.settingsLogFile stringValue];
 }
-
-- (void)setLogFile:(NSString *)val {
-    [self.settingsLogFile setStringValue:val];
+- (void)setLogFile:(NSString *)val
+{
+    [self.settingsLogFile setStringValue:[val trimToNil]?:@""];
 }
-
-- (NSString *)port {
+- (NSString *)port
+{
     return [self.settingsPort stringValue];
 }
-
-- (void)setPort:(NSString *)val {
-    [self.settingsPort setStringValue:val];
+- (void)setPort:(NSString *)val
+{
+    [self.settingsPort setStringValue:[val trimToNil]?:@""];
 }
-
-- (BOOL)autoStartup {
-    return [self.autoStartupCheckbox state] == NSOnState;
+- (BOOL)autoStartup
+{
+    return self.autoStartupCheckbox.state == NSOnState;
 }
-
-- (void)setAutoStartup:(BOOL)enabled {
+- (void)setAutoStartup:(BOOL)enabled
+{
     self.autoStartupChangedBySystem = YES;
-    if( enabled  ) {
-        [self.autoStartupCheckbox setState:NSOnState];
-    } else {
-        [self.autoStartupCheckbox setState:NSOffState];
-    }
+    self.autoStartupCheckbox.state = enabled ? NSOnState : NSOffState;
     self.autoStartupChangedBySystem = NO;
 }
 
-- (BOOL)isAuthorized {
+- (BOOL)authorized
+{
     return [self.authView authorizationState] == SFAuthorizationViewUnlockedState;
 }
 
-- (AuthorizationRef)authorization {
+- (AuthorizationRef)authorization
+{
     return [[self.authView authorization] authorizationRef];
 }
 
-- (void)initAuthorization {
+- (void)initAuthorization
+{
     AuthorizationItem items = {kAuthorizationRightExecute, 0, NULL, 0};
     AuthorizationRights rights = {1, &items};
     [self.authView setAuthorizationRights:&rights];
@@ -89,18 +108,21 @@
     [self.authView setAutoupdate:YES];
 }
 
-- (void)destroyAuthorization {
+- (void)destroyAuthorization
+{
     [self.authView deauthorize:[self.authView authorization]];
 }
 
-- (void)postponeAuthorizationTimeout {
-    if ([self isAuthorized]) {
+- (void)postponeAuthorizationTimeout
+{
+    if (self.authorized) {
         // No good way to do this at present - this is just a stub function
         // in case a method presents itself in future.
     }
 }
 
-- (void)authorizationViewDidAuthorize:(SFAuthorizationView *)view {
+- (void)authorizationViewDidAuthorize:(SFAuthorizationView *)view
+{
     // Reset editing settings mode first
     self.editingSettings = NO;
 
@@ -108,18 +130,21 @@
     [self.delegate postgrePrefsDidAuthorize:self];
 }
 
-- (void)authorizationViewDidDeauthorize:(SFAuthorizationView *)view {
+- (void)authorizationViewDidDeauthorize:(SFAuthorizationView *)view
+{
     [self.delegate postgrePrefsDidDeauthorize:self];
     
     // Reset editing settings mode
     self.editingSettings = NO;
 }
 
-- (BOOL)wasEditingSettings {
+- (BOOL)wasEditingSettings
+{
     return self.editingSettings;
 }
 
-- (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem {
+- (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem
+{
     if ([tabView indexOfTabViewItem:tabViewItem] == 0) {
         if (self.editingSettings) {
             [self postponeAuthorizationTimeout];
@@ -131,7 +156,8 @@
     }
 }
 
-- (void)mainViewDidLoad {
+- (void)mainViewDidLoad
+{
     // Remove existing delegate
     if ([self delegate]) {
         DLog(@"Warning - delegate already exists! Removing existing delegate...");
@@ -139,87 +165,71 @@
     }
     
     // Set new delegate
-    [self setDelegate:[[PostgrePrefsController alloc] init]];
+    [self setDelegate:[[PGPrefsController alloc] init]];
 
-    // Reset editing settings mode
-    self.editingSettings = NO;
+    // Reset internal variables
+    _invalidSettings = NO;
+    _canStartStop = YES;
+    _canRefresh = YES;
+    _canChangeAutoStartup = YES;
+    _editingSettings = NO;
 
     // Listen for tab changes
     self.mainTabs.delegate = self;
     
     // Call delegate DidLoad method
     [self.delegate postgrePrefsDidLoad:self];
-    
-    _invalidSettings = NO;
-    _canStartStop = YES;
-    _canRefresh = YES;
-    _canChangeAutoStartup = YES;
 }
 
-- (void)willUnselect {
+- (void)willUnselect
+{
     [self.delegate postgrePrefsWillUnselect:self];
 
     // Reset editing settings mode
     self.editingSettings = NO;
+    
+    // Ensure saved preferences are written to disk
+    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
-- (NSDictionary *)persistedPreferences {
-    return [[NSUserDefaults standardUserDefaults] persistentDomainForName:[[NSBundle bundleForClass:[self class]] bundleIdentifier]];
+- (NSDictionary *)savedPreferences
+{
+    return [[[NSUserDefaults standardUserDefaults] persistentDomainForName:[[NSBundle bundleForClass:[self class]] bundleIdentifier]] stringDictionary];
 }
-
-- (void)setPersistedPreferences:(NSDictionary *) prefs {
+- (void)setSavedPreferences:(NSDictionary *)prefs
+{
     // Remove existing prefs
     [[NSUserDefaults standardUserDefaults] removePersistentDomainForName:[[NSBundle bundleForClass: [self class]] bundleIdentifier]];
     
     // Save new prefs
-    if (! isBlankDictionary(prefs)) {
-        [[NSUserDefaults standardUserDefaults] setPersistentDomain:prefs forName: [[NSBundle bundleForClass:[self class]] bundleIdentifier]];
+    prefs = [prefs stringDictionary];
+    if (prefs.nonBlank) {
+        [[NSUserDefaults standardUserDefaults] setPersistentDomain:prefs forName:[[NSBundle bundleForClass:[self class]] bundleIdentifier]];
     }
 }
 
-- (NSDictionary *)guiPreferences {
-    return [NSDictionary dictionaryWithObjectsAndKeys:
-            [[self.settingsUsername stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]], @"Username", 
-            [[self.settingsBinDir stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]], @"BinDirectory", 
-            [[self.settingsDataDir stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]], @"DataDirectory", 
-            [[self.settingsLogFile stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]], @"LogFile",
-            [[self.settingsPort stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]], @"Port",
-            ([self.autoStartupCheckbox state] == NSOnState ? @"Yes" : @"No"), @"AutoStartup",
-            nil];
+- (NSDictionary *)guiPreferences
+{
+    return [@{
+             PGPrefsUsernameKey:self.username,
+             PGPrefsBinDirectoryKey:self.binDirectory,
+             PGPrefsDataDirectoryKey:self.dataDirectory,
+             PGPrefsLogFileKey:self.logFile,
+             PGPrefsPortKey:self.port,
+             PGPrefsAutoStartupKey:(self.autoStartup ? @"Yes" : @"No")
+    } stringDictionary];
 }
-
-- (void)setGuiPreference:(NSDictionary *)prefs key:(NSString *)key gui:(NSFormCell *)cell {
+- (void)setGuiPreferences:(NSDictionary *)prefs
+{
+    prefs = [prefs stringDictionary];
     
-    // Clean key
-    key = [key stringByTrimmingCharactersInSet: [NSCharacterSet whitespaceCharacterSet]];
-    
-    // Get value from prefs - may not exist
-    id value = [prefs objectForKey:key];
-    
-    // Value exists
-    if (value && value != [NSNull null] && [value isKindOfClass:[NSString class]] && [value length] > 0) {
-        
-        [cell setStringValue:value];
-        
-    // No value - set blank
-    } else {
-        [cell setStringValue:@""];
-    }
-}
-
-- (void)setGuiPreferences:(NSDictionary *) prefs defaults:(NSDictionary *) defaults {
-    [self setGuiPreference:prefs key:@"Username" gui:self.settingsUsername];
-    [self setGuiPreference:prefs key:@"BinDirectory" gui:self.settingsBinDir];
-    [self setGuiPreference:prefs key:@"DataDirectory" gui:self.settingsDataDir];
-    [self setGuiPreference:prefs key:@"LogFile" gui:self.settingsLogFile];
-    [self setGuiPreference:prefs key:@"Port" gui:self.settingsPort];
-    self.autoStartupChangedBySystem = YES;
-    [self.autoStartupCheckbox setState:([[prefs objectForKey:@"AutoStartup"] isEqualToString:@"Yes"] || [[prefs objectForKey:@"AutoStartup"] isEqualToString:@"true"] ? NSOnState : NSOffState)];
-    self.autoStartupChangedBySystem = NO;
-}
-
-- (void)setGuiPreferences:(NSDictionary *) prefs {
-    [self setGuiPreferences:prefs defaults:nil];
+    self.username = prefs[PGPrefsUsernameKey];
+    self.binDirectory = prefs[PGPrefsBinDirectoryKey];
+    self.dataDirectory = prefs[PGPrefsDataDirectoryKey];
+    self.logFile = prefs[PGPrefsLogFileKey];
+    self.port = prefs[PGPrefsPortKey];
+    BOOL autoStartup = [prefs[PGPrefsAutoStartupKey] isEqualToString:@"Yes"] || [prefs[PGPrefsAutoStartupKey] isEqualToString:@"true"];
+    self.autoStartup = autoStartup;
 }
 
 - (void)setCanStartStop:(BOOL)canStartStop
@@ -250,7 +260,8 @@
     self.autoStartupCheckbox.enabled = canChangeAutoStartup;
 }
 
-- (void)displayStarted {
+- (void)displayStarted
+{
     NSString *startedPath = [[self bundle] pathForResource:@"started" ofType:@"png"];
     NSImage *started = [[NSImage alloc] initWithContentsOfFile:startedPath];
     
@@ -269,7 +280,8 @@
     [self.spinner stopAnimation:self];
 }
 
-- (void)displayStopped {
+- (void)displayStopped
+{
     NSString *stoppedPath = [[self bundle] pathForResource:@"stopped" ofType:@"png"];
     NSImage *stopped = [[NSImage alloc] initWithContentsOfFile:stoppedPath];
     
@@ -288,7 +300,8 @@
     [self.spinner stopAnimation:self];
 }
 
-- (void)displayStarting {
+- (void)displayStarting
+{
     NSString *checkingPath = [[self bundle] pathForResource:@"checking" ofType:@"png"];
     NSImage *checking = [[NSImage alloc] initWithContentsOfFile:checkingPath];
     [self.statusLabel setTitleWithMnemonic:@"Starting..."];
@@ -316,7 +329,8 @@
     [self.spinner startAnimation:self];
 }
 
-- (void)displayChecking {
+- (void)displayChecking
+{
     NSString *checkingPath = [[self bundle] pathForResource:@"checking" ofType:@"png"];
     NSImage *checking = [[NSImage alloc] initWithContentsOfFile:checkingPath];
     
@@ -336,7 +350,8 @@
     [self displayAutoStartupNoError];
 }
 
-- (void)displayUnknown {
+- (void)displayUnknown
+{
     NSString *stoppedPath = [[self bundle] pathForResource:@"stopped" ofType:@"png"];
     NSImage *stopped = [[NSImage alloc] initWithContentsOfFile:stoppedPath];
     
@@ -345,7 +360,7 @@
     [self.statusLabel setTitleWithMnemonic:@"Unknown"];
     [self.statusLabel setTextColor:[NSColor redColor]];
     [self.statusImage setImage:stopped];
-    if (isBlankString([self.startStopInfo stringValue])) {
+    if (! self.startStopInfo.stringValue.nonBlank) {
         [self.startStopInfo setTitleWithMnemonic:@"Please check the values in the Settings tab and try again."];
     }
     
@@ -357,12 +372,14 @@
     [self.spinner stopAnimation:self];
 }
 
-- (void)displayLocked {
+- (void)displayLocked
+{
     [self.authTabs selectTabViewItemWithIdentifier:@"locked"];
 }
 
-- (void)displayUnlocked {
-    NSString *identifier = [self isAuthorized] ? @"unlocked" : @"locked";
+- (void)displayUnlocked
+{
+    NSString *identifier = self.authorized ? @"unlocked" : @"locked";
     [self.authTabs selectTabViewItemWithIdentifier:identifier];
     [self.mainTabs selectTabViewItemAtIndex:0];
 }
@@ -385,60 +402,71 @@
     [self.autoStartupSpinner stopAnimation:self];
 }
 
-- (bool)isError {
+- (bool)isError
+{
     return ![self.errorLabel isHidden];
 }
 
-- (void)displayError:(NSString *)errMsg {
+- (void)displayError:(NSString *)errMsg
+{
     [self.errorLabel setTitleWithMnemonic:errMsg];
     [self.errorView setHidden:NO];
     [self.startStopInfo setHidden:YES];
 }
 
-- (void)displayNoError {
+- (void)displayNoError
+{
     [self.errorLabel setTitleWithMnemonic:@""];
     [self.errorView setHidden:YES];
     [self.startStopInfo setHidden:NO];
 }
 
-- (void)displayAutoStartupError:(NSString *) errMsg {
+- (void)displayAutoStartupError:(NSString *)errMsg
+{
     [self.autoStartupErrorLabel setTitleWithMnemonic:errMsg];
     [self.autoStartupErrorView setHidden:NO];
     [self.autoStartupInfo setHidden:YES];
 }
 
-- (void)displayAutoStartupNoError {
+- (void)displayAutoStartupNoError
+{
     [self.autoStartupErrorLabel setTitleWithMnemonic:@""];
     [self.autoStartupErrorView setHidden:YES];
     [self.autoStartupInfo setHidden:NO];
 }
 
-- (void)displayUpdatingSettings {
+- (void)displayUpdatingSettings
+{
     [self.resetSettingsButton setEnabled:NO];
 }
 
-- (void)displayUpdatedSettings {
+- (void)displayUpdatedSettings
+{
     [self.resetSettingsButton setEnabled:YES];
 }
 
-- (IBAction)toggleAutoStartup:(id)sender {
+- (IBAction)toggleAutoStartup:(id)sender
+{
     [self postponeAuthorizationTimeout];
     if (!self.autoStartupChangedBySystem) {
         [self.delegate postgrePrefsDidClickAutoStartup:self];
     }
 }
 
-- (IBAction)startStopServer:(id)sender {
+- (IBAction)startStopServer:(id)sender
+{
     [self postponeAuthorizationTimeout];
     [self.delegate postgrePrefsDidClickStartStopServer:self];
 }
 
-- (IBAction)resetSettings:(id)sender {
+- (IBAction)resetSettings:(id)sender
+{
     [self postponeAuthorizationTimeout];
     [self.delegate postgrePrefsDidClickResetSettings:self];
 }
 
-- (IBAction)refreshButton:(id)sender {
+- (IBAction)refreshButton:(id)sender
+{
     [self postponeAuthorizationTimeout];
     [self.delegate postgrePrefsDidClickRefresh:self];
 }

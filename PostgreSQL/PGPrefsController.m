@@ -7,31 +7,43 @@
 //
 
 #import "PGPrefsController.h"
-#import "PGPrefsUtilities.h"
 
-NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.postgresql.plist";
+#pragma mark - Interfaces
 
-@implementation PostgrePrefsController
+@interface PGPrefsController()
+@property (nonatomic, readwrite) PGPrefsStatus status;
+@end
 
-- (NSString*)runShell:(PostgrePrefs *) prefs command:(NSArray *) command {
-    return runCommand(@"/bin/bash", [@[@"-c"] arrayByAddingObjectsFromArray:command], YES);
+
+
+#pragma mark - PGPrefsController
+
+@implementation PGPrefsController
+
+- (NSString*)runShell:(PGPrefsPane *)prefs command:(NSArray *)command
+{
+    return [@"/bin/bash" runWithArgs:[@[@"-c"] arrayByAddingObjectsFromArray:command]];
 }
-- (void)runShellNoOutput:(PostgrePrefs *) prefs command:(NSArray *) command {
-    runCommand(@"/bin/bash", [@[@"-c"] arrayByAddingObjectsFromArray:command], NO);
+- (void)runShellNoOutput:(PGPrefsPane *)prefs command:(NSArray *)command
+{
+    [@"/bin/bash" startWithArgs:[@[@"-c"] arrayByAddingObjectsFromArray:command]];
 }
-- (NSString*)runAuthorizedShell:(PostgrePrefs *) prefs command:(NSArray *) command {    
+- (NSString*)runAuthorizedShell:(PGPrefsPane *)prefs command:(NSArray *)command
+{
     NSString *path = [[prefs bundle] pathForResource:@"PGPrefsRunAsAdmin" ofType:@"scpt"];
-    return runAuthorizedCommand(@"/usr/bin/osascript", [@[path] arrayByAddingObjectsFromArray:command], [prefs authorization], YES);
+    return [@"/usr/bin/osascript" runWithArgs:[@[path] arrayByAddingObjectsFromArray:command] authorization:prefs.authorization];
 }
-- (void)runAuthorizedShellNoOutput:(PostgrePrefs *) prefs command:(NSArray *) command {
+- (void)runAuthorizedShellNoOutput:(PGPrefsPane *)prefs command:(NSArray *)command
+{
     NSString *path = [[prefs bundle] pathForResource:@"PGPrefsRunAsAdmin" ofType:@"scpt"];
-    runAuthorizedCommand(@"/usr/bin/osascript", [@[path] arrayByAddingObjectsFromArray:command], [prefs authorization], NO);
+    [@"/usr/bin/osascript" startWithArgs:[@[path] arrayByAddingObjectsFromArray:command] authorization:prefs.authorization];
 }
 
 //
 // Tries to find PostgreSQL installation and generate appropriate start/stop settings.
 //
-- (NSDictionary *)detectPostgreSQLInstallationAndGenerateSettings:(PostgrePrefs *) prefs {
+- (NSDictionary *)detectPostgreSQLInstallationAndGenerateSettings:(PGPrefsPane *)prefs
+{
     NSString *path = [[prefs bundle] pathForResource:@"PGPrefsDetectDefaults" ofType:@"sh"];
     NSString *pg_ctl = [self runAuthorizedShell:prefs command:@[path, [NSString stringWithFormat:@" --DEBUG=%@", (IsLogging ? @"Yes" : @"No") ]]];
     
@@ -41,26 +53,26 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
         NSString *line;
         for (line in lines) {
             if ([line hasPrefix:@"PGUSER="]) {
-                username = [[line substringFromIndex:[@"PGUSER=" length]] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                username = [[line substringFromIndex:[@"PGUSER=" length]] trimToNil]?:@"";
             } else if ([line hasPrefix:@"PGDATA="]) {
-                dataDir = [[line substringFromIndex:[@"PGDATA=" length]] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                dataDir = [[line substringFromIndex:[@"PGDATA=" length]] trimToNil]?:@"";
             } else if ([line hasPrefix:@"PGBIN="]) {
-                binDir = [[line substringFromIndex:[@"PGBIN=" length]] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                binDir = [[line substringFromIndex:[@"PGBIN=" length]] trimToNil]?:@"";
             } else if ([line hasPrefix:@"PGLOG="]) {
-                logFile = [[line substringFromIndex:[@"PGLOG=" length]] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                logFile = [[line substringFromIndex:[@"PGLOG=" length]] trimToNil]?:@"";
             } else if ([line hasPrefix:@"PGPORT="]) {
-                port = [[line substringFromIndex:[@"PGPORT=" length]] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                port = [[line substringFromIndex:[@"PGPORT=" length]] trimToNil]?:@"";
             } else if ([line hasPrefix:@"PGAUTO="]) {
-                autoStartup = [[line substringFromIndex:[@"PGAUTO=" length]] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                autoStartup = [[line substringFromIndex:[@"PGAUTO=" length]] trimToNil]?:@"";
             }
         }
         return @{
-            @"Username":username,
-            @"BinDirectory":binDir,
-            @"DataDirectory":dataDir,
-            @"LogFile":logFile,
-            @"Port":port,
-            @"AutoStartup":autoStartup
+            PGPrefsUsernameKey:username,
+            PGPrefsBinDirectoryKey:binDir,
+            PGPrefsDataDirectoryKey:dataDir,
+            PGPrefsLogFileKey:logFile,
+            PGPrefsPortKey:port,
+            PGPrefsAutoStartupKey:autoStartup
         };
     } else {
         return nil;
@@ -70,34 +82,36 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 // Checks if start/stop/status command requires authorisation - i.e. needs to be run as admin
 //
-- (BOOL)postgreCommandRequiresAuthorisation:(PostgrePrefs *) prefs {
+- (BOOL)postgreCommandRequiresAuthorisation:(PGPrefsPane *)prefs
+{
     NSString *currentUser = NSUserName();
-    return isNonBlankString([prefs username]) && ![[currentUser lowercaseString] isEqualToString:[[prefs username] lowercaseString]];
+    return prefs.username.nonBlank && ![[currentUser lowercaseString] isEqualToString:[[prefs username] lowercaseString]];
 }
 
 //
 // Generates the start/stop/status command
 //
-- (NSString *)generatePostgreCommand:(PostgrePrefs *) prefs command:(NSString *)command {
+- (NSString *)generatePostgreCommand:(PGPrefsPane *)prefs command:(NSString *)command
+{
     NSString *path = [[prefs bundle] pathForResource:@"PGPrefsPostgreSQL" ofType:@"sh"];
     NSString *result = path;
     
-    if (isNonBlankString([prefs username])) {
-        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGUSER=%@\"", [prefs username]]];
+    if (prefs.username.nonBlank) {
+        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGUSER=%@\"", prefs.username]];
     }
-    if (isNonBlankString([prefs dataDirectory])) {
-        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGDATA=%@\"", [prefs dataDirectory]]];
+    if (prefs.dataDirectory.nonBlank) {
+        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGDATA=%@\"", prefs.dataDirectory]];
     }
-    if (isNonBlankString([prefs port])) {
-        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGPORT=%@\"", [prefs port]]];
+    if (prefs.port.nonBlank) {
+        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGPORT=%@\"", prefs.port]];
     }
-    if (isNonBlankString([prefs binDirectory])) {
-        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGBIN=%@\"", [prefs binDirectory]]];
+    if (prefs.binDirectory.nonBlank) {
+        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGBIN=%@\"", prefs.binDirectory]];
     }
-    if (isNonBlankString([prefs logFile])) {
-        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGLOG=%@\"", [prefs logFile]]];
+    if (prefs.logFile.nonBlank) {
+        result = [result stringByAppendingString:[NSString stringWithFormat:@" \"--PGLOG=%@\"", prefs.logFile]];
     }
-    result = [result stringByAppendingString:[NSString stringWithFormat:@" --PGAUTO=%@", ([prefs autoStartup] ? @"Yes" : @"No" ) ]];
+    result = [result stringByAppendingString:[NSString stringWithFormat:@" --PGAUTO=%@", (prefs.autoStartup ? @"Yes" : @"No" ) ]];
     result = [result stringByAppendingString:[NSString stringWithFormat:@" --DEBUG=%@", (IsLogging ? @"Yes" : @"No") ]];
     result = [result stringByAppendingString:[NSString stringWithFormat:@" %@", command]];
     
@@ -107,12 +121,13 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 // Runs 'pg_ctl status' to check if PostgreSQL is running and updates GUI with result
 //
-- (void)checkServerStatus:(PostgrePrefs *) prefs {
-    _status = @"Unknown";
+- (void)checkServerStatus:(PGPrefsPane *)prefs
+{
+    self.status = PGPrefsStatusUnknown;
     @try {
         
         // Ensure not already deauthorised
-        if ([prefs isAuthorized]) {
+        if (prefs.authorized) {
             
             NSString *command = [self generatePostgreCommand:prefs command:@"status"];
             NSString *result = nil;
@@ -126,9 +141,9 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
             
             if (result) {
                 if ([result rangeOfString:@"pg_ctl: server is running"].location != NSNotFound) {
-                    _status = @"Started";
+                    self.status = PGPrefsStarted;
                 } else if ([result rangeOfString:@"pg_ctl: no server running"].location != NSNotFound) {
-                    _status = @"Stopped";
+                    self.status = PGPrefsStopped;
                 } else {
                     [prefs displayError:result];
                 }
@@ -140,26 +155,30 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
         [prefs displayError:[NSString stringWithFormat:@"Error: %@\n%@", [err name], [err reason]]];
     }
     @finally {
-        if ([_status isEqual:@"Started"]) {
-            [prefs displayStarted];            
-        } else if ([_status isEqual:@"Stopped"]) {
-            [prefs displayStopped];
-        } else {
-            [prefs displayUnknown];
+        switch (self.status) {
+            case PGPrefsStarted:
+                [prefs displayStarted];
+                break;
+            case PGPrefsStopped:
+                [prefs displayStopped];
+                break;
+            default:
+                [prefs displayUnknown];
         }
-    }    
+    }
 }
 
 //
 // Runs 'pg_ctl start' and then checks server status
 //
-- (void)startServer:(PostgrePrefs *) prefs {
+- (void)startServer:(PGPrefsPane *)prefs
+{
     [prefs displayStarting];
     NSString *result = nil;
     @try {
         
         // Ensure not already deauthorised
-        if ([prefs isAuthorized]) {
+        if (prefs.authorized) {
 
             NSString *command = [self generatePostgreCommand:prefs command:@"start"];
             
@@ -186,13 +205,14 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 // Runs 'pg_ctl stop' and then checks server status
 //
-- (void)stopServer:(PostgrePrefs *) prefs {
+- (void)stopServer:(PGPrefsPane *)prefs
+{
     [prefs displayStopping];
     NSString *result = nil;
     @try {
         
         // Ensure not already deauthorised
-        if ([prefs isAuthorized]) {
+        if (prefs.authorized) {
 
             NSString *command = [self generatePostgreCommand:prefs command:@"stop"];
             
@@ -219,7 +239,8 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 // On first startup - prepares for authorization, displays splash screen
 //
-- (void)postgrePrefsDidLoad:(PostgrePrefs *)prefs {
+- (void)postgrePrefsDidLoad:(PGPrefsPane *)prefs
+{
     DLog(@"Loaded");
     // Display splash screen
     [prefs initAuthorization];
@@ -229,25 +250,28 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 // User finished authorization - gets settings, displays 'Start & Stop' tab and checks server status
 //
-- (void)postgrePrefsDidAuthorize:(PostgrePrefs *)prefs {
+- (void)postgrePrefsDidAuthorize:(PGPrefsPane *)prefs
+{
     DLog(@"Authorized");
     [prefs displayChecking];
     [prefs displayUnlocked];
     [prefs displayNoError];
     
-    // Retrieve persisted settings and update in gui
-    NSDictionary *settings = [prefs persistedPreferences];
-    NSDictionary *defaults = nil;
+    // Retrieve persisted settings
+    NSDictionary *settings = prefs.savedPreferences;
     DLog(@"Saved Settings: %@", settings);
     
-    // Only generate defaults if we have no persisted settings
-    if (isBlankDictionary(settings)) {
-        defaults = [self detectPostgreSQLInstallationAndGenerateSettings:prefs];
-        DLog(@"Default Settings: %@", defaults);
+    // Only detect defaults if we have no persisted settings
+    if (! settings.nonBlank) {
+        settings = [self detectPostgreSQLInstallationAndGenerateSettings:prefs];
+        DLog(@"Default Settings: %@", settings);
+        
+        // Save the settings
+        prefs.savedPreferences = settings;
     }
-    NSDictionary *combined = mergeDictionaries(settings, defaults);
-    DLog(@"Combined Settings: %@", combined);
-    [prefs setGuiPreferences:combined];
+    
+    // Update in gui
+    prefs.guiPreferences = settings;
     
     [self performSelector:@selector(checkServerStatus:) withObject:prefs afterDelay:0.5];
 }
@@ -258,18 +282,17 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 // 2. User clicked show all
 // 3. Sometimes called after PrefsDidLoad! <-- IMPORTANT
 //
-- (void)postgrePrefsDidDeauthorize:(PostgrePrefs *)prefs {
+- (void)postgrePrefsDidDeauthorize:(PGPrefsPane *)prefs {
     DLog(@"Deauthorized");
     [prefs displayLocked];
-    if ([prefs wasEditingSettings]) {
-        [prefs setPersistedPreferences:[prefs guiPreferences]];
-    }
+    if (prefs.wasEditingSettings) prefs.savedPreferences = prefs.guiPreferences;
 }
 
 //
 // User clicked 'Show All' or quit - deletes authorization, displays splash screen
 //
-- (void)postgrePrefsWillUnselect:(PostgrePrefs *)prefs {
+- (void)postgrePrefsWillUnselect:(PGPrefsPane *)prefs
+{
     DLog(@"Unselected");
     [prefs destroyAuthorization]; // This will trigger call to DidDeauthorise
     [prefs displayLocked];
@@ -278,8 +301,9 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 // User clicked button to start/stop server - calls start/stop command
 //
-- (void)postgrePrefsDidClickStartStopServer:(PostgrePrefs *)prefs {
-    if ([_status isEqualToString:@"Started"]) {
+- (void)postgrePrefsDidClickStartStopServer:(PGPrefsPane *)prefs
+{
+    if (self.status == PGPrefsStarted) {
         [prefs displayStopping];
         [self performSelector:@selector(stopServer:) withObject:prefs afterDelay:0.2];
     } else {
@@ -291,12 +315,13 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 // Adds or removes postgresql launch agent in launchctl
 //
-- (BOOL)setPostgreLaunchAgent:(PostgrePrefs *) prefs enabled:(BOOL)enabled {
+- (BOOL)setPostgreLaunchAgent:(PGPrefsPane *)prefs enabled:(BOOL)enabled
+{
     NSString *result = nil;
     @try {
         
         // Ensure not already deauthorised
-        if ([prefs isAuthorized]) {
+        if (prefs.authorized) {
             
             NSString *command = [self generatePostgreCommand:prefs command:(enabled ? @"AutoOn" : @"AutoOff")];
             
@@ -323,7 +348,8 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 // Apply auto-startup - adds/removes launchagent, and if fails then reverts GUI
 //
-- (void)applyAutoStartup:(PostgrePrefs *) prefs {
+- (void)applyAutoStartup:(PGPrefsPane *)prefs
+{
     [prefs displayNoError];
     [prefs displayAutoStartupNoError];
     if( [prefs autoStartup]  ) {
@@ -334,13 +360,14 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
         [self setPostgreLaunchAgent:prefs enabled:NO];
         [prefs setAutoStartup:NO];
     }
-    [prefs setPersistedPreferences:[prefs guiPreferences]];
+    prefs.savedPreferences = prefs.guiPreferences;
 }
 
 //
 // Apply auto-startup and trigger check status afterwards
 //
-- (void)applyAutoStartupAndCheckStatus:(PostgrePrefs *) prefs {
+- (void)applyAutoStartupAndCheckStatus:(PGPrefsPane *)prefs
+{
     [self applyAutoStartup:prefs];
     [self performSelector:@selector(checkServerStatus:) withObject:prefs afterDelay:3.0];
 }
@@ -348,7 +375,8 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 // Apply auto-startup and re-enable checkbox
 //
-- (void)applyAutoStartupAndNotifyCompleted:(PostgrePrefs *) prefs {
+- (void)applyAutoStartupAndNotifyCompleted:(PGPrefsPane *)prefs
+{
     [self applyAutoStartup:prefs];
     [prefs displayDidChangeAutoStartup];
 }
@@ -356,16 +384,18 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 // Settings updated - displays checking, saves prefs, updates launchctl & checks server status
 //
-- (void)applyUpdatedSettings:(PostgrePrefs *) prefs {
+- (void)applyUpdatedSettings:(PGPrefsPane *)prefs
+{
     [prefs displayChecking];
-    [prefs setPersistedPreferences:[prefs guiPreferences]];
+    prefs.savedPreferences = prefs.guiPreferences;
     [self performSelector:@selector(applyAutoStartupAndCheckStatus:) withObject:prefs afterDelay:0.2];
 }
 
 //
 // User changed auto-startup
 //
-- (void)postgrePrefsDidClickAutoStartup:(PostgrePrefs *) prefs {
+- (void)postgrePrefsDidClickAutoStartup:(PGPrefsPane *)prefs
+{
     [prefs displayWillChangeAutoStartup];
     [self performSelectorInBackground:@selector(applyAutoStartupAndNotifyCompleted:) withObject:prefs];
 }
@@ -373,7 +403,8 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 // Check server status
 //
-- (void)refresh:(PostgrePrefs *) prefs {
+- (void)refresh:(PGPrefsPane *)prefs
+{
     [prefs displayNoError];
     [prefs displayAutoStartupNoError];
     [prefs displayChecking];
@@ -383,20 +414,27 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 // User clicked refresh
 //
-- (void)postgrePrefsDidClickRefresh:(PostgrePrefs *) prefs {
+- (void)postgrePrefsDidClickRefresh:(PGPrefsPane *)prefs
+{
     [self refresh:prefs];
 }
 
 //
 // User changed some settings - checks server status using new settings
 //
-- (void)postgrePrefsDidFinishEditingSettings:(PostgrePrefs *)prefs {
-    if ([prefs isAuthorized]) {
-        if (! isEqualStringDictionary([prefs guiPreferences], [prefs persistedPreferences]) ) {
+- (void)postgrePrefsDidFinishEditingSettings:(PGPrefsPane *)prefs
+{
+    if (prefs.authorized) {
+        
+        NSDictionary *guiPrefs = prefs.guiPreferences;
+        NSDictionary *savedPrefs = prefs.savedPreferences;
+        
+        BOOL unchanged = (!guiPrefs && !savedPrefs) || [guiPrefs isEqualToDictionary:savedPrefs];
+        if (unchanged) {
+            [self refresh:prefs];
+        } else {
             DLog(@"Changed Settings");
             [self applyUpdatedSettings:prefs];
-        } else {
-            [self refresh:prefs];            
         }
     }
 }
@@ -404,12 +442,13 @@ NSString * const LAUNCH_AGENT_PLIST_FILENAME = @"/tmp/com.hkwebentrepreneurs.pos
 //
 // User clicked to reset settings to defaults
 //
-- (void)postgrePrefsDidClickResetSettings:(PostgrePrefs *) prefs {
+- (void)postgrePrefsDidClickResetSettings:(PGPrefsPane *)prefs
+{
     [prefs displayUpdatingSettings];
     NSDictionary *defaults = [self detectPostgreSQLInstallationAndGenerateSettings:prefs];
     DLog(@"Settings: %@", defaults);
-    [prefs setGuiPreferences:defaults];
-    [prefs setPersistedPreferences:nil];
+    prefs.guiPreferences = defaults;
+    prefs.savedPreferences = nil;
     [prefs displayUpdatedSettings];
 }
 

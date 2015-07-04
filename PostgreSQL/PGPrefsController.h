@@ -8,22 +8,33 @@
 
 #import <Foundation/Foundation.h>
 #import "PGPrefsPane.h"
+#import "NSString+Utilities.h"
+#import "NSDictionary+Utilities.h"
 
-extern NSString * const LAUNCH_AGENT_PLIST_FILENAME;
+#pragma mark - Constants
 
-@interface PostgrePrefsController: NSObject <PostgrePrefsDelegate> {
-@private
-    NSString *_status;
-}
+typedef NS_ENUM(NSInteger, PGPrefsStatus) {
+    PGPrefsStatusUnknown = 0,
+    PGPrefsStopped,
+    PGPrefsStarted
+};
 
-- (void)postgrePrefsDidAuthorize:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidDeauthorize:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidLoad:(PostgrePrefs *) prefs;
-- (void)postgrePrefsWillUnselect:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidClickStartStopServer:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidClickRefresh:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidClickAutoStartup:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidClickResetSettings:(PostgrePrefs *) prefs;
-- (void)postgrePrefsDidFinishEditingSettings:(PostgrePrefs *)prefs;
+
+
+#pragma mark - PGPrefsController
+
+@interface PGPrefsController: NSObject <PGPrefsPaneDelegate>
+
+@property (nonatomic, readonly) PGPrefsStatus status;
+
+- (void)postgrePrefsDidAuthorize:(PGPrefsPane *) prefs;
+- (void)postgrePrefsDidDeauthorize:(PGPrefsPane *) prefs;
+- (void)postgrePrefsDidLoad:(PGPrefsPane *) prefs;
+- (void)postgrePrefsWillUnselect:(PGPrefsPane *) prefs;
+- (void)postgrePrefsDidClickStartStopServer:(PGPrefsPane *) prefs;
+- (void)postgrePrefsDidClickRefresh:(PGPrefsPane *) prefs;
+- (void)postgrePrefsDidClickAutoStartup:(PGPrefsPane *) prefs;
+- (void)postgrePrefsDidClickResetSettings:(PGPrefsPane *) prefs;
+- (void)postgrePrefsDidFinishEditingSettings:(PGPrefsPane *)prefs;
 
 @end
