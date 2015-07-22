@@ -1,0 +1,250 @@
+=pod
+
+=head1 PostgreSQL Mac Preferences
+
+=begin html
+
+<br />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/elephant.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/logo.png" />
+
+=end html
+
+=over 4
+
+=item * L<Overview|/"Overview">
+
+=item * L<Install Instructions|/"Install Instructions">
+
+=item * L<Uninstall Instructions|/"Uninstall Instructions">
+    
+=item * L<FAQ|/"FAQ">
+
+=item * L<Version History|/"Version History">
+        
+=item * L<Contact|/"Contact">
+
+=back
+
+=head2 Overview
+
+A Mac OS X System Preferences pane for controlling the PostgreSQL Database Server.
+    
+Features include:
+
+=over 4
+
+=item *
+
+B<Compatible> with all PostgreSQL installations - including
+    
+=for html <a href="http://russbrooks.com/2010/11/25/install-postgresql-9-on-os-x">Homebrew</a> and <a href="http://www.postgresql.org/download/macosx/">One click installer</a>
+    
+=for text Homebrew and One click installer
+
+=item *
+
+Start and stop PostgreSQL Server at the B<click of a button> - no need for obscure commands
+
+=item *
+
+Set PostgreSQL to B<start automatically> on user login
+
+=item *
+
+Easily change PostgreSQL B<settings> in the GUI
+
+=back
+    
+=for html This tool was inspired by the excellent work of <a href="http://johntwang.com/blog/2011/04/03/PostgreSQL-Preference-Pane/">John T Wang</a>.
+    
+=for text This tool was inspired by the excellent work of John T Wang
+
+=head3 Welcome Screen
+
+=begin html
+
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_welcome.png" />
+
+=end html
+
+=head3 Start and Stop PostgreSQL
+
+=begin html
+
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_startstop.png" />
+
+=end html
+
+=head3 Modify Settings
+
+=begin html
+
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_settings.png" />
+
+=end html
+
+=head2 Install Instructions
+
+Steps for installation are as follows:
+    
+=over 4
+    
+=item 1
+    
+Download the latest release version
+    
+=for html <a href="https://github.com/mckenfra/postgresql-mac-preferences/releases">here</a>
+
+=for text here: https://github.com/mckenfra/postgresql-mac-preferences/releases
+    
+=item 2
+    
+Once downloaded, unzip it and then either double-click the C<PostgreSQL.prefPane> file, or drag it to System Preferences to install it.
+
+=item 3
+    
+When installing, you will be asked if you want to install it for this user only, or for all users. Choose this user only (either option is fine however).
+
+=back
+    
+=begin html
+
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_install.png" />
+
+=end html
+
+=head2 Uninstall Instructions
+
+Right-click on the C<PostgreSQL icon> in System Preferences, and click C<Remove>.
+
+Also, delete the following files if they exist:
+
+=over 4
+
+=item * C</Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
+
+=item * C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
+
+=back
+
+=head2 FAQ
+
+=over 4
+
+=item * B<Can I run multiple instances of PostgreSQL on the same machine?>
+
+=item * No, at present the PostgreSQL Preferences only permit one running PostgreSQL instance at a time. The PostgreSQL Preferences will attempt to stop all other running PostgreSQL instances, when the user clicks the C<Start PostgreSQL> button.
+
+
+=item * B<PostgreSQL does not start up.>
+    
+=item * PostgreSQL Preferences uses L<launchctl|/Links> to start, stop and schedule auto-startup of PostgreSQL. The launchctl utility logs its output to C</var/log/system.log> by default. You can monitor this logfile by executing the following code on the command line: C<tail -100f /var/log/system.log>. Also, ensure a valid Log File path is configured in the L<Settings Screen|/Modify Settings> - you can then check this logfile for more detailed error messages.
+    
+We would like to ensure this tool works as smoothly as possible, so please L<Contact Us|/Contact> if you are still having issues, or if you have any suggestions for improvements. 
+    
+
+=item * B<I have enabled auto-startup, but PostgreSQL still does not startup automatically on user login.>
+    
+=item * It is possible that another instance of PostgreSQL is also scheduled to start on computer bootup or user login, with the same port number. To rectify this, you can change the Port setting in the L<Settings Screen|/Modify Settings> to another port. If this does not fix the problem, check C</var/log/system.log> and the logfile for your PostgreSQL instance for any error messages.
+
+=item * B<I have configured a Log File in the Settings Screen but nothing is getting logged.>
+        
+=item * Ensure the Log File directory exists, and the Username specified in the L<Settings Screen|/Modify Settings> has read and write access to this directory.
+
+=back    
+    
+=head2 Version History
+
+=begin html
+
+<table>
+<thead>
+<tr>
+    <th>Version</th>
+    <th>Date</th>
+    <th>Comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+    <td>v1.4</td>
+    <td>03-Jul 2015</td>
+    <td>Bug-fix release
+        <ul>
+        <li>Fixed auto-start on login if upgrading from older version of pref pane</li>
+        <li>Clicking auto-start no longer causes Postgre to startup straightaway</li>
+        </ul>
+    </td>
+</tr>
+<tr>
+    <td>v1.3</td>
+    <td>30-Jun 2015</td>
+    <td>Bug-fix release
+        <ul>
+        <li>Fixed auto-start PostgreSQL on login (OS X 10.10+)</li>
+        <li>Fixed description of auto-start function in interface</li>
+        <li>Detect errors relating to auto-start and show in interface</li>
+        </ul>
+    </td>
+</tr>
+<tr>
+    <td>v1.2</td>
+    <td>30-Jun 2015</td>
+    <td>Bug-fix release
+        <ul>
+        <li>Fixed auto-start PostgreSQL on login (OS X 10.9)</li>
+        </ul>
+    </td>
+</tr>
+<tr>
+    <td>v1.1</td>
+    <td>17-Oct 2014</td>
+    <td>Bug-fix release
+        <ul>
+        <li>Fixed errors caused by spaces or ~ in paths</li>
+        <li>Auto-detect Postgres.app install</li>
+        <li>Fixed incompatibility with latest XCode (ARC now mandatory)</li>
+        <li><b>Note:</b> requires Mac OS X Lion or newer</li>
+        </ul>
+    </td>
+</tr>
+<tr>
+    <td>v1.0.1</td>
+    <td>10-Mar 2012</td>
+    <td>Bug-fix release
+        <ul>
+        <li>Fixed hard-coded username in start/stop script</li>
+        <li>Fixed bug where settings were getting cleared when user re-authorized</li>
+        </ul>
+    </td>
+</tr>
+<tr>
+    <td>v1.0</td>
+    <td>29-Dec 2011</td>
+    <td>Initial Release</td>
+</tr>
+</tbody>
+</table>
+
+=end html
+
+=head2 Contact
+
+=for html Please email any feedback to <a href="mailto:info@hkwebentrepreneurs.com">info@hkwebentrepreneurs.com</a>
+
+=for text Please email any feedback to email@hkwebentrepreneurs.com
+
+=head2 Links
+
+=begin html
+
+<ul>
+    <li>Man page for <a href="https://developer.apple.com/library/mac/#documentation/Darwin/Reference/ManPages/man1/launchctl.1.html">launchctl</a></li>
+    
+    <li><a href="http://www.hkwebentrepreneurs.com">http://www.hkwebentrepreneurs.com</a></li>
+</ul>
+
+=end html
+
+=cut
