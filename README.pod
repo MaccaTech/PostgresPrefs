@@ -18,7 +18,7 @@
 
 =item * L<Uninstall Instructions|/"Uninstall Instructions">
 
-=item * L<Upgrading|/"Upgrading">
+=item * L<Upgrading from Version 1.x|/"Upgrading from Version 1.x">
     
 =item * L<FAQ|/"FAQ">
 
@@ -88,8 +88,6 @@ Control B<multiple> PostgreSQL servers in the same window - B<NEW IN v2.x>
 
 =head2 Install Instructions
 
-Steps for installation are as follows:
-    
 =over 4
     
 =item 1
@@ -120,37 +118,37 @@ When installing, you will be asked if you want to install it for this user only,
 
 =over 4
 
-=item * B<Delete all server configurations>
-
-=item Open C<PostgreSQL Preferences> and click the C<-> button in the servers list for each server
-
-=item
-
-=item * B<Uninstall from System Preferences>
-
-=item Right-click on the C<PostgreSQL icon> in System Preferences, and click C<Remove>
-
-=item
-
-=item * B<Delete all server logs>
-
-=item Delete the following directories if they exist:
+=item 0 Delete all server configurations
 
 =over 4
 
-=item * C</Library/Logs/PostgreSQL>
+=item Open C<PostgreSQL Preferences> and click the C<'-'> button in the servers list for each server
 
-=item * C<~/Library/Logs/PostgreSQL>
+=back
+
+=item 0 Uninstall from System Preferences
+
+=over 4
+
+=item Right-click on the C<PostgreSQL icon> in System Preferences, and click C<Remove>
+
+=back
+
+=item 0 Delete the following log directories if they exist:
+
+=over 4
+
+=item C</Library/Logs/PostgreSQL>
+
+=item C<~/Library/Logs/PostgreSQL>
 
 =back
 
 =back
 
-=head2 Upgrading
+=head2 Upgrading from Version 1.x 
 
-Please follow the uninstall instructions described L<here|https://github.com/mckenfra/postgresql-mac-preferences/README-v1>
-
-B<Note:> please ensure you delete the file C<com.hkwebentrepreneurs.postgresql.plist> if it exists in either of these directories:
+As per the Version 1.x L<uninstall instructions|https://github.com/mckenfra/postgresql-mac-preferences/tree/master/README-v1.x#Uninstall_Instructions>, please ensure you delete the file C<com.hkwebentrepreneurs.postgresql.plist> if it exists in either of these directories:
 
 =over 4
 
@@ -168,32 +166,42 @@ B<Note:> please ensure you delete the file C<com.hkwebentrepreneurs.postgresql.p
 
 =item * It can start and stop PostgreSQL servers, show their running status, and schedule auto-startup at boot/login. It cannot install PostgreSQL, create database clusters, create databases or run SQL.
 
-=item
+=back
+
+=over 4
 
 =item * B<Can I run multiple instances of PostgreSQL on the same machine?>
 
 =item * Yes - this is new with version 2! Note that each separate instance of PostgreSQL I<must have its own data directory and port>. You can specify a different port in the settings popup. However, to create a separate data directory you must create a new database cluster by running the C<initdb> command, as described in the PostgreSQL documentation.
 
-=item
+=back
+
+=over 4
 
 =item * B<PostgreSQL does not start up.>
     
 =item * If you clicked C<Start PostgreSQL>, and the server is stuck with status C<Retrying...>, the first step is to click the C<View Log> button. This will open the default log for the server in Mac OS X's C<Console> log-viewing application. From the log messages, it should be clear what the problem is. For example, the PostgreSQL data directory or port may already be in use by another server.
 
-=item
+=back
+
+=over 4
 
 =item * B<I have selected startup at Login/Boot, but PostgreSQL still does not startup automatically.>
     
 =item * First, make sure you can start the server manually using the C<Start PostgreSQL> button. If this works ok, then please file an issue on github and we will investigate.
 
-=item
+=back
+
+=over 4
 
 =item * B<Does this tool affect my existing installations?>
         
 =item * No, this tool creates its own C<launchd> configuration files for starting and stopping servers, and leaves all existing configurations untouched.
 Note that this means, for example, that there may be other PostgreSQL servers that are configured to startup at system login/boot. For example, a fresh install of PostgreSQL L<www.enterprisedb.com|https://www.enterprisedb.com> will create a configuration file in C</Library/LaunchDaemons> that will startup a server automatically on boot. To disable this, you can delete the file named C<com.edb.launchd.postgresql*.plist> in that directory.
 
-=item
+=back
+
+=over 4
 
 =item * B<Who is Macca Tech, and why did you make this tool?>
 
