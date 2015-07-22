@@ -64,7 +64,7 @@ Easily change PostgreSQL B<settings> in the GUI
 
 =begin html
 
-<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_welcome.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/screenshot_welcome.png" />
 
 =end html
 
@@ -72,7 +72,7 @@ Easily change PostgreSQL B<settings> in the GUI
 
 =begin html
 
-<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_startstop.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/screenshot_startstop.png" />
 
 =end html
 
@@ -80,7 +80,7 @@ Easily change PostgreSQL B<settings> in the GUI
 
 =begin html
 
-<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_settings.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/screenshot_settings.png" />
 
 =end html
 

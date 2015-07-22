@@ -18,7 +18,7 @@
 
 =item * L<Uninstall Instructions|/"Uninstall Instructions">
 
-=item * L<Upgrading from Older Version|/"Upgrading from Older Version">
+=item * L<Upgrading|/"Upgrading">
     
 =item * L<FAQ|/"FAQ">
 
@@ -66,7 +66,7 @@ Control B<multiple> PostgreSQL servers in the same window - B<NEW IN v2.x>
 
 =begin html
 
-<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_v2_main.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/screenshot_v2_main.png" />
 
 =end html
 
@@ -74,7 +74,7 @@ Control B<multiple> PostgreSQL servers in the same window - B<NEW IN v2.x>
 
 =begin html
 
-<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_v2_settings.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/screenshot_v2_settings.png" />
 
 =end html
 
@@ -82,7 +82,7 @@ Control B<multiple> PostgreSQL servers in the same window - B<NEW IN v2.x>
 
 =begin html
 
-<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_v2_log.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/screenshot_v2_log.png" />
 
 =end html
 
@@ -120,15 +120,21 @@ When installing, you will be asked if you want to install it for this user only,
 
 =over 4
 
-=item 1 B<Delete all server configurations>
+=item 1
+
+B<Delete all server configurations>
 
 =item * Open C<PostgreSQL Preferences> and click the C<-> button in the servers list for each server
 
-=item 2 B<Uninstall from System Preferences>
+=item 2
+
+B<Uninstall from System Preferences>
 
 =item * Right-click on the C<PostgreSQL icon> in System Preferences, and click C<Remove>
 
-=item 3 B<Delete all server logs>
+=item 3
+
+B<Delete all server logs>
 
 =item * Delete the following directories if they exist:
 
@@ -137,7 +143,7 @@ C<~/Library/Logs/PostgreSQL>
 
 =back
 
-=head2 Upgrading from Older Version
+=head2 Upgrading
 
 Please follow the uninstall instructions described
 
@@ -160,27 +166,49 @@ C<~/Library/LaunchAgents>
 
 =item * It can start and stop PostgreSQL servers, show their running status, and schedule auto-startup at boot/login. It cannot install PostgreSQL, create database clusters, create databases or run SQL.
 
-=item * B<Can I run multiple instances of PostgreSQL on the same machine?>
+=item *
+
+B<Can I run multiple instances of PostgreSQL on the same machine?>
 
 =item * Yes - this is new with version 2! Note that each separate instance of PostgreSQL B<must have its own data directory and port>. You can specify a different port in the settings popup. However, to create a separate data directory you must create a new database cluster by running the C<initdb> command, as described in the PostgreSQL documentation.
 
-=item * B<PostgreSQL does not start up.>
+=item *
+
+B<PostgreSQL does not start up.>
     
 =item * If you clicked C<Start PostgreSQL>, and the server is stuck with status C<Retrying...>, the first step is to click the C<View Log> button. This will open the default log for the server in Mac OS X's C<Console> log-viewing application. From the log messages, it should be clear what the problem is. For example, the PostgreSQL data directory or port may already be in use by another server.
 
-=item * B<I have selected startup at Login/Boot, but PostgreSQL still does not startup automatically.>
+=item *
+
+B<I have selected startup at Login/Boot, but PostgreSQL still does not startup automatically.>
     
 =item * First, make sure you can start the server manually using the C<Start PostgreSQL> button. If this works ok, then please file an issue on github and we will investigate.
 
-=item * B<Does this tool affect my existing installations?>
+=item *
+
+B<Does this tool affect my existing installations?>
         
 =item * No, this tool creates its own C<launchd> configuration files for starting and stopping servers, and leaves all existing configurations untouched.
 
-Note that this means, for example, that there may be other PostgreSQL servers that are configured to startup at system login/boot. For example, a fresh install of PostgreSQL <a href="http://www.enterprisedb.com">www.enterprisedb.com</a> will create a configuration file in C</Library/LaunchDaemons> that will startup a server automatically on boot. To disable this, you can delete the file named C<com.edb.launchd.postgresql*.plist> in that directory.
+Note that this means, for example, that there may be other PostgreSQL servers that are configured to startup at system login/boot. For example, a fresh install of PostgreSQL
 
-=item * B<Who is Macca Tech, and why did you make this tool?>
+=for html <a href="https://www.enterprisedb.com">www.enterprisedb.com</a>
 
-=item * At the moment, <a href="http://www.maccatech.com">Macca Tech Ltd</a> consists of just me, a developer who enjoys creating tools and apps on Mac OS X and iOS. I created this tool partly for fun, and partly because I was using PostgreSQL and found it far too complicated to do something as simple as starting and stopping a database! 
+=for text http://www.enterprisedb.com
+
+ will create a configuration file in C</Library/LaunchDaemons> that will startup a server automatically on boot. To disable this, you can delete the file named C<com.edb.launchd.postgresql*.plist> in that directory.
+
+=item *
+
+B<Who is Macca Tech, and why did you make this tool?>
+
+=item * At the moment, 
+
+=for html <a href="https://www.maccatech.com">Macca Tech</a>
+
+=for text Macca Tech http://www.maccatech.com
+
+consists of just me, a developer who enjoys creating tools and apps on Mac OS X and iOS. I created this tool partly for fun, and partly because I was using PostgreSQL and found it far too complicated to do something as simple as starting and stopping a database! 
 
 =back    
     
