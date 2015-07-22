@@ -122,17 +122,19 @@ When installing, you will be asked if you want to install it for this user only,
 
 =item * B<Delete all server configurations>
 
-Open C<PostgreSQL Preferences> and click the C<-> button in the servers list for each server
+=item Open C<PostgreSQL Preferences> and click the C<-> button in the servers list for each server
 
+=item
 
 =item * B<Uninstall from System Preferences>
 
-Right-click on the C<PostgreSQL icon> in System Preferences, and click C<Remove>
+=item Right-click on the C<PostgreSQL icon> in System Preferences, and click C<Remove>
 
+=item
 
 =item * B<Delete all server logs>
 
-Delete the following directories if they exist:
+=item Delete the following directories if they exist:
 
 =over 4
 
@@ -146,7 +148,7 @@ Delete the following directories if they exist:
 
 =head2 Upgrading
 
-Please follow the uninstall instructions described L<here:https://github.com/mckenfra/postgresql-mac-preferences/README-v1>
+Please follow the uninstall instructions described L<here|https://github.com/mckenfra/postgresql-mac-preferences/README-v1>
 
 B<Note:> please ensure you delete the file C<com.hkwebentrepreneurs.postgresql.plist> if it exists in either of these directories:
 
@@ -166,28 +168,32 @@ B<Note:> please ensure you delete the file C<com.hkwebentrepreneurs.postgresql.p
 
 =item * It can start and stop PostgreSQL servers, show their running status, and schedule auto-startup at boot/login. It cannot install PostgreSQL, create database clusters, create databases or run SQL.
 
+=item
 
 =item * B<Can I run multiple instances of PostgreSQL on the same machine?>
 
 =item * Yes - this is new with version 2! Note that each separate instance of PostgreSQL I<must have its own data directory and port>. You can specify a different port in the settings popup. However, to create a separate data directory you must create a new database cluster by running the C<initdb> command, as described in the PostgreSQL documentation.
 
+=item
 
 =item * B<PostgreSQL does not start up.>
     
 =item * If you clicked C<Start PostgreSQL>, and the server is stuck with status C<Retrying...>, the first step is to click the C<View Log> button. This will open the default log for the server in Mac OS X's C<Console> log-viewing application. From the log messages, it should be clear what the problem is. For example, the PostgreSQL data directory or port may already be in use by another server.
 
+=item
 
 =item * B<I have selected startup at Login/Boot, but PostgreSQL still does not startup automatically.>
     
 =item * First, make sure you can start the server manually using the C<Start PostgreSQL> button. If this works ok, then please file an issue on github and we will investigate.
 
+=item
 
 =item * B<Does this tool affect my existing installations?>
         
 =item * No, this tool creates its own C<launchd> configuration files for starting and stopping servers, and leaves all existing configurations untouched.
-
 Note that this means, for example, that there may be other PostgreSQL servers that are configured to startup at system login/boot. For example, a fresh install of PostgreSQL L<www.enterprisedb.com|https://www.enterprisedb.com> will create a configuration file in C</Library/LaunchDaemons> that will startup a server automatically on boot. To disable this, you can delete the file named C<com.edb.launchd.postgresql*.plist> in that directory.
 
+=item
 
 =item * B<Who is Macca Tech, and why did you make this tool?>
 
