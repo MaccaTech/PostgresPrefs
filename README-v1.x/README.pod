@@ -122,9 +122,9 @@ Also, delete the following files if they exist:
 
 =over 4
 
-=item * C</Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
+=item * C</Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist>
 
-=item * C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist*>
+=item * C<~/Library/LaunchAgents/com.hkwebentrepreneurs.postgresql.plist>
 
 =back
 

@@ -118,7 +118,9 @@ When installing, you will be asked if you want to install it for this user only,
 
 =over 4
 
-=item 0 Delete all server configurations
+=item 1
+
+Delete all server configurations
 
 =over 4
 
@@ -126,7 +128,9 @@ When installing, you will be asked if you want to install it for this user only,
 
 =back
 
-=item 0 Uninstall from System Preferences
+=item 2
+
+Uninstall from System Preferences
 
 =over 4
 
@@ -134,7 +138,9 @@ When installing, you will be asked if you want to install it for this user only,
 
 =back
 
-=item 0 Delete the following log directories if they exist:
+=item 3
+
+Delete the following log directories if they exist:
 
 =over 4
 
@@ -148,7 +154,7 @@ When installing, you will be asked if you want to install it for this user only,
 
 =head2 Upgrading from Version 1.x 
 
-As per the Version 1.x L<uninstall instructions|https://github.com/mckenfra/postgresql-mac-preferences/tree/master/README-v1.x#Uninstall_Instructions>, please ensure you delete the file C<com.hkwebentrepreneurs.postgresql.plist> if it exists in either of these directories:
+Please ensure you delete the file C<com.hkwebentrepreneurs.postgresql.plist> if it exists in either of these directories:
 
 =over 4
 
@@ -172,7 +178,7 @@ As per the Version 1.x L<uninstall instructions|https://github.com/mckenfra/post
 
 =item * B<Can I run multiple instances of PostgreSQL on the same machine?>
 
-=item * Yes - this is new with version 2! Note that each separate instance of PostgreSQL I<must have its own data directory and port>. You can specify a different port in the settings popup. However, to create a separate data directory you must create a new database cluster by running the C<initdb> command, as described in the PostgreSQL documentation.
+=item * Yes - this is new with Version 2! Note that each separate instance of PostgreSQL I<must have its own data directory and port>. You can specify a different port in the settings popup. However, to create a separate data directory you must create a new database cluster by running the C<initdb> command, as described in the L<PostgreSQL documentation|http://www.postgresql.org/docs/manuals/>.
 
 =back
 
@@ -197,7 +203,7 @@ As per the Version 1.x L<uninstall instructions|https://github.com/mckenfra/post
 =item * B<Does this tool affect my existing installations?>
         
 =item * No, this tool creates its own C<launchd> configuration files for starting and stopping servers, and leaves all existing configurations untouched.
-Note that this means, for example, that there may be other PostgreSQL servers that are configured to startup at system login/boot. For example, a fresh install of PostgreSQL L<www.enterprisedb.com|https://www.enterprisedb.com> will create a configuration file in C</Library/LaunchDaemons> that will startup a server automatically on boot. To disable this, you can delete the file named C<com.edb.launchd.postgresql*.plist> in that directory.
+Note that this means, for example, that there may be other PostgreSQL servers that are configured to startup at system login/boot. For example, a fresh install of PostgreSQL from L<enterprisedb.com|http://www.enterprisedb.com/products-services-training/pgdownload#osx> will create a configuration file in C</Library/LaunchDaemons> that will startup a server automatically on boot. To disable this, you can delete the file named C<com.edb.launchd.postgresql*.plist> in that directory.
 
 =back
 
