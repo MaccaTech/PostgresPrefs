@@ -124,7 +124,9 @@ Delete all server configurations
 
 =over 4
 
-=item Open C<PostgreSQL Preferences> and click the C<'-'> button in the servers list for each server
+=item
+
+Open C<PostgreSQL Preferences> and click the C<'-'> button in the servers list for each server
 
 =back
 
@@ -134,7 +136,9 @@ Uninstall from System Preferences
 
 =over 4
 
-=item Right-click on the C<PostgreSQL icon> in System Preferences, and click C<Remove>
+=item
+
+Right-click on the C<PostgreSQL icon> in System Preferences, and click C<Remove>
 
 =back
 
@@ -144,9 +148,13 @@ Delete the following log directories if they exist:
 
 =over 4
 
-=item C</Library/Logs/PostgreSQL>
+=item
 
-=item C<~/Library/Logs/PostgreSQL>
+C</Library/Logs/PostgreSQL>
+
+=item
+
+C<~/Library/Logs/PostgreSQL>
 
 =back
 
