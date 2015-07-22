@@ -21,6 +21,7 @@
 
 - (void)initAuthorization;
 
+- (void)showStatusWithName:(NSString *)name colour:(NSColor *)colour image:(NSString *)image info:(NSString *)info startStopButton:(NSString *)startStopButton;
 - (void)showStarted;
 - (void)showStopped;
 - (void)showStarting;
@@ -675,90 +676,86 @@
     [self.mainView.window makeFirstResponder:self.serversTableView];
 }
 
+- (void)showStatusWithName:(NSString *)name colour:(NSColor *)colour image:(NSString *)image info:(NSString *)info startStopButton:(NSString *)startStopButton
+{
+    NSString *imagePath = [[self bundle] pathForResource:image ofType:@"png"];
+    
+    self.statusField.stringValue = name;
+    self.statusField.textColor = colour;
+    self.statusImage.image = [[NSImage alloc] initWithContentsOfFile:imagePath];
+    if (info) self.infoField.stringValue = info;
+    if (startStopButton) self.startStopButton.title = startStopButton;
+}
 - (void)showStarted
 {
-    NSString *startedPath = [[self bundle] pathForResource:@"started" ofType:@"png"];
-    NSImage *started = [[NSImage alloc] initWithContentsOfFile:startedPath];
-    
-    self.startStopButton.title = @"Stop PostgreSQL";
-    self.infoField.stringValue = @"The PostgreSQL Database Server is started and ready for client connections.\nTo shut down the server, use the \"Stop PostgreSQL\" button.";
-    self.statusField.stringValue = @"Running";
-    self.statusField.textColor = PGServerStartedColor;
-    self.statusImage.image = started;
+    [self showStatusWithName:@"Running"
+                      colour:PGServerStartedColor
+                       image:@"started"
+                        info:@"The PostgreSQL Database Server is started and ready for client connections.\nTo shut down the server, use the \"Stop PostgreSQL\" button."
+             startStopButton:@"Stop PostgreSQL"];
 }
 
 - (void)showStopped
 {
-    NSString *stoppedPath = [[self bundle] pathForResource:@"stopped" ofType:@"png"];
-    NSImage *stopped = [[NSImage alloc] initWithContentsOfFile:stoppedPath];
-    
-    self.startStopButton.title = @"Start PostgreSQL";
-    self.infoField.stringValue = @"The PostgreSQL Database Server is currently stopped.\nTo start it, use the \"Start PostgreSQL\" button.";
-    self.statusField.stringValue = @"Stopped";
-    self.statusField.textColor = PGServerStoppedColor;
-    self.statusImage.image = stopped;
+    [self showStatusWithName:@"Stopped"
+                      colour:PGServerStoppedColor
+                       image:@"stopped"
+                        info:@"The PostgreSQL Database Server is currently stopped.\nTo start it, use the \"Start PostgreSQL\" button."
+             startStopButton:@"Start PostgreSQL"];
 }
 
 - (void)showStarting
 {
-    NSString *checkingPath = [[self bundle] pathForResource:@"checking" ofType:@"png"];
-    NSImage *checking = [[NSImage alloc] initWithContentsOfFile:checkingPath];
-    self.statusField.stringValue = @"Starting...";
-    self.statusField.textColor = PGServerStartingColor;
-    self.statusImage.image = checking;
+    [self showStatusWithName:@"Starting..."
+                      colour:PGServerStartingColor
+                       image:@"checking"
+                        info:nil
+             startStopButton:nil];
 }
 
 - (void)showStopping
 {
-    NSString *checkingPath = [[self bundle] pathForResource:@"checking" ofType:@"png"];
-    NSImage *checking = [[NSImage alloc] initWithContentsOfFile:checkingPath];
-    self.statusField.stringValue = @"Stopping...";
-    self.statusField.textColor = PGServerStoppingColor;
-    self.statusImage.image = checking;
+    [self showStatusWithName:@"Stopping..."
+                      colour:PGServerStoppingColor
+                       image:@"checking"
+                        info:nil
+             startStopButton:nil];
 }
 
 - (void)showChecking
 {
-    NSString *checkingPath = [[self bundle] pathForResource:@"checking" ofType:@"png"];
-    NSImage *checking = [[NSImage alloc] initWithContentsOfFile:checkingPath];
-    
-    self.startStopButton.title = @"PostgreSQL";
-    self.infoField.stringValue = @"The running status of the PostgreSQL Database Server is currently being checked.";
-    self.statusField.stringValue = @"Checking...";
-    self.statusField.textColor = PGServerCheckingColor;
-    self.statusImage.image = checking;
+    [self showStatusWithName:@"Checking..."
+                      colour:PGServerCheckingColor
+                       image:@"checking"
+                        info:@"The running status of the PostgreSQL Database Server is currently being checked."
+             startStopButton:@"PostgreSQL"];
 }
 
 - (void)showRetrying
 {
-    NSString *checkingPath = [[self bundle] pathForResource:@"retrying" ofType:@"png"];
-    NSImage *checking = [[NSImage alloc] initWithContentsOfFile:checkingPath];
-    
-    self.startStopButton.title = @"Stop PostgreSQL";
-    self.infoField.stringValue = @"The PostgreSQL Database Server has failed to start. Please view the log for details.";
-    self.statusField.stringValue = @"Retrying...";
-    self.statusField.textColor = PGServerRetryingColor;
-    self.statusImage.image = checking;
+    [self showStatusWithName:@"Retrying..."
+                      colour:PGServerRetryingColor
+                       image:@"retrying"
+                        info:@"The PostgreSQL Database Server has failed to start. Please view the log for details."
+             startStopButton:@"Stop PostgreSQL"];
 }
 
 - (void)showUnknown
 {
-    NSString *unknownPath = [[self bundle] pathForResource:@"unknown" ofType:@"png"];
-    NSImage *unknownImage = [[NSImage alloc] initWithContentsOfFile:unknownPath];
-    
-    self.startStopButton.title = @"PostgreSQL";
-    self.infoField.stringValue = @"The running status of the PostgreSQL Database Server is not currently known.\nPlease check the server settings and try again.";
-    self.statusField.stringValue = @"Unknown";
-    self.statusField.textColor = PGServerStatusUnknownColor;
-    self.statusImage.image = unknownImage;
+    [self showStatusWithName:@"Unknown"
+                      colour:PGServerStatusUnknownColor
+                       image:@"unknown"
+                        info:@"The running status of the PostgreSQL Database Server is not currently known.\nPlease check the server settings and try again."
+             startStopButton:@"PostgreSQL"];
 }
 
 - (void)showProtected
 {
-    [self showUnknown];
-    
-    self.infoField.stringValue = @"The PostgreSQL Database Server is run under a different user account. Please click the lock.";
-    self.statusField.stringValue = @"Protected";
+    [self showStatusWithName:@"Protected"
+                      colour:PGServerStatusProtectedColor
+                       image:@"protected"
+                        info:@"The PostgreSQL Database Server is run under a different user account. Please click the lock."
+             startStopButton:@"PostgreSQL"];
 }
 
 - (void)showError:(NSString *)errMsg

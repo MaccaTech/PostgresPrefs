@@ -26,6 +26,7 @@
 
 // Colours
 #define PGServerStatusUnknownColor [NSColor darkGrayColor]
+#define PGServerStatusProtectedColor [NSColor darkGrayColor]
 #define PGServerStartingColor [NSColor blueColor]
 #define PGServerStartedColor [NSColor colorWithCalibratedRed:0 green:0.8f blue:0 alpha:1]
 #define PGServerStoppingColor [NSColor blueColor]
