@@ -332,7 +332,7 @@ PGAUTO   | ${PGAUTO}";
     my_pg_user=$(to_string "${PGUSER}");
     if [ -n "${my_pg_user}" ]; then
         check_user=`id -u -n ${my_pg_user}`;
-        if [ "${my_pg_user}" != "${my_pg_user_check}" ]; then
+        if [ "${my_pg_user}" != "${check_user}" ]; then
             fatal "PGUSER is invalid - ${my_pg_user}";
         fi
     else
