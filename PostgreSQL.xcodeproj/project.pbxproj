@@ -12,11 +12,6 @@
 		20079E771B48061100521807 /* PGPrefsPane.h in Headers */ = {isa = PBXBuildFile; fileRef = 20079E6D1B48061100521807 /* PGPrefsPane.h */; };
 		20079E781B48061100521807 /* PGPrefsPane.m in Sources */ = {isa = PBXBuildFile; fileRef = 20079E6E1B48061100521807 /* PGPrefsPane.m */; };
 		20079E791B48061100521807 /* Common.h in Headers */ = {isa = PBXBuildFile; fileRef = 20079E701B48061100521807 /* Common.h */; };
-		20079E7A1B48061100521807 /* NSDictionary+Utilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 20079E711B48061100521807 /* NSDictionary+Utilities.h */; };
-		20079E7B1B48061100521807 /* NSDictionary+Utilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 20079E721B48061100521807 /* NSDictionary+Utilities.m */; };
-		20079E7C1B48061100521807 /* NSString+Utilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 20079E731B48061100521807 /* NSString+Utilities.h */; };
-		20079E7D1B48061100521807 /* NSString+Utilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 20079E741B48061100521807 /* NSString+Utilities.m */; };
-		20079E891B4807E200521807 /* PGPrefsDetectDefaults.sh in Resources */ = {isa = PBXBuildFile; fileRef = 20079E861B4807E200521807 /* PGPrefsDetectDefaults.sh */; };
 		20079E8A1B4807E200521807 /* PGPrefsPostgreSQL.sh in Resources */ = {isa = PBXBuildFile; fileRef = 20079E871B4807E200521807 /* PGPrefsPostgreSQL.sh */; };
 		20079E8B1B4807E200521807 /* PGPrefsRunAsAdmin.applescript in Sources */ = {isa = PBXBuildFile; fileRef = 20079E881B4807E200521807 /* PGPrefsRunAsAdmin.applescript */; };
 		20079E981B48086300521807 /* checking.png in Resources */ = {isa = PBXBuildFile; fileRef = 20079E8D1B48086300521807 /* checking.png */; };
@@ -29,13 +24,27 @@
 		20164595149DFFBA009ACF7A /* AppleScriptObjC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20164594149DFFBA009ACF7A /* AppleScriptObjC.framework */; };
 		20164597149DFFC3009ACF7A /* SecurityInterface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20164596149DFFC3009ACF7A /* SecurityInterface.framework */; };
 		20164599149E031E009ACF7A /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20164598149E031E009ACF7A /* Security.framework */; };
+		201A6A7E1B5DB73D005B691B /* retrying.png in Resources */ = {isa = PBXBuildFile; fileRef = 201A6A7D1B5DB73D005B691B /* retrying.png */; };
 		2035B190149C8B83009A2972 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2035B18F149C8B83009A2972 /* Cocoa.framework */; };
 		2035B192149C8B83009A2972 /* PreferencePanes.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2035B191149C8B83009A2972 /* PreferencePanes.framework */; };
 		2035B19C149C8B83009A2972 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 2035B19A149C8B83009A2972 /* InfoPlist.strings */; };
 		2035B1A5149C8B84009A2972 /* PGPrefsPane.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2035B1A3149C8B83009A2972 /* PGPrefsPane.xib */; };
 		20381A8319F0F10A00559533 /* PostgreSQL.iconset in Resources */ = {isa = PBXBuildFile; fileRef = 20381A8219F0F10A00559533 /* PostgreSQL.iconset */; };
+		20727F881B4C7971002BBCCC /* PGServerController.h in Headers */ = {isa = PBXBuildFile; fileRef = 20727F861B4C7971002BBCCC /* PGServerController.h */; };
+		20727F891B4C7971002BBCCC /* PGServerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 20727F871B4C7971002BBCCC /* PGServerController.m */; };
+		2086E18F1B57B55800F2B292 /* PGSearchController.h in Headers */ = {isa = PBXBuildFile; fileRef = 2086E18D1B57B55800F2B292 /* PGSearchController.h */; };
+		2086E1901B57B55800F2B292 /* PGSearchController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2086E18E1B57B55800F2B292 /* PGSearchController.m */; };
+		20B628C11B495154003F8557 /* PGServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 20B628BF1B495154003F8557 /* PGServer.h */; };
+		20B628C21B495154003F8557 /* PGServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B628C01B495154003F8557 /* PGServer.m */; };
+		20B628C71B4973BE003F8557 /* PGProcess.h in Headers */ = {isa = PBXBuildFile; fileRef = 20B628C51B4973BE003F8557 /* PGProcess.h */; };
+		20B628C81B4973BE003F8557 /* PGProcess.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B628C61B4973BE003F8557 /* PGProcess.m */; };
 		20BBC29814AD1E7600BA0859 /* README.pod in Resources */ = {isa = PBXBuildFile; fileRef = 20BBC29714AD1E7600BA0859 /* README.pod */; };
 		20BBC29A14AD201A00BA0859 /* README.pod.html in Resources */ = {isa = PBXBuildFile; fileRef = 20BBC29914AD201A00BA0859 /* README.pod.html */; };
+		20E969821B51574600013B0E /* PGServerDataStore.h in Headers */ = {isa = PBXBuildFile; fileRef = 20E969801B51574600013B0E /* PGServerDataStore.h */; };
+		20E969831B51574600013B0E /* PGServerDataStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 20E969811B51574600013B0E /* PGServerDataStore.m */; };
+		20E9698A1B51AEB900013B0E /* PGData.h in Headers */ = {isa = PBXBuildFile; fileRef = 20E969881B51AEB900013B0E /* PGData.h */; };
+		20E9698B1B51AEB900013B0E /* PGData.m in Sources */ = {isa = PBXBuildFile; fileRef = 20E969891B51AEB900013B0E /* PGData.m */; };
+		20E9698D1B52DA2000013B0E /* unknown.png in Resources */ = {isa = PBXBuildFile; fileRef = 20E9698C1B52DA2000013B0E /* unknown.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,11 +53,6 @@
 		20079E6D1B48061100521807 /* PGPrefsPane.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGPrefsPane.h; sourceTree = "<group>"; };
 		20079E6E1B48061100521807 /* PGPrefsPane.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGPrefsPane.m; sourceTree = "<group>"; };
 		20079E701B48061100521807 /* Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
-		20079E711B48061100521807 /* NSDictionary+Utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+Utilities.h"; sourceTree = "<group>"; };
-		20079E721B48061100521807 /* NSDictionary+Utilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+Utilities.m"; sourceTree = "<group>"; };
-		20079E731B48061100521807 /* NSString+Utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+Utilities.h"; sourceTree = "<group>"; };
-		20079E741B48061100521807 /* NSString+Utilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+Utilities.m"; sourceTree = "<group>"; };
-		20079E861B4807E200521807 /* PGPrefsDetectDefaults.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = PGPrefsDetectDefaults.sh; sourceTree = "<group>"; };
 		20079E871B4807E200521807 /* PGPrefsPostgreSQL.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = PGPrefsPostgreSQL.sh; sourceTree = "<group>"; };
 		20079E881B4807E200521807 /* PGPrefsRunAsAdmin.applescript */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.applescript; path = PGPrefsRunAsAdmin.applescript; sourceTree = "<group>"; };
 		20079E8D1B48086300521807 /* checking.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checking.png; sourceTree = "<group>"; };
@@ -62,6 +66,8 @@
 		20164596149DFFC3009ACF7A /* SecurityInterface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityInterface.framework; path = System/Library/Frameworks/SecurityInterface.framework; sourceTree = SDKROOT; };
 		20164598149E031E009ACF7A /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		201645A1149E68F4009ACF7A /* AppleScriptObjC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppleScriptObjC.framework; path = System/Library/Frameworks/AppleScriptObjC.framework; sourceTree = SDKROOT; };
+		201A6A7C1B5C2F3F005B691B /* Debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
+		201A6A7D1B5DB73D005B691B /* retrying.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = retrying.png; sourceTree = "<group>"; };
 		2035B18C149C8B83009A2972 /* PostgreSQL.prefPane */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostgreSQL.prefPane; sourceTree = BUILT_PRODUCTS_DIR; };
 		2035B18F149C8B83009A2972 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		2035B191149C8B83009A2972 /* PreferencePanes.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PreferencePanes.framework; path = System/Library/Frameworks/PreferencePanes.framework; sourceTree = SDKROOT; };
@@ -73,8 +79,22 @@
 		2035B19D149C8B83009A2972 /* PostgreSQL-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PostgreSQL-Prefix.pch"; sourceTree = "<group>"; };
 		2035B1A4149C8B84009A2972 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/PGPrefsPane.xib; sourceTree = "<group>"; };
 		20381A8219F0F10A00559533 /* PostgreSQL.iconset */ = {isa = PBXFileReference; lastKnownFileType = folder.iconset; path = PostgreSQL.iconset; sourceTree = "<group>"; };
+		20727F861B4C7971002BBCCC /* PGServerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGServerController.h; sourceTree = "<group>"; };
+		20727F871B4C7971002BBCCC /* PGServerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGServerController.m; sourceTree = "<group>"; };
+		2078AE291B50095C00488526 /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Config.h; sourceTree = "<group>"; };
+		2086E18D1B57B55800F2B292 /* PGSearchController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGSearchController.h; sourceTree = "<group>"; };
+		2086E18E1B57B55800F2B292 /* PGSearchController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGSearchController.m; sourceTree = "<group>"; };
+		20B628BF1B495154003F8557 /* PGServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGServer.h; sourceTree = "<group>"; };
+		20B628C01B495154003F8557 /* PGServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGServer.m; sourceTree = "<group>"; };
+		20B628C51B4973BE003F8557 /* PGProcess.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGProcess.h; sourceTree = "<group>"; };
+		20B628C61B4973BE003F8557 /* PGProcess.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGProcess.m; sourceTree = "<group>"; };
 		20BBC29714AD1E7600BA0859 /* README.pod */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.pod; sourceTree = SOURCE_ROOT; };
 		20BBC29914AD201A00BA0859 /* README.pod.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = README.pod.html; sourceTree = "<group>"; };
+		20E969801B51574600013B0E /* PGServerDataStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGServerDataStore.h; sourceTree = "<group>"; };
+		20E969811B51574600013B0E /* PGServerDataStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGServerDataStore.m; sourceTree = "<group>"; };
+		20E969881B51AEB900013B0E /* PGData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGData.h; sourceTree = "<group>"; };
+		20E969891B51AEB900013B0E /* PGData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGData.m; sourceTree = "<group>"; };
+		20E9698C1B52DA2000013B0E /* unknown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = unknown.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,10 +116,18 @@
 		20079E6A1B48061100521807 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				20079E6B1B48061100521807 /* PGPrefsController.h */,
-				20079E6C1B48061100521807 /* PGPrefsController.m */,
 				20079E6D1B48061100521807 /* PGPrefsPane.h */,
 				20079E6E1B48061100521807 /* PGPrefsPane.m */,
+				20079E6B1B48061100521807 /* PGPrefsController.h */,
+				20079E6C1B48061100521807 /* PGPrefsController.m */,
+				2086E18D1B57B55800F2B292 /* PGSearchController.h */,
+				2086E18E1B57B55800F2B292 /* PGSearchController.m */,
+				20727F861B4C7971002BBCCC /* PGServerController.h */,
+				20727F871B4C7971002BBCCC /* PGServerController.m */,
+				20E969801B51574600013B0E /* PGServerDataStore.h */,
+				20E969811B51574600013B0E /* PGServerDataStore.m */,
+				20B628BF1B495154003F8557 /* PGServer.h */,
+				20B628C01B495154003F8557 /* PGServer.m */,
 				20079E6F1B48061100521807 /* Utils */,
 			);
 			path = Classes;
@@ -108,11 +136,13 @@
 		20079E6F1B48061100521807 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				2078AE291B50095C00488526 /* Config.h */,
 				20079E701B48061100521807 /* Common.h */,
-				20079E711B48061100521807 /* NSDictionary+Utilities.h */,
-				20079E721B48061100521807 /* NSDictionary+Utilities.m */,
-				20079E731B48061100521807 /* NSString+Utilities.h */,
-				20079E741B48061100521807 /* NSString+Utilities.m */,
+				201A6A7C1B5C2F3F005B691B /* Debug.h */,
+				20E969881B51AEB900013B0E /* PGData.h */,
+				20E969891B51AEB900013B0E /* PGData.m */,
+				20B628C51B4973BE003F8557 /* PGProcess.h */,
+				20B628C61B4973BE003F8557 /* PGProcess.m */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -120,7 +150,6 @@
 		20079E851B4807E200521807 /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
-				20079E861B4807E200521807 /* PGPrefsDetectDefaults.sh */,
 				20079E871B4807E200521807 /* PGPrefsPostgreSQL.sh */,
 				20079E881B4807E200521807 /* PGPrefsRunAsAdmin.applescript */,
 			);
@@ -130,6 +159,7 @@
 		20079E8C1B48086300521807 /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				201A6A7D1B5DB73D005B691B /* retrying.png */,
 				20079E8D1B48086300521807 /* checking.png */,
 				20079E8E1B48086300521807 /* elephant.png */,
 				20079E8F1B48086300521807 /* elephant_big.png */,
@@ -137,6 +167,7 @@
 				20079E911B48086300521807 /* refresh.png */,
 				20079E961B48086300521807 /* started.png */,
 				20079E971B48086300521807 /* stopped.png */,
+				20E9698C1B52DA2000013B0E /* unknown.png */,
 			);
 			path = Images;
 			sourceTree = "<group>";
@@ -214,11 +245,15 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				20079E7A1B48061100521807 /* NSDictionary+Utilities.h in Headers */,
-				20079E7C1B48061100521807 /* NSString+Utilities.h in Headers */,
+				20B628C71B4973BE003F8557 /* PGProcess.h in Headers */,
+				20B628C11B495154003F8557 /* PGServer.h in Headers */,
+				20727F881B4C7971002BBCCC /* PGServerController.h in Headers */,
 				20079E771B48061100521807 /* PGPrefsPane.h in Headers */,
 				20079E751B48061100521807 /* PGPrefsController.h in Headers */,
 				20079E791B48061100521807 /* Common.h in Headers */,
+				20E969821B51574600013B0E /* PGServerDataStore.h in Headers */,
+				2086E18F1B57B55800F2B292 /* PGSearchController.h in Headers */,
+				20E9698A1B51AEB900013B0E /* PGData.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -279,12 +314,13 @@
 				20079EA21B48086300521807 /* stopped.png in Resources */,
 				20079EA11B48086300521807 /* started.png in Resources */,
 				20079E9A1B48086300521807 /* elephant_big.png in Resources */,
+				201A6A7E1B5DB73D005B691B /* retrying.png in Resources */,
 				20079E9B1B48086300521807 /* logo.png in Resources */,
+				20E9698D1B52DA2000013B0E /* unknown.png in Resources */,
 				2035B19C149C8B83009A2972 /* InfoPlist.strings in Resources */,
 				2035B1A5149C8B84009A2972 /* PGPrefsPane.xib in Resources */,
 				20079E981B48086300521807 /* checking.png in Resources */,
 				20381A8319F0F10A00559533 /* PostgreSQL.iconset in Resources */,
-				20079E891B4807E200521807 /* PGPrefsDetectDefaults.sh in Resources */,
 				20079E991B48086300521807 /* elephant.png in Resources */,
 				20BBC29814AD1E7600BA0859 /* README.pod in Resources */,
 				20BBC29A14AD201A00BA0859 /* README.pod.html in Resources */,
@@ -308,9 +344,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				20079E7D1B48061100521807 /* NSString+Utilities.m in Sources */,
+				20727F891B4C7971002BBCCC /* PGServerController.m in Sources */,
+				20B628C21B495154003F8557 /* PGServer.m in Sources */,
+				2086E1901B57B55800F2B292 /* PGSearchController.m in Sources */,
 				20079E8B1B4807E200521807 /* PGPrefsRunAsAdmin.applescript in Sources */,
-				20079E7B1B48061100521807 /* NSDictionary+Utilities.m in Sources */,
+				20E969831B51574600013B0E /* PGServerDataStore.m in Sources */,
+				20E9698B1B51AEB900013B0E /* PGData.m in Sources */,
+				20B628C81B4973BE003F8557 /* PGProcess.m in Sources */,
 				20079E781B48061100521807 /* PGPrefsPane.m in Sources */,
 				20079E761B48061100521807 /* PGPrefsController.m in Sources */,
 			);

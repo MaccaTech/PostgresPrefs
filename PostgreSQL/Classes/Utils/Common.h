@@ -3,31 +3,87 @@
 //  PostgreSQL
 //
 //  Created by Francis McKenzie on 4/7/15.
-//  Copyright (c) 2015 HK Web Entrepreneurs. All rights reserved.
+//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
 //
 
 #ifndef PostgreSQL_Common_h
 #define PostgreSQL_Common_h
 
-#ifdef DEBUG
-#
-#   define LOG_FILE [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Logs/PostgreSQL/PostgreSQL.log"]
-#
-// DLog is almost a drop-in replacement for NSLog
-// DLog();
-// DLog(@"here");
-// DLog(@"value: %d", x);
-// Unfortunately this doesn't work DLog(aStringVariable); you have to do this instead DLog(@"%@", aStringVariable);
-#   define DLog(fmt, ...) { if (! [[NSFileManager defaultManager] fileExistsAtPath:LOG_FILE] ) { [[NSFileManager defaultManager] createDirectoryAtPath:[LOG_FILE stringByDeletingLastPathComponent] withIntermediateDirectories:YES attributes:nil error:NULL]; } const char *PATH = [LOG_FILE fileSystemRepresentation]; freopen(PATH, "a", stderr); NSLog((@"%s [Line %d] " fmt @"\n\n"), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
-#
-#   define IsLogging YES
-#
-#else /* ! DEBUG */
-#
-#   define DLog(...)
-#   define DLogInit(...)
-#   define IsLogging NO
-#
-#endif /* DEBUG */
+// Run block on main thread
+CG_INLINE void
+MainThread(void(^block)(void))
+{
+    if ([NSThread isMainThread]) block();
+    else dispatch_sync(dispatch_get_main_queue(), block);
+}
+// Run block in background thread
+CG_INLINE void
+BackgroundThread(void(^block)(void))
+{
+    if (![NSThread isMainThread]) block();
+    else dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0ul), block);
+}
+// Run block in background thread
+CG_INLINE void
+BackgroundThreadAfterDelay(void(^block)(void), NSTimeInterval delay)
+{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0ul), block);
+}
+// Return value converted to NSString
+CG_INLINE NSString *
+ToString(id value)
+{
+    if (value == nil || value == [NSNull null]) return nil;
+    return [value description];
+}
+// Return value converted to NSArray
+CG_INLINE NSArray *
+ToArray(id value)
+{
+    if (value == nil || value == [NSNull null] || ![value isKindOfClass:[NSArray class]]) return nil;
+    return (NSArray *)value;
+}
+// Return value converted to NSDictionary
+CG_INLINE NSDictionary *
+ToDictionary(id value)
+{
+    if (value == nil || value == [NSNull null] || ![value isKindOfClass:[NSDictionary class]]) return nil;
+    return (NSDictionary *)value;
+}
+// Return value converted to BOOL
+CG_INLINE BOOL
+ToBOOL(id value)
+{
+    if (value == nil || value == [NSNull null]) return NO;
+    if ([value isKindOfClass:[NSNumber class]]) return [((NSNumber *) value) boolValue];
+    NSString *description = [[value description] lowercaseString];
+    return [description isEqualToString:@"true"] || [description isEqualToString:@"yes"];
+}
+// Return string with leading & trailing whitespace removed, or nil if only whitespace
+CG_INLINE NSString *
+TrimToNil(NSString *string)
+{
+    NSString *trimmed = [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    return [trimmed length] > 0 ? trimmed : nil;
+}
+// Return YES if the string is non-blank
+CG_INLINE BOOL
+NonBlank(NSString *string)
+{
+    static NSCharacterSet *NonBlanks;
+    if (!NonBlanks) NonBlanks = [[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet];
+    return string && [string rangeOfCharacterFromSet:NonBlanks].location != NSNotFound;
+}
+// Convert JSON string to dictionary. If JSON string is array, returns first element.
+CG_INLINE NSDictionary *
+JsonToDictionary(NSString *json, NSError *error)
+{
+    NSData *jsonData = [json dataUsingEncoding:NSUTF8StringEncoding];
+    id jsonSerialized = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
+    if (error) return nil;
+    if ([jsonSerialized isKindOfClass:[NSArray class]])
+        jsonSerialized = ((NSArray *)jsonSerialized).firstObject;
+    return ToDictionary(jsonSerialized);
+}
 
 #endif /* PostgreSQL_Common_h */

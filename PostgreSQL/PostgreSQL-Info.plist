@@ -9,7 +9,7 @@
 	<key>CFBundleIconFile</key>
 	<string>PostgreSQL</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.hkwebentrepreneurs.${PRODUCT_NAME:rfc1034identifier}</string>
+	<string>com.maccatech.${PRODUCT_NAME:rfc1034identifier}</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -17,11 +17,11 @@
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.5</string>
+	<string>2.0</string>
 	<key>CFBundleVersion</key>
-	<string>1.5</string>
+	<string>2.0</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2015 HK Web Entrepreneurs. All rights reserved.</string>
+	<string>Copyright © 2015 Macca Tech Ltd. All rights reserved.</string>
 	<key>NSMainNibFile</key>
 	<string>PGPrefsPane</string>
 	<key>NSPrefPaneIconFile</key>
@@ -29,6 +29,6 @@
 	<key>NSPrefPaneIconLabel</key>
 	<string>PostgreSQL</string>
 	<key>NSPrincipalClass</key>
-	<string>PGPrefsPane</string>
+	<string>ComMaccatechPostgrePrefsPane</string>
 </dict>
 </plist>

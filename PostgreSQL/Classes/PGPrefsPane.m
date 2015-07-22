@@ -3,32 +3,96 @@
 //  Postgres
 //
 //  Created by Francis McKenzie on 17/12/11.
-//  Copyright (c) 2011 HK Web Entrepreneurs. All rights reserved.
+//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
 //
 
 #import "PGPrefsPane.h"
-#import "PGPrefsController.h"
-
-#pragma mark - Constants
-
-NSString *const PGPrefsUsernameKey      = @"Username";
-NSString *const PGPrefsBinDirectoryKey  = @"BinDirectory";
-NSString *const PGPrefsDataDirectoryKey = @"DataDirectory";
-NSString *const PGPrefsLogFileKey       = @"LogFile";
-NSString *const PGPrefsPortKey          = @"Port";
-NSString *const PGPrefsAutoStartupKey   = @"AutoStartup";
-
-
 
 #pragma mark - Interfaces
 
 @interface PGPrefsPane()
-    @property (nonatomic) BOOL autoStartupChangedBySystem;
-    @property (nonatomic) BOOL editingSettings;
-    @property (nonatomic) BOOL invalidSettings;
-    @property (nonatomic) BOOL canStartStop;
-    @property (nonatomic) BOOL canRefresh;
-    @property (nonatomic) BOOL canChangeAutoStartup;
+
+/// If YES, user events will not be sent to the controller (e.g. select server)
+@property (nonatomic) BOOL updatingDisplay;
+/// If NO, then all user controls will be greyed-out
+@property (nonatomic) BOOL enabled;
+/// If NO, then the start/stop button will be greyed-out
+@property (nonatomic) BOOL startStopEnabled;
+
+- (void)initAuthorization;
+
+- (void)showStarted;
+- (void)showStopped;
+- (void)showStarting;
+- (void)showStopping;
+- (void)showChecking;
+- (void)showRetrying;
+- (void)showUnknown;
+- (void)showProtected;
+- (void)showDirtyInSettingsWindow:(PGServer *)server;
+- (void)showSettingsInSettingsWindow:(PGServer *)server;
+- (void)showSettingsInMainServerView:(PGServer *)server;
+- (void)showStatusInMainServerView:(PGServer *)server;
+- (void)showServerInMainServerView:(PGServer *)server;
+- (void)showServerInServersTable:(PGServer *)server;
+- (void)showServerRenameWindow:(PGServer *)server;
+- (void)showServerSettingsWindow:(PGServer *)server;
+
+@end
+
+
+
+#pragma mark - PGPrefsCenteredTextFieldCell
+
+@implementation PGPrefsCenteredTextFieldCell
+
+- (NSRect)adjustedFrameToVerticallyCenterText:(NSRect)rect
+{
+    NSAttributedString *string = self.attributedStringValue;
+    CGFloat boundsHeight = [string boundingRectWithSize:rect.size options:NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading].size.height;
+    NSInteger offset = floor((NSHeight(rect) - ceilf(boundsHeight))/2);
+    NSRect centeredRect = NSInsetRect(rect, 0, offset);
+    return centeredRect;
+}
+- (void)drawInteriorWithFrame:(NSRect)frame inView:(NSView *)view
+{
+    [super drawInteriorWithFrame:[self adjustedFrameToVerticallyCenterText:frame] inView:view];
+}
+
+@end
+
+
+
+#pragma mark - PGPrefsSegmentedControl
+
+@implementation PGPrefsSegmentedControl
+- (SEL)action
+{
+    // This allows connected menu to popup instantly
+    // (because no action is returned for menu button)
+    return [self menuForSegment:self.selectedSegment] != nil ? nil : [super action];
+}
+@end
+
+
+
+#pragma mark - PGPrefsRenameWindow
+
+@implementation PGPrefsRenameWindow
+@end
+
+
+
+#pragma mark - PGPrefsServerSettingsWindow
+
+@implementation PGPrefsServerSettingsWindow
+@end
+
+
+
+#pragma mark - PGPrefsServersCell
+
+@implementation PGPrefsServersCell
 @end
 
 
@@ -37,437 +101,808 @@ NSString *const PGPrefsAutoStartupKey   = @"AutoStartup";
 
 @implementation PGPrefsPane
 
-- (NSString *)username
-{
-    return [self.settingsUsername stringValue];
-}
-- (void)setUsername:(NSString *)val
-{
-    [self.settingsUsername setStringValue:[val trimToNil]?:@""];
-}
-- (NSString *)binDirectory
-{
-    return [self.settingsBinDir stringValue];
-}
-- (void)setBinDirectory:(NSString *)val
-{
-    [self.settingsBinDir setStringValue:[val trimToNil]?:@""];
-}
-- (NSString *)dataDirectory
-{
-    return [self.settingsDataDir stringValue];
-}
-- (void)setDataDirectory:(NSString *)val
-{
-    [self.settingsDataDir setStringValue:[val trimToNil]?:@""];
-}
-- (NSString *)logFile
-{
-    return [self.settingsLogFile stringValue];
-}
-- (void)setLogFile:(NSString *)val
-{
-    [self.settingsLogFile setStringValue:[val trimToNil]?:@""];
-}
-- (NSString *)port
-{
-    return [self.settingsPort stringValue];
-}
-- (void)setPort:(NSString *)val
-{
-    [self.settingsPort setStringValue:[val trimToNil]?:@""];
-}
-- (BOOL)autoStartup
-{
-    return self.autoStartupCheckbox.state == NSOnState;
-}
-- (void)setAutoStartup:(BOOL)enabled
-{
-    self.autoStartupChangedBySystem = YES;
-    self.autoStartupCheckbox.state = enabled ? NSOnState : NSOffState;
-    self.autoStartupChangedBySystem = NO;
-}
-
-- (BOOL)authorized
-{
-    return [self.authView authorizationState] == SFAuthorizationViewUnlockedState;
-}
-
-- (AuthorizationRef)authorization
-{
-    return [[self.authView authorization] authorizationRef];
-}
-
-- (void)initAuthorization
-{
-    AuthorizationItem items = {kAuthorizationRightExecute, 0, NULL, 0};
-    AuthorizationRights rights = {1, &items};
-    [self.authView setAuthorizationRights:&rights];
-    self.authView.delegate = self;
-    [self.authView updateStatus:nil];
-    [self.authView setAutoupdate:YES];
-}
-
-- (void)destroyAuthorization
-{
-    [self.authView deauthorize:[self.authView authorization]];
-}
-
-- (void)postponeAuthorizationTimeout
-{
-    if (self.authorized) {
-        // No good way to do this at present - this is just a stub function
-        // in case a method presents itself in future.
-    }
-}
-
-- (void)authorizationViewDidAuthorize:(SFAuthorizationView *)view
-{
-    // Reset editing settings mode first
-    self.editingSettings = NO;
-
-    // Delegate
-    [self.delegate postgrePrefsDidAuthorize:self];
-}
-
-- (void)authorizationViewDidDeauthorize:(SFAuthorizationView *)view
-{
-    [self.delegate postgrePrefsDidDeauthorize:self];
-    
-    // Reset editing settings mode
-    self.editingSettings = NO;
-}
-
-- (BOOL)wasEditingSettings
-{
-    return self.editingSettings;
-}
-
-- (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem
-{
-    if ([tabView indexOfTabViewItem:tabViewItem] == 0) {
-        if (self.editingSettings) {
-            [self postponeAuthorizationTimeout];
-            [self.delegate postgrePrefsDidFinishEditingSettings:self];
-        }
-        self.editingSettings = NO;
-    } else {
-        self.editingSettings = YES;
-    }
-}
+#pragma mark Lifecycle
 
 - (void)mainViewDidLoad
 {
     // Remove existing delegate
-    if ([self delegate]) {
-        DLog(@"Warning - delegate already exists! Removing existing delegate...");
-        [self setDelegate:nil];
+    if (self.controller) {
+        DLog(@"Warning - controller already exists! Removing existing controller...");
+        if (self.controller.viewController == self) self.controller.viewController = nil;
+        self.controller = nil;
     }
+    
+    // Set servers menu
+    [self.serversMenu setDelegate:self];
+    [self.serversButtons setMenu:self.serversMenu forSegment:2];
     
     // Set new delegate
-    [self setDelegate:[[PGPrefsController alloc] init]];
-
+    self.controller = [[PGPrefsController alloc] initWithViewController:self];
+    
     // Reset internal variables
-    _invalidSettings = NO;
-    _canStartStop = YES;
-    _canRefresh = YES;
-    _canChangeAutoStartup = YES;
-    _editingSettings = NO;
-
-    // Listen for tab changes
-    self.mainTabs.delegate = self;
+    _startStopEnabled = self.startStopButton.enabled;
+    _enabled = YES;
+    
+    // Setup subview delegates
+    self.serverSettingsWindow.usernameField.delegate = self;
+    self.serverSettingsWindow.binDirectoryField.delegate = self;
+    self.serverSettingsWindow.dataDirectoryField.delegate = self;
+    self.serverSettingsWindow.logFileField.delegate = self;
+    self.serverSettingsWindow.portField.delegate = self;
+    
+    // Wire up authorization
+    [self initAuthorization];
     
     // Call delegate DidLoad method
-    [self.delegate postgrePrefsDidLoad:self];
+    [self.controller viewDidLoad];
 }
 
+- (void)willSelect
+{
+    [self.controller viewWillAppear];
+}
+- (void)didSelect
+{
+    [self.controller viewDidAppear];
+    
+    // Hack to get first responder to work
+    // See http://stackoverflow.com/questions/24903165/mysterious-first-responder-change
+    [self.mainView.window performSelector:@selector(makeFirstResponder:) withObject:self.serversTableView afterDelay:0.0];
+}
 - (void)willUnselect
 {
-    [self.delegate postgrePrefsWillUnselect:self];
-
-    // Reset editing settings mode
-    self.editingSettings = NO;
-    
-    // Ensure saved preferences are written to disk
-    [[NSUserDefaults standardUserDefaults] synchronize];
+    [self.controller viewWillDisappear];
+}
+- (void)didUnselect
+{
+    [self.controller viewDidDisappear];
 }
 
-- (NSDictionary *)savedPreferences
+
+
+#pragma mark Properties
+
+- (void)setEnabled:(BOOL)enabled
 {
-    return [[[NSUserDefaults standardUserDefaults] persistentDomainForName:[[NSBundle bundleForClass:[self class]] bundleIdentifier]] stringDictionary];
-}
-- (void)setSavedPreferences:(NSDictionary *)prefs
-{
-    // Remove existing prefs
-    [[NSUserDefaults standardUserDefaults] removePersistentDomainForName:[[NSBundle bundleForClass: [self class]] bundleIdentifier]];
+    if (enabled == _enabled) return;
+    _enabled = enabled;
     
-    // Save new prefs
-    prefs = [prefs stringDictionary];
-    if (prefs.nonBlank) {
-        [[NSUserDefaults standardUserDefaults] setPersistentDomain:prefs forName:[[NSBundle bundleForClass:[self class]] bundleIdentifier]];
+    self.startStopButton.enabled = enabled && self.startStopEnabled;
+    self.changeSettingsButton.enabled = enabled;
+    self.startupAtBootCell.enabled = enabled;
+    self.startupAtLoginCell.enabled = enabled;
+    self.startupManualCell.enabled = enabled;
+    
+    self.serversButtons.enabled = enabled;
+    self.noServersButtons.enabled = YES; // Always enabled, not always visible
+}
+- (void)setStartStopEnabled:(BOOL)startStopEnabled
+{
+    if (startStopEnabled == _startStopEnabled) return;
+    _startStopEnabled = startStopEnabled;
+
+    self.startStopButton.enabled = self.enabled && startStopEnabled;
+}
+
+
+
+#pragma mark PGServerSettings
+
+- (void)controlTextDidChange:(NSNotification *)notification
+{
+    if (self.updatingDisplay) return;
+    
+    PGPrefsServerSettingsWindow *view = self.serverSettingsWindow;
+    if (notification.object == view.usernameField) [self.controller userDidChangeSetting:PGServerUsernameKey value:view.usernameField.stringValue];
+    else if (notification.object == view.binDirectoryField) [self.controller userDidChangeSetting:PGServerBinDirectoryKey value:view.binDirectoryField.stringValue];
+    else if (notification.object == view.dataDirectoryField) [self.controller userDidChangeSetting:PGServerDataDirectoryKey value:view.dataDirectoryField.stringValue];
+    else if (notification.object == view.logFileField) [self.controller userDidChangeSetting:PGServerLogFileKey value:view.logFileField.stringValue];
+    else if (notification.object == view.portField) [self.controller userDidChangeSetting:PGServerPortKey value:view.portField.stringValue];
+    else
+        DLog(@"Unknown control: %@", notification.object);
+}
+- (IBAction)startupClicked:(id)sender
+{
+    if (self.updatingDisplay) return;
+ 
+    NSCell *cell = [sender selectedCell];
+    PGServerStartup startup;
+    if (cell == self.startupAtBootCell) startup = PGServerStartupAtBoot;
+    else if (cell == self.startupAtLoginCell) startup = PGServerStartupAtLogin;
+    else if (cell == self.startupManualCell) startup = PGServerStartupManual;
+    else return;
+    
+    [self.controller performSelector:@selector(userDidChangeServerStartup:) withObject:ServerStartupDescription(startup) afterDelay:0.1];
+}
+
+- (IBAction)viewLogClicked:(id)sender
+{
+    [self.controller userDidViewLog];
+}
+
+
+
+#pragma mark Authorization
+
+- (BOOL)authorized
+{
+    return self.authorizationView.authorizationState == SFAuthorizationViewUnlockedState;
+}
+
+- (AuthorizationRef)authorization
+{
+    SFAuthorization *authorization = self.authorizationView.authorization;
+    return authorization ? authorization.authorizationRef : NULL;
+}
+
+- (void)initAuthorization
+{
+    AuthorizationRights *rights = self.controller.authorizationRights;
+    if (!rights) {
+        DLog(@"No Authorization Rights!");
+        [self.authorizationView removeFromSuperview];
+        return;
+    }
+
+    self.authorizationView.authorizationRights = rights;
+    self.authorizationView.delegate = self;
+    [self.authorizationView updateStatus:nil];
+    self.authorizationView.autoupdate = self.authorized;
+}
+
+- (AuthorizationRef)authorize
+{
+    if (self.authorized) return self.authorizationView.authorization.authorizationRef;
+    
+    self.authorizationView.flags = kAuthorizationFlagDefaults | kAuthorizationFlagExtendRights | kAuthorizationFlagInteractionAllowed;
+    BOOL authorized = [self.authorizationView authorize:self];
+    self.authorizationView.flags = authorized ? kAuthorizationFlagDefaults : kAuthorizationFlagDefaults | kAuthorizationFlagExtendRights;
+    [self.authorizationView updateStatus:nil];
+    return authorized ? self.authorizationView.authorization.authorizationRef : NULL;
+}
+
+- (void)deauthorize
+{
+    [self.authorizationView deauthorize:self.authorizationView.authorization];
+    
+    [self.mainView.window makeFirstResponder:self.serversTableView];
+}
+
+- (void)authorizationViewDidAuthorize:(SFAuthorizationView *)view
+{
+    self.authorizationView.flags = kAuthorizationFlagDefaults;
+    
+    view.autoupdate = YES;
+    [self.controller viewDidAuthorize:view.authorization.authorizationRef];
+}
+
+- (void)authorizationViewDidDeauthorize:(SFAuthorizationView *)view
+{
+    view.autoupdate = NO;
+    self.authorizationView.flags = kAuthorizationFlagDefaults | kAuthorizationFlagExtendRights;
+    
+    [self.controller viewDidDeauthorize];
+}
+
+
+
+#pragma mark Apply/Revert Settings
+
+- (IBAction)changeSettingsClicked:(id)sender
+{
+    [self.controller userWillEditSettings];
+}
+- (IBAction)resetSettingsClicked:(id)sender
+{
+    [self.controller userDidRevertSettings];
+}
+- (IBAction)applySettingsClicked:(id)sender
+{
+    [NSApp endSheet:self.serverSettingsWindow returnCode:NSOKButton];
+}
+- (IBAction)cancelSettingsClicked:(id)sender
+{
+    [NSApp endSheet:self.serverSettingsWindow returnCode:NSCancelButton];
+}
+
+
+
+#pragma mark Servers
+
+- (IBAction)serversButtonClicked:(NSSegmentedControl *)sender
+{
+    [self.mainView.window makeFirstResponder:self.serversTableView];
+    
+    switch (sender.selectedSegment) {
+        case 0:
+            [self.controller userDidAddServer];
+            break;
+        case 1:
+            [self.controller userDidDeleteServer];
+            break;
+        case 2:
+            // Ignore - popup handled separately
+            break;
+        default:
+            break; // Invalid segment
     }
 }
 
-- (NSDictionary *)guiPreferences
+- (IBAction)renameServerClicked:(id)sender
 {
-    return [@{
-             PGPrefsUsernameKey:self.username,
-             PGPrefsBinDirectoryKey:self.binDirectory,
-             PGPrefsDataDirectoryKey:self.dataDirectory,
-             PGPrefsLogFileKey:self.logFile,
-             PGPrefsPortKey:self.port,
-             PGPrefsAutoStartupKey:(self.autoStartup ? @"Yes" : @"No")
-    } stringDictionary];
-}
-- (void)setGuiPreferences:(NSDictionary *)prefs
-{
-    prefs = [prefs stringDictionary];
-    
-    self.username = prefs[PGPrefsUsernameKey];
-    self.binDirectory = prefs[PGPrefsBinDirectoryKey];
-    self.dataDirectory = prefs[PGPrefsDataDirectoryKey];
-    self.logFile = prefs[PGPrefsLogFileKey];
-    self.port = prefs[PGPrefsPortKey];
-    BOOL autoStartup = [prefs[PGPrefsAutoStartupKey] isEqualToString:@"Yes"] || [prefs[PGPrefsAutoStartupKey] isEqualToString:@"true"];
-    self.autoStartup = autoStartup;
+    [self showServerRenameWindow:self.server];
 }
 
-- (void)setCanStartStop:(BOOL)canStartStop
+- (IBAction)cancelRenameServerClicked:(id)sender
 {
-    if (canStartStop == _canStartStop) return;
-    
-    if (canStartStop && self.invalidSettings) return;
-    
-    _canStartStop = canStartStop;
-    
-    self.startStopButton.enabled = canStartStop;
-}
-- (void)setCanRefresh:(BOOL)canRefresh
-{
-    if (canRefresh == _canRefresh) return;
-    _canRefresh = canRefresh;
-    
-    self.refreshButton.enabled = canRefresh;
-}
-- (void)setCanChangeAutoStartup:(BOOL)canChangeAutoStartup
-{
-    if (canChangeAutoStartup == _canChangeAutoStartup) return;
-    
-    if (canChangeAutoStartup && self.invalidSettings) return;
-    
-    _canChangeAutoStartup = canChangeAutoStartup;
-    
-    self.autoStartupCheckbox.enabled = canChangeAutoStartup;
+    [NSApp endSheet:self.serversRenameWindow returnCode:NSCancelButton];
 }
 
-- (void)displayStarted
+- (IBAction)okRenameServerClicked:(id)sender
+{
+    if (![self.controller userCanRenameServer:self.serversRenameWindow.nameField.stringValue]) return;
+    
+    [NSApp endSheet:self.serversRenameWindow returnCode:NSOKButton];
+}
+     
+- (void)sheetDidEnd:(NSWindow *)sheet returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
+{
+    // Rename
+    if (sheet == self.serversRenameWindow) {
+        [self.serversRenameWindow orderOut:self];
+        
+        // Cancelled
+        if (returnCode == NSCancelButton) {
+            [self.controller userDidCancelRenameServer];
+            
+        // Apply
+        } else {
+            [self.controller userDidRenameServer:self.serversRenameWindow.nameField.stringValue];
+        }
+        
+    // Settings
+    } else if (sheet == self.serverSettingsWindow) {
+        [self.serverSettingsWindow orderOut:self];
+        
+        // Cancelled
+        if (returnCode == NSCancelButton) {
+            [self.controller userDidCancelSettings];
+            
+        // Apply
+        } else {
+            [self.controller userDidApplySettings];
+        }
+    }
+}
+
+- (void)menuWillOpen:(NSMenu *)menu
+{
+    [self.mainView.window makeFirstResponder:self.serversTableView];
+    
+}
+
+
+
+#pragma mark Start/Stop
+
+- (IBAction)startStopClicked:(id)sender
+{
+    [self.controller userDidStartStopServer];
+}
+
+
+
+#pragma mark NSTableViewDataSource
+
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView
+{
+    // Servers
+    if (tableView == self.serversTableView) {
+        NSInteger result = MAX(self.servers.count+1, 1);
+        DLog(@"Servers Table Rows: %@", @(result));
+        return result;
+        
+    // Search servers
+    } else if (tableView == self.serverSettingsWindow.serversTableView) {
+        NSInteger result = self.searchServers.count;
+        DLog(@"Search Servers Table Rows: %@", @(result));
+        return result;
+    }
+    
+    return 0;
+}
+- (void)tableView:(NSTableView *)tableView sortDescriptorsDidChange:(NSArray *)oldDescriptors
+
+{
+    if (tableView != self.serverSettingsWindow.serversTableView) return;
+    
+    self.searchServers = [self.searchServers sortedArrayUsingDescriptors:tableView.sortDescriptors];
+    [tableView reloadData];
+}
+
+
+
+#pragma mark NSTableViewDelegate
+
+- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)row
+{
+    // Servers
+    if (tableView == self.serversTableView) {
+        return row == 0 ? 16 : 36;
+        
+    // Search servers
+    } else if (tableView == self.serverSettingsWindow.serversTableView) {
+        return 18;
+    }
+    return 44;
+}
+- (BOOL)tableView:(NSTableView *)tableView shouldSelectRow:(NSInteger)row
+{
+    // Servers
+    if (tableView == self.serversTableView) {
+        if (row == 0) return NO;
+        if (!self.updatingDisplay) [self.controller userDidSelectServer:self.servers[row-1]];
+        // Always scroll to beginning of table when selecting top-most datacell
+        // That way, header cell is visible, rather than tending to be 'off-screen'
+        if (row == 1) [tableView scrollToBeginningOfDocument:self];
+        return YES;
+        
+    // Search servers
+    } else if (tableView == self.serverSettingsWindow.serversTableView) {
+        [self.controller userDidSelectSearchServer:self.searchServers[row]];
+        return YES;
+    }
+    
+    return YES;
+}
+- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row
+{
+    // Servers
+    if (tableView == self.serversTableView) {
+        // Header
+        if (row == 0) {
+            NSTableCellView *result = [tableView makeViewWithIdentifier:@"HeaderCell" owner:self];
+            result.textField.stringValue = @"DATABASE SERVERS";
+            return result;
+            
+        // Server
+        } else {
+            PGPrefsServersCell *result = [tableView makeViewWithIdentifier:@"DataCell" owner:self];
+            PGServer *server = self.servers[row-1];
+            [self configureServersCell:result forServer:server];
+            return result;
+        }
+    
+    // Search servers
+    } else if (tableView == self.serverSettingsWindow.serversTableView) {
+        
+        PGServer *server = self.searchServers.count == 0 ? nil : self.searchServers[row];
+        NSString *cellIdentifier = nil;
+        NSString *value = nil;
+        
+        // Name
+        if ([tableColumn.identifier isEqualToString:@"Name"]) {
+            cellIdentifier = @"NameCell";
+            value = server.name;
+            
+        // Domain
+        } else if ([tableColumn.identifier isEqualToString:@"Domain"]) {
+            cellIdentifier = @"DomainCell";
+            value = server.domain;
+            
+        // Unknown
+        } else return nil;
+
+        NSTableCellView *result = [tableView makeViewWithIdentifier:cellIdentifier owner:self];
+        result.textField.stringValue = value?:@"";
+        return result;
+    }
+    
+    return nil;
+}
+- (void)configureServersCell:(PGPrefsServersCell *)cell forServer:(PGServer *)server
+{
+    // Name
+    cell.textField.stringValue = server.name?:@"Name Not Found";
+    
+    // Icon & Status
+    NSString *statusText = nil;
+    NSString *imageName = nil;
+    if (server.needsAuthorization && !self.authorized) {
+        imageName = NSImageNameLockLockedTemplate;
+        statusText = @"Protected";
+    } else {
+        statusText = ServerStatusDescription(server.status);
+        switch (server.status) {
+            case PGServerStarted:
+                if (NonBlank(server.settings.port)) statusText = [NSString stringWithFormat:@"%@ on port %@", statusText, server.settings.port];
+                imageName = NSImageNameStatusAvailable;
+                break;
+            case PGServerStopped:
+                imageName = NSImageNameStatusUnavailable;
+                break;
+            case PGServerRetrying: // Fall through
+            case PGServerStarting: // Fall through
+            case PGServerStopping: // Fall through
+            case PGServerUpdating:
+                imageName = NSImageNameStatusPartiallyAvailable;
+                break;
+            default:
+                imageName = NSImageNameStatusNone;
+        }
+    }
+    cell.statusTextField.stringValue = statusText;
+    cell.imageView.image = [NSImage imageNamed:imageName];
+}
+
+
+
+#pragma mark PGPrefsViewController
+
+- (void)prefsController:(PGPrefsController *)controller willEditServerSettings:(PGServer *)server
+{
+    [self showServerSettingsWindow:server];
+}
+- (void)prefsController:(PGPrefsController *)controller didChangeServers:(NSArray *)servers
+{
+    self.updatingDisplay = YES;
+ 
+    DLog(@"Servers: %@", @(servers.count));
+    
+    PGServer *server = [self selectedServer];
+    self.servers = servers;
+    [self.serversTableView reloadData];
+    [self selectServer:server];
+    
+    self.updatingDisplay = NO;
+}
+
+- (void)prefsController:(PGPrefsController *)controller didChangeSelectedServer:(PGServer *)server
+{
+    self.updatingDisplay = YES;
+    
+    [self selectServer:server];
+    [self showServerInMainServerView:server];
+    
+    self.updatingDisplay = NO;
+}
+
+- (void)prefsController:(PGPrefsController *)controller didChangeServerStatus:(PGServer *)server
+{
+    self.updatingDisplay = YES;
+    
+    if ([self selectedServer] == server) [self showStatusInMainServerView:server];
+    
+    [self showServerInServersTable:server];
+    
+    self.updatingDisplay = NO;
+}
+
+- (void)prefsController:(PGPrefsController *)controller didDirtyServerSettings:(PGServer *)server
+{
+    self.updatingDisplay = YES;
+    
+    [self showDirtyInSettingsWindow:server];
+
+    self.updatingDisplay = NO;
+}
+
+- (void)prefsController:(PGPrefsController *)controller didApplyServerSettings:(PGServer *)server
+{
+    self.updatingDisplay = YES;
+    
+    [self selectServer:server];
+    [self showSettingsInMainServerView:server];
+    [self showServerInServersTable:server];
+
+    self.updatingDisplay = NO;
+}
+
+- (void)prefsController:(PGPrefsController *)controller didRevertServerSettings:(PGServer *)server
+{
+    self.updatingDisplay = YES;
+    
+    [self showSettingsInSettingsWindow:server];
+    [self.serverSettingsWindow.serversTableView deselectAll:self];
+
+    self.updatingDisplay = NO;
+}
+- (void)prefsController:(PGPrefsController *)controller didRevertServerStartup:(PGServer *)server
+{
+    self.updatingDisplay = YES;
+    
+    [self performSelector:@selector(showServerStartup:) withObject:server afterDelay:0.0];
+    
+    self.updatingDisplay = NO;
+    
+}
+- (void)revertServerStartup:(PGServer *)server
+{
+    self.updatingDisplay = YES;
+    
+    [self showServerStartup:server];
+    
+    self.updatingDisplay = NO;
+}
+- (void)prefsController:(PGPrefsController *)controller didChangeSearchServers:(NSArray *)servers
+{
+    self.updatingDisplay = YES;
+    
+    NSArray *sortDescriptors = self.serverSettingsWindow.serversTableView.sortDescriptors;
+    
+    if (sortDescriptors.count == 0) sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES]];
+    
+    self.searchServers = [servers sortedArrayUsingDescriptors:sortDescriptors];
+    self.serverSettingsWindow.serversTableView.sortDescriptors = sortDescriptors;
+    
+    [self.serverSettingsWindow.serversTableView reloadData];
+    
+    self.updatingDisplay = NO;
+}
+
+
+
+#pragma mark Private
+
+- (NSUInteger)rowForServer:(PGServer *)server
+{
+    NSUInteger result = [self.servers indexOfObject:server];
+    return result == NSNotFound ? result : result+1;
+}
+
+- (PGServer *)selectedServer
+{
+    if (self.servers.count == 0) return nil;
+    
+    NSInteger row = self.serversTableView.selectedRow;
+    
+    if (row < 0 || row-1 >= self.servers.count) return nil;
+    
+    return self.servers[row-1];
+}
+
+- (void)selectServer:(PGServer *)server
+{
+    NSUInteger row = [self.servers indexOfObject:server];
+    if (row == NSNotFound) return;
+    
+    [self.serversTableView selectRowIndexes:[NSIndexSet indexSetWithIndex:row+1] byExtendingSelection:NO];
+    
+    [self.mainView.window makeFirstResponder:self.serversTableView];
+}
+
+- (void)showStarted
 {
     NSString *startedPath = [[self bundle] pathForResource:@"started" ofType:@"png"];
     NSImage *started = [[NSImage alloc] initWithContentsOfFile:startedPath];
     
-    [self.startStopButton setTitle:@"Stop PostgreSQL"];
-    [self.statusInfo setTitleWithMnemonic:@"The PostgreSQL Database Server is started and ready for client connections.\nTo shut down the server, use the \"Stop PostgreSQL\" button."];
-    [self.statusLabel setTitleWithMnemonic:@"Running"];
-    [self.statusLabel setTextColor:[NSColor greenColor]];
-    [self.startStopInfo setTitleWithMnemonic:@"If you stop the server, you and your applications will not be able to use PostgreSQL and all current connections will be closed."];
-    [self.statusImage setImage:started];        
-    
-    self.invalidSettings = NO;
-    self.canStartStop = YES;
-    self.canRefresh = YES;
-    self.canChangeAutoStartup = YES;
-    
-    [self.spinner stopAnimation:self];
+    self.startStopButton.title = @"Stop PostgreSQL";
+    self.infoField.stringValue = @"The PostgreSQL Database Server is started and ready for client connections.\nTo shut down the server, use the \"Stop PostgreSQL\" button.";
+    self.statusField.stringValue = @"Running";
+    self.statusField.textColor = PGServerStartedColor;
+    self.statusImage.image = started;
 }
 
-- (void)displayStopped
+- (void)showStopped
 {
     NSString *stoppedPath = [[self bundle] pathForResource:@"stopped" ofType:@"png"];
     NSImage *stopped = [[NSImage alloc] initWithContentsOfFile:stoppedPath];
     
-    [self.startStopButton setTitle:@"Start PostgreSQL"];
-    [self.statusInfo setTitleWithMnemonic:@"The PostgreSQL Database Server is currently stopped.\nTo start it, use the \"Start PostgreSQL\" button."];
-    [self.statusLabel setTitleWithMnemonic:@"Stopped"];
-    [self.statusLabel setTextColor:[NSColor redColor]];
-    [self.startStopInfo setTitleWithMnemonic:@""];
-    [self.statusImage setImage:stopped];
-    
-    self.invalidSettings = NO;
-    self.canStartStop = YES;
-    self.canRefresh = YES;
-    self.canChangeAutoStartup = YES;
-    
-    [self.spinner stopAnimation:self];
+    self.startStopButton.title = @"Start PostgreSQL";
+    self.infoField.stringValue = @"The PostgreSQL Database Server is currently stopped.\nTo start it, use the \"Start PostgreSQL\" button.";
+    self.statusField.stringValue = @"Stopped";
+    self.statusField.textColor = PGServerStoppedColor;
+    self.statusImage.image = stopped;
 }
 
-- (void)displayStarting
+- (void)showStarting
 {
     NSString *checkingPath = [[self bundle] pathForResource:@"checking" ofType:@"png"];
     NSImage *checking = [[NSImage alloc] initWithContentsOfFile:checkingPath];
-    [self.statusLabel setTitleWithMnemonic:@"Starting..."];
-    [self.statusLabel setTextColor:[NSColor blueColor]];
-    [self.statusImage setImage:checking];
-    
-    self.canStartStop = NO;
-    self.canRefresh = NO;
-    self.canChangeAutoStartup = NO;
-    
-    [self.spinner startAnimation:self];
+    self.statusField.stringValue = @"Starting...";
+    self.statusField.textColor = PGServerStartingColor;
+    self.statusImage.image = checking;
 }
 
-- (void)displayStopping {
+- (void)showStopping
+{
     NSString *checkingPath = [[self bundle] pathForResource:@"checking" ofType:@"png"];
     NSImage *checking = [[NSImage alloc] initWithContentsOfFile:checkingPath];
-    [self.statusLabel setTitleWithMnemonic:@"Stopping..."];
-    [self.statusLabel setTextColor:[NSColor blueColor]];
-    [self.statusImage setImage:checking];
-    
-    self.canStartStop = NO;
-    self.canRefresh = NO;
-    self.canChangeAutoStartup = NO;
-    
-    [self.spinner startAnimation:self];
+    self.statusField.stringValue = @"Stopping...";
+    self.statusField.textColor = PGServerStoppingColor;
+    self.statusImage.image = checking;
 }
 
-- (void)displayChecking
+- (void)showChecking
 {
     NSString *checkingPath = [[self bundle] pathForResource:@"checking" ofType:@"png"];
     NSImage *checking = [[NSImage alloc] initWithContentsOfFile:checkingPath];
     
-    [self.startStopButton setTitle:@"PostgreSQL"];
-    [self.statusInfo setTitleWithMnemonic:@"The running status of the PostgreSQL Database Server is not currently known."];
-    [self.statusLabel setTitleWithMnemonic:@"Checking..."];
-    [self.statusLabel setTextColor:[NSColor blueColor]];
-    [self.startStopInfo setTitleWithMnemonic:@""];
-    [self.statusImage setImage:checking];
+    self.startStopButton.title = @"PostgreSQL";
+    self.infoField.stringValue = @"The running status of the PostgreSQL Database Server is currently being checked.";
+    self.statusField.stringValue = @"Checking...";
+    self.statusField.textColor = PGServerCheckingColor;
+    self.statusImage.image = checking;
+}
+
+- (void)showRetrying
+{
+    NSString *checkingPath = [[self bundle] pathForResource:@"retrying" ofType:@"png"];
+    NSImage *checking = [[NSImage alloc] initWithContentsOfFile:checkingPath];
     
-    self.canStartStop = NO;
-    self.canRefresh = NO;
-    self.canChangeAutoStartup = NO;
+    self.startStopButton.title = @"Stop PostgreSQL";
+    self.infoField.stringValue = @"The PostgreSQL Database Server has failed to start. Please view the log for details.";
+    self.statusField.stringValue = @"Retrying...";
+    self.statusField.textColor = PGServerRetryingColor;
+    self.statusImage.image = checking;
+}
+
+- (void)showUnknown
+{
+    NSString *unknownPath = [[self bundle] pathForResource:@"unknown" ofType:@"png"];
+    NSImage *unknownImage = [[NSImage alloc] initWithContentsOfFile:unknownPath];
     
-    [self.spinner startAnimation:self];
+    self.startStopButton.title = @"PostgreSQL";
+    self.infoField.stringValue = @"The running status of the PostgreSQL Database Server is not currently known.\nPlease check the server settings and try again.";
+    self.statusField.stringValue = @"Unknown";
+    self.statusField.textColor = PGServerStatusUnknownColor;
+    self.statusImage.image = unknownImage;
+}
+
+- (void)showProtected
+{
+    [self showUnknown];
     
-    [self displayAutoStartupNoError];
+    self.infoField.stringValue = @"The PostgreSQL Database Server is run under a different user account. Please click the lock.";
+    self.statusField.stringValue = @"Protected";
 }
 
-- (void)displayUnknown
+- (void)showError:(NSString *)errMsg
 {
-    NSString *stoppedPath = [[self bundle] pathForResource:@"stopped" ofType:@"png"];
-    NSImage *stopped = [[NSImage alloc] initWithContentsOfFile:stoppedPath];
-    
-    [self.startStopButton setTitle:@"PostgreSQL"];
-    [self.statusInfo setTitleWithMnemonic:@"The running status of the PostgreSQL Database Server is not currently known."];
-    [self.statusLabel setTitleWithMnemonic:@"Unknown"];
-    [self.statusLabel setTextColor:[NSColor redColor]];
-    [self.statusImage setImage:stopped];
-    if (! self.startStopInfo.stringValue.nonBlank) {
-        [self.startStopInfo setTitleWithMnemonic:@"Please check the values in the Settings tab and try again."];
-    }
-    
-    self.invalidSettings = YES;
-    self.canStartStop = NO;
-    self.canRefresh = YES;
-    self.canChangeAutoStartup = NO;
-    
-    [self.spinner stopAnimation:self];
-}
-
-- (void)displayLocked
-{
-    [self.authTabs selectTabViewItemWithIdentifier:@"locked"];
-}
-
-- (void)displayUnlocked
-{
-    NSString *identifier = self.authorized ? @"unlocked" : @"locked";
-    [self.authTabs selectTabViewItemWithIdentifier:identifier];
-    [self.mainTabs selectTabViewItemAtIndex:0];
-}
-
-- (void)displayWillChangeAutoStartup
-{
-    self.canChangeAutoStartup = NO;
-    self.canRefresh = NO;
-    self.canStartStop = NO;
-    
-    [self.autoStartupSpinner startAnimation:self];
-}
-
-- (void)displayDidChangeAutoStartup
-{
-    self.canChangeAutoStartup = YES;
-    self.canRefresh = YES;
-    self.canStartStop = YES;
-
-    [self.autoStartupSpinner stopAnimation:self];
-}
-
-- (bool)isError
-{
-    return ![self.errorLabel isHidden];
-}
-
-- (void)displayError:(NSString *)errMsg
-{
-    [self.errorLabel setTitleWithMnemonic:errMsg];
-    [self.errorView setHidden:NO];
-    [self.startStopInfo setHidden:YES];
-}
-
-- (void)displayNoError
-{
-    [self.errorLabel setTitleWithMnemonic:@""];
-    [self.errorView setHidden:YES];
-    [self.startStopInfo setHidden:NO];
-}
-
-- (void)displayAutoStartupError:(NSString *)errMsg
-{
-    [self.autoStartupErrorLabel setTitleWithMnemonic:errMsg];
-    [self.autoStartupErrorView setHidden:NO];
-    [self.autoStartupInfo setHidden:YES];
-}
-
-- (void)displayAutoStartupNoError
-{
-    [self.autoStartupErrorLabel setTitleWithMnemonic:@""];
-    [self.autoStartupErrorView setHidden:YES];
-    [self.autoStartupInfo setHidden:NO];
-}
-
-- (void)displayUpdatingSettings
-{
-    [self.resetSettingsButton setEnabled:NO];
-}
-
-- (void)displayUpdatedSettings
-{
-    [self.resetSettingsButton setEnabled:YES];
-}
-
-- (IBAction)toggleAutoStartup:(id)sender
-{
-    [self postponeAuthorizationTimeout];
-    if (!self.autoStartupChangedBySystem) {
-        [self.delegate postgrePrefsDidClickAutoStartup:self];
+    // No error
+    if (!errMsg) {
+        self.errorField.stringValue = @"";
+        self.errorView.hidden = YES;
+        self.infoField.hidden = NO;
+        
+    // Error
+    } else {
+        self.errorField.stringValue = errMsg;
+        self.errorView.hidden = NO;
+        self.infoField.hidden = YES;
     }
 }
 
-- (IBAction)startStopServer:(id)sender
+- (void)showDirtyInSettingsWindow:(PGServer *)server
 {
-    [self postponeAuthorizationTimeout];
-    [self.delegate postgrePrefsDidClickStartStopServer:self];
+    self.serverSettingsWindow.revertSettingsButton.enabled = server.dirtySettings != nil;
+    self.serverSettingsWindow.applySettingsButton.enabled = server.dirtySettings != nil;
+    
+    PGServerSettings *settings = server.dirtySettings ?: server.settings;
+    self.serverSettingsWindow.invalidBinDirectoryImage.hidden = !settings.invalidBinDirectory;
+    self.serverSettingsWindow.invalidDataDirectoryImage.hidden = !settings.invalidDataDirectory;
+}
+- (void)showSettingsInSettingsWindow:(PGServer *)server
+{
+    PGServerSettings *settings = server.dirtySettings ?: server.settings;
+    self.serverSettingsWindow.usernameField.stringValue = settings.username?:@"";
+    self.serverSettingsWindow.binDirectoryField.stringValue = settings.binDirectory?:@"";
+    self.serverSettingsWindow.dataDirectoryField.stringValue = settings.dataDirectory?:@"";
+    self.serverSettingsWindow.logFileField.stringValue = settings.logFile?:@"";
+    self.serverSettingsWindow.portField.stringValue = settings.port?:@"";
+    
+    [self showDirtyInSettingsWindow:server];
+    
+    // Focus on problem field
+    NSControl *focus = self.serverSettingsWindow.serversTableView;
+    if (settings.invalidBinDirectory) focus = self.serverSettingsWindow.binDirectoryField;
+    else if (settings.invalidDataDirectory) focus = self.serverSettingsWindow.dataDirectoryField;
+    [self.serverSettingsWindow makeFirstResponder:focus];
+}
+- (void)showSettingsInMainServerView:(PGServer *)server
+{
+    PGServerSettings *settings = server.settings;
+    self.usernameField.stringValue = settings.username?:@"";
+    self.binDirectoryField.stringValue = settings.binDirectory?:@"";
+    self.dataDirectoryField.stringValue = settings.dataDirectory?:@"";
+    self.logFileField.stringValue = settings.logFile?:@"";
+    self.portField.stringValue = settings.port?:@"";
+    
+    self.viewLogButton.enabled = server.logExists;
+    
+    [self showServerStartup:self.server];
+}
+- (void)showServerStartup:(PGServer *)server;
+{
+    NSCell *cell;
+    switch (server.settings.startup) {
+        case PGServerStartupAtBoot: cell = self.startupAtBootCell; break;
+        case PGServerStartupAtLogin: cell = self.startupAtLoginCell; break;
+        default: cell = self.startupManualCell; break;
+    }
+    [self.startupMatrix selectCell:cell];
+}
+- (void)showStatusInMainServerView:(PGServer *)server
+{
+    [self showError:server.error];
+    
+    if (server.needsAuthorization && !self.authorized) {
+        [self showProtected];
+    } else {
+        switch (server.status) {
+            case PGServerStarted: [self showStarted]; break;
+            case PGServerStarting: [self showStarting]; break;
+            case PGServerStopping: [self showStopping]; break;
+            case PGServerStopped: [self showStopped]; break;
+            case PGServerRetrying: [self showRetrying]; break;
+            default: [self showUnknown]; break;
+        }
+    }
+    
+    self.viewLogButton.enabled = server.logExists;
+    
+    self.startStopButton.hidden = server.status == PGServerStatusUnknown;
+    self.enabled = !server.processing;
+    
+    if (server.processing) [self.statusSpinner startAnimation:self];
+    else [self.statusSpinner stopAnimation:self];
 }
 
-- (IBAction)resetSettings:(id)sender
+- (void)showServerInMainServerView:(PGServer *)server
 {
-    [self postponeAuthorizationTimeout];
-    [self.delegate postgrePrefsDidClickResetSettings:self];
+    DLog(@"Server: %@", server);
+    
+    self.server = server;
+    
+    // No server
+    if (!server) {
+        [self.serverNoServerTabs selectTabViewItemWithIdentifier:@"noserver"];
+        self.authorizationView.hidden = YES;
+        self.serversButtons.hidden = YES;
+        self.noServersButtons.hidden = NO;
+        
+        // Reset startup button to Manual
+        [self.startupMatrix selectCell:self.startupManualCell];
+        
+        // Disable everything except "Add server" button
+        self.enabled = NO;
+        
+    // Server
+    } else {
+        [self.serverNoServerTabs selectTabViewItemWithIdentifier:@"server"];
+        self.authorizationView.hidden = NO;
+        self.serversButtons.hidden = NO;
+        self.noServersButtons.hidden = YES;
+        
+        [self showSettingsInMainServerView:server];
+        [self showStatusInMainServerView:server];
+    }
 }
 
-- (IBAction)refreshButton:(id)sender
+- (void)showServerInServersTable:(PGServer *)server
 {
-    [self postponeAuthorizationTimeout];
-    [self.delegate postgrePrefsDidClickRefresh:self];
+    NSUInteger row = [self rowForServer:server];
+    
+    if (row == NSNotFound) return;
+    
+    [self.serversTableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:row] columnIndexes:[NSIndexSet indexSetWithIndex:0]];
 }
+
+- (void)showServerSettingsWindow:(PGServer *)server
+{
+    [self.serverSettingsWindow.serversTableView deselectAll:self];
+    [self.serverSettingsWindow.serversTableView scrollRowToVisible:0];
+    [self showSettingsInSettingsWindow:server];
+    [NSApp beginSheet:self.serverSettingsWindow modalForWindow:self.mainView.window modalDelegate:self didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    [self.serverSettingsWindow orderFront:self];
+}
+
+- (void)showServerRenameWindow:(PGServer *)server
+{
+    self.serversRenameWindow.nameField.stringValue = server.name;
+    
+    [NSApp beginSheet:self.serversRenameWindow modalForWindow:self.mainView.window modalDelegate:self didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    [self.serversRenameWindow orderFront:self];
+}
+
 @end

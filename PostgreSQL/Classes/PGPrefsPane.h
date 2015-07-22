@@ -3,114 +3,171 @@
 //  Postgres
 //
 //  Created by Francis McKenzie on 17/12/11.
-//  Copyright (c) 2011 HK Web Entrepreneurs. All rights reserved.
+//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
 //
 
 #import <PreferencePanes/PreferencePanes.h>
 #import <SecurityInterface/SFAuthorizationView.h>
-#import "NSString+Utilities.h"
-#import "NSDictionary+Utilities.h"
+#import "PGPrefsController.h"
+#import "PGServer.h"
 
 @class PGPrefsPane;
 
-#pragma mark - Constants
+#pragma mark - PGPrefsCenteredTextFieldCell
 
-extern NSString *const PGPrefsUsernameKey;
-extern NSString *const PGPrefsBinDirectoryKey;
-extern NSString *const PGPrefsDataDirectoryKey;
-extern NSString *const PGPrefsLogFileKey;
-extern NSString *const PGPrefsPortKey;
-extern NSString *const PGPrefsAutoStartupKey;
-
+/**
+ * A textfield cell whose content is center-aligned vertically
+ */
+@interface PGPrefsCenteredTextFieldCell : NSTextFieldCell
+@end
 
 
-#pragma mark - PGPrefsPaneDelegate
 
-@protocol PGPrefsPaneDelegate <NSObject>
-@required
-- (void)postgrePrefsDidAuthorize:(PGPrefsPane *)prefs;
-- (void)postgrePrefsDidDeauthorize:(PGPrefsPane *)prefs;
-- (void)postgrePrefsDidLoad:(PGPrefsPane *)prefs;
-- (void)postgrePrefsWillUnselect:(PGPrefsPane *)prefs;
-- (void)postgrePrefsDidClickStartStopServer:(PGPrefsPane *)prefs;
-- (void)postgrePrefsDidClickRefresh:(PGPrefsPane *)prefs;
-- (void)postgrePrefsDidClickAutoStartup:(PGPrefsPane *)prefs;
-- (void)postgrePrefsDidClickResetSettings:(PGPrefsPane *)prefs;
-- (void)postgrePrefsDidFinishEditingSettings:(PGPrefsPane *)prefs;
-@optional
-// None
+#pragma mark - PGPrefsSegmentedControl
+
+/**
+ * A segmented cell whose sole purpose is to allow an NSSegmentedControl to popup
+ * a menu when any of its segments are clicked that have a menu attached to them.
+ */
+@interface PGPrefsSegmentedControl : NSSegmentedCell
+@end
+
+
+
+#pragma mark - PGPrefsRenameWindow
+
+/**
+ * A popup window with textbox for user to enter new name for server.
+ */
+@interface PGPrefsRenameWindow : NSWindow
+@property (weak) IBOutlet NSTextField *nameField;
+@end
+
+
+
+#pragma mark - PGPrefsServerSettingsWindow
+
+/**
+ * A popup window for editing a server's settings.
+ */
+@interface PGPrefsServerSettingsWindow : NSWindow
+@property (weak) IBOutlet NSTableView *serversTableView;
+@property (weak) IBOutlet NSTextField *usernameField;
+@property (weak) IBOutlet NSTextField *binDirectoryField;
+@property (weak) IBOutlet NSTextField *dataDirectoryField;
+@property (weak) IBOutlet NSTextField *logFileField;
+@property (weak) IBOutlet NSTextField *portField;
+@property (weak) IBOutlet NSButton *revertSettingsButton;
+@property (weak) IBOutlet NSButton *applySettingsButton;
+@property (weak) IBOutlet NSImageView *invalidBinDirectoryImage;
+@property (weak) IBOutlet NSImageView *invalidDataDirectoryImage;
+@end
+
+
+
+#pragma mark - PGPrefsServersCell
+
+/**
+ * The custom cell used in the Postgre Database Servers table on the preference pane.
+ */
+@interface PGPrefsServersCell : NSTableCellView
+@property (nonatomic, weak) IBOutlet NSTextField *statusTextField;
 @end
 
 
 
 #pragma mark - PGPrefsPane
 
-@interface PGPrefsPane : NSPreferencePane <NSTabViewDelegate>
+/**
+ * Preference pane for administering (i.e. starting/stopping) PostgreSQL servers.
+ *
+ * Note this class is the entry point into the application.
+ */
+@interface PGPrefsPane : NSPreferencePane <PGPrefsViewController, NSTabViewDelegate, NSTextFieldDelegate, NSTableViewDataSource, NSTableViewDelegate, NSMenuDelegate>
 
-@property (nonatomic, strong) id<PGPrefsPaneDelegate> delegate;
+@property (nonatomic, strong) PGPrefsController *controller;
 
-@property (nonatomic, weak) IBOutlet SFAuthorizationView *authView;
-@property (nonatomic, weak) IBOutlet NSTabView *authTabs;
-@property (nonatomic, weak) IBOutlet NSTabView *mainTabs;
-@property (nonatomic, weak) IBOutlet NSButton *resetSettingsButton;
-@property (nonatomic, weak) IBOutlet NSImageView *statusImage;
-@property (nonatomic, weak) IBOutlet NSTextField *statusLabel;
-@property (nonatomic, weak) IBOutlet NSTextField *statusInfo;
-@property (nonatomic, weak) IBOutlet NSTextField *startStopInfo;
-@property (nonatomic, weak) IBOutlet NSButton *startStopButton;
-@property (nonatomic, weak) IBOutlet NSButton *refreshButton;
-@property (nonatomic, weak) IBOutlet NSProgressIndicator *spinner;
-@property (nonatomic, weak) IBOutlet NSButton *autoStartupCheckbox;
-@property (nonatomic, weak) IBOutlet NSProgressIndicator *autoStartupSpinner;
-@property (nonatomic, weak) IBOutlet NSView *autoStartupErrorView;
-@property (nonatomic, weak) IBOutlet NSTextField *autoStartupErrorLabel;
-@property (nonatomic, weak) IBOutlet NSTextField *autoStartupInfo;
-@property (nonatomic, weak) IBOutlet NSView *errorView;
-@property (nonatomic, weak) IBOutlet NSTextField *errorLabel;
-@property (nonatomic, weak) IBOutlet NSForm *settingsForm;
-@property (nonatomic, weak) IBOutlet NSFormCell *settingsUsername;
-@property (nonatomic, weak) IBOutlet NSFormCell *settingsBinDir;
-@property (nonatomic, weak) IBOutlet NSFormCell *settingsDataDir;
-@property (nonatomic, weak) IBOutlet NSFormCell *settingsLogFile;
-@property (nonatomic, weak) IBOutlet NSFormCell *settingsPort;
+@property (nonatomic, strong) PGServer *server;
+@property (nonatomic, strong) NSArray *servers;
+@property (nonatomic, strong) NSArray *searchServers;
 
-@property (nonatomic, strong) NSDictionary *guiPreferences;
-@property (nonatomic, strong) NSDictionary *savedPreferences;
-@property (nonatomic, strong) NSString *username;
-@property (nonatomic, strong) NSString *binDirectory;
-@property (nonatomic, strong) NSString *dataDirectory;
-@property (nonatomic, strong) NSString *logFile;
-@property (nonatomic, strong) NSString *port;
-@property (nonatomic) BOOL autoStartup;
+// Server/No-Server
+@property (weak) IBOutlet NSTabView *serverNoServerTabs;
 
-- (IBAction)startStopServer:(id)sender;
-- (IBAction)refreshButton:(id)sender;
-- (IBAction)toggleAutoStartup:(id)sender;
-- (IBAction)resetSettings:(id)sender;
+// Current Settings
+@property (weak) IBOutlet NSTextField *usernameField;
+@property (weak) IBOutlet NSTextField *binDirectoryField;
+@property (weak) IBOutlet NSTextField *dataDirectoryField;
+@property (weak) IBOutlet NSTextField *logFileField;
+@property (weak) IBOutlet NSTextField *portField;
+@property (weak) IBOutlet NSMatrix *startupMatrix;
+@property (weak) IBOutlet NSButtonCell *startupAtBootCell;
+@property (weak) IBOutlet NSButtonCell *startupAtLoginCell;
+@property (weak) IBOutlet NSButtonCell *startupManualCell;
+- (void)controlTextDidChange:(NSNotification *)notification;
+- (IBAction)startupClicked:(id)sender;
 
-- (BOOL)wasEditingSettings;
+// Log
+@property (weak) IBOutlet NSButton *viewLogButton;
+- (IBAction)viewLogClicked:(id)sender;
 
-- (void)initAuthorization;
-- (void)destroyAuthorization;
+// Status
+@property (weak) IBOutlet NSImageView *statusImage;
+@property (weak) IBOutlet NSTextField *statusField;
+@property (weak) IBOutlet NSProgressIndicator *statusSpinner;
+@property (weak) IBOutlet NSTextField *infoField;
+@property (weak) IBOutlet NSView *errorView;
+@property (weak) IBOutlet NSTextField *errorField;
+
+// Apply/Revert Settings
+@property (strong) IBOutlet PGPrefsServerSettingsWindow *serverSettingsWindow;
+@property (weak) IBOutlet NSButton *changeSettingsButton;
+- (IBAction)changeSettingsClicked:(id)sender;
+- (IBAction)resetSettingsClicked:(id)sender;
+- (IBAction)applySettingsClicked:(id)sender;
+- (IBAction)cancelSettingsClicked:(id)sender;
+
+// Servers
+@property (weak) IBOutlet NSTableView *serversTableView;
+@property (strong) IBOutlet NSMenu *serversMenu;
+@property (strong) IBOutlet PGPrefsRenameWindow *serversRenameWindow;
+@property (weak) IBOutlet NSSegmentedControl *serversButtons;
+@property (weak) IBOutlet NSSegmentedControl *noServersButtons;
+- (IBAction)serversButtonClicked:(id)sender;
+- (IBAction)renameServerClicked:(id)sender;
+- (IBAction)cancelRenameServerClicked:(id)sender;
+- (IBAction)okRenameServerClicked:(id)sender;
+
+
+// Start/Stop
+@property (weak) IBOutlet NSButton *startStopButton;
+- (IBAction)startStopClicked:(id)sender;
+
+// Authorization
+@property (nonatomic, weak) IBOutlet SFAuthorizationView *authorizationView;
+- (AuthorizationRef)authorize;
+- (void)deauthorize;
 - (BOOL)authorized;
 - (AuthorizationRef)authorization;
 
-- (void)displayStarted;
-- (void)displayStopped;
-- (void)displayStarting;
-- (void)displayStopping;
-- (void)displayChecking;
-- (void)displayUnknown;
-- (void)displayLocked;
-- (void)displayUnlocked;
-- (void)displayWillChangeAutoStartup;
-- (void)displayDidChangeAutoStartup;
-- (void)displayError:(NSString *)errMsg;
-- (void)displayNoError;
-- (void)displayUpdatingSettings;
-- (void)displayUpdatedSettings;
-- (void)displayAutoStartupError:(NSString *)errMsg;
-- (void)displayAutoStartupNoError;
+// NSTableViewDataSource
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView;
+
+// NSTableViewDelegate
+- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row;
+- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)row;
+- (BOOL)tableView:(NSTableView *)tableView shouldSelectRow:(NSInteger)row;
+
+// PGPrefsDelegate
+- (void)prefsController:(PGPrefsController *)controller willEditServerSettings:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didChangeServers:(NSArray *)servers;
+- (void)prefsController:(PGPrefsController *)controller didChangeSelectedServer:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didChangeServerStatus:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didDirtyServerSettings:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didApplyServerSettings:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didRevertServerSettings:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didRevertServerStartup:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didChangeSearchServers:(NSArray *)servers;
 
 @end
 

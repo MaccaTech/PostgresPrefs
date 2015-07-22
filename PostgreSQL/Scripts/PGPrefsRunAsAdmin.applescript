@@ -3,14 +3,20 @@
 #  PostgreSQL
 #
 #  Created by Francis McKenzie on 24/12/11.
-#  Copyright (c) 2011 HK Web Entrepreneurs. All rights reserved.
+#  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
 #
 # ==============================================================
 #
 # OVERVIEW:
 # ---------
 #
-# Executes all received arguments on the shell with admin privileges
+# Executes all received arguments on the shell with admin
+# privileges
+#
+# Note: any error message received on stderr is redirected
+# to stdout, because Objective C function
+# AuthorizationExecuteWithPrivileges can only capture output
+# on stdout
 #
 # ==============================================================
 
@@ -27,8 +33,8 @@ on run argv
     try
         set result to do shell script cmd with administrator privileges without altering line endings
         
-        # Return error
-        on error errMsg
+    # Return error to stdout
+    on error errMsg
         set result to errMsg as string
     end try
     

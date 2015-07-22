@@ -3,38 +3,108 @@
 //  PostgreSQL
 //
 //  Created by Francis McKenzie on 18/12/11.
-//  Copyright (c) 2011 HK Web Entrepreneurs. All rights reserved.
+//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
-#import "PGPrefsPane.h"
-#import "NSString+Utilities.h"
-#import "NSDictionary+Utilities.h"
+#import "PGSearchController.h"
+#import "PGServerController.h"
+#import "PGServerDataStore.h"
 
-#pragma mark - Constants
+@class PGPrefsController;
 
-typedef NS_ENUM(NSInteger, PGPrefsStatus) {
-    PGPrefsStatusUnknown = 0,
-    PGPrefsStopped,
-    PGPrefsStarted
-};
+#pragma mark - PGPrefsViewController
+
+/**
+ * Delegate that udpates the GUI in response to controller events.
+ *
+ * Also responsible for obtaining authorization from user.
+ */
+@protocol PGPrefsViewController <NSObject>
+
+- (AuthorizationRef)authorize;
+- (void)deauthorize;
+
+- (void)prefsController:(PGPrefsController *)controller willEditServerSettings:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didChangeServers:(NSArray *)servers;
+- (void)prefsController:(PGPrefsController *)controller didChangeSelectedServer:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didChangeServerStatus:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didDirtyServerSettings:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didApplyServerSettings:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didRevertServerSettings:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didRevertServerStartup:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didChangeSearchServers:(NSArray *)servers;
+
+@end
 
 
 
 #pragma mark - PGPrefsController
 
-@interface PGPrefsController: NSObject <PGPrefsPaneDelegate>
+/**
+ * Controller that ties together a preference pane (view) and
+ * a set of Postgre Servers (model).
+ *
+ * The controller receives user actions from the preference pane, carries out
+ * corresponding actions on the Postgre Servers.
+ *
+ * The Postgre Servers are stored in NSUserDefaults, and are started/stopped
+ * using .plist files generated in the standard Mac launchagent directories.
+ */
+@interface PGPrefsController : NSObject <PGServerDelegate, PGSearchDelegate>
 
-@property (nonatomic, readonly) PGPrefsStatus status;
+@property (nonatomic, weak) id<PGPrefsViewController> viewController;
+@property (nonatomic, strong, readonly) PGServerController *serverController;
+@property (nonatomic, strong, readonly) PGSearchController *searchController;
+@property (nonatomic, strong, readonly) PGServerDataStore *dataStore;
 
-- (void)postgrePrefsDidAuthorize:(PGPrefsPane *) prefs;
-- (void)postgrePrefsDidDeauthorize:(PGPrefsPane *) prefs;
-- (void)postgrePrefsDidLoad:(PGPrefsPane *) prefs;
-- (void)postgrePrefsWillUnselect:(PGPrefsPane *) prefs;
-- (void)postgrePrefsDidClickStartStopServer:(PGPrefsPane *) prefs;
-- (void)postgrePrefsDidClickRefresh:(PGPrefsPane *) prefs;
-- (void)postgrePrefsDidClickAutoStartup:(PGPrefsPane *) prefs;
-- (void)postgrePrefsDidClickResetSettings:(PGPrefsPane *) prefs;
-- (void)postgrePrefsDidFinishEditingSettings:(PGPrefsPane *)prefs;
+@property (nonatomic, strong, readonly) PGServer *server;
+@property (nonatomic, strong, readonly) NSArray *servers;
+
+@property (nonatomic, readonly) AuthorizationRef authorization;
+- (AuthorizationRights *)authorizationRights;
+
+- (id)initWithViewController:(id<PGPrefsViewController>)viewController;
+
+// Lifecycle
+- (void)viewDidLoad;
+- (void)viewWillAppear;
+- (void)viewDidAppear;
+- (void)viewWillDisappear;
+- (void)viewDidDisappear;
+- (void)viewDidAuthorize:(AuthorizationRef)authorization;
+- (void)viewDidDeauthorize;
+
+// Servers
+- (void)userDidSelectServer:(PGServer *)server;
+- (void)userDidAddServer;
+- (void)userDidDeleteServer;
+- (BOOL)userCanRenameServer:(NSString *)name;
+- (void)userDidRenameServer:(NSString *)name;
+- (void)userDidCancelRenameServer;
+
+// Start/Stop
+- (void)userDidStartStopServer;
+
+// Settings
+- (void)userDidSelectSearchServer:(PGServer *)server;
+- (void)userWillEditSettings;
+- (void)userDidChangeServerStartup:(NSString *)startup;
+- (void)userDidChangeSetting:(NSString *)setting value:(NSString *)value;
+- (void)userDidRevertSettings;
+- (void)userDidApplySettings;
+- (void)userDidCancelSettings;
+
+// Log
+- (void)userDidViewLog;
+
+// PGServerDelegate
+- (void)postgreServer:(PGServer *)server willRunAction:(PGServerAction)action;
+- (void)postgreServer:(PGServer *)server didSucceedAction:(PGServerAction)action;
+- (void)postgreServer:(PGServer *)server didFailAction:(PGServerAction)action error:(NSString *)error;
+- (void)postgreServer:(PGServer *)server didRunAction:(PGServerAction)action;
+
+// PGSearchDelegate
+- (void)didFindMoreServers:(PGSearchController *)search;
 
 @end
