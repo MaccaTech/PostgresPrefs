@@ -251,6 +251,15 @@ Note that this means, for example, that there may be other PostgreSQL servers th
     </td>
 </tr>
 <tr>
+    <td>v1.4.1</td>
+    <td>22-Jul 2015</td>
+    <td>Bug-fix release
+        <ul>
+        <li>Fixed error message being shown if username setting is non-blank.</li>
+        </ul>
+    </td>
+</tr>
+<tr>
     <td>v1.4</td>
     <td>03-Jul 2015</td>
     <td>Bug-fix release
