@@ -219,7 +219,7 @@ Note that this means, for example, that there may be other PostgreSQL servers th
 
 =item * B<Who is Macca Tech, and why did you make this tool?>
 
-=item * At the moment, L<Macca Tech|https://www.maccatech.com> consists of just me, a developer who enjoys creating tools and apps on Mac OS X and iOS. I created this tool partly for fun, and partly because I was using PostgreSQL and found it far too complicated to do something as simple as starting and stopping a database! 
+=item * At the moment, L<Macca Tech|http://www.maccatech.com> consists of just me, a developer who enjoys creating tools and apps on Mac OS X and iOS. I created this tool partly for fun, and partly because I was using PostgreSQL and found it far too complicated to do something as simple as starting and stopping a database! 
 
 =back    
     
