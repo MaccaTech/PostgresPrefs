@@ -130,6 +130,11 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
     self.port = ToString(properties[PGServerPortKey]);
     self.startup = ToServerStartup(properties[PGServerStartupKey]);
 }
+- (BOOL)hasDifferentUser
+{
+    NSString *currentUser = NSUserName();
+    return NonBlank(self.username) && ![[currentUser lowercaseString] isEqualToString:[self.username lowercaseString]];
+}
 - (BOOL)valid
 {
     return !(self.invalidUsername || self.invalidBinDirectory || self.invalidDataDirectory || self.invalidLogFile || self.invalidPort);
@@ -212,10 +217,14 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
     _settings = settings ?: [[PGServerSettings alloc] init];
 }
 
+- (BOOL)canStartAtLogin
+{
+    return !self.settings.hasDifferentUser;
+}
+
 - (BOOL)needsAuthorization
 {
-    NSString *currentUser = NSUserName();
-    if (NonBlank(self.settings.username) && ![[currentUser lowercaseString] isEqualToString:[self.settings.username lowercaseString]]) return YES;
+    if (self.settings.hasDifferentUser) return YES;
     if (self.settings.startup == PGServerStartupAtBoot) return YES;
     return NO;
 }

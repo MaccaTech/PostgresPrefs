@@ -113,6 +113,9 @@ ServerStartupDescription(PGServerStartup value)
 - (id)initWithProperties:(NSDictionary *)properties;
 - (BOOL)isEqualToSettings:(PGServerSettings *)settings;
 
+/// If YES, the username is different to the current user
+- (BOOL)hasDifferentUser;
+
 - (BOOL)valid;
 - (void)setValid;
 @property (nonatomic) BOOL invalidUsername;
@@ -156,6 +159,9 @@ ServerStartupDescription(PGServerStartup value)
 
 /// This server's active settings (i.e. those that have been saved somewhere)
 @property (nonatomic, strong) PGServerSettings *settings;
+
+/// If NO, the server cannot be started at login, only at boot. This is the case when the username is different to the current user.
+@property (nonatomic, readonly) BOOL canStartAtLogin;
 
 /// If YES, then the server is loaded into the root launchd context, so "check status" commands must be run as root. A server needs authorization if: (1) it has a different username or (2) it is run on boot
 @property (nonatomic, readonly) BOOL needsAuthorization;

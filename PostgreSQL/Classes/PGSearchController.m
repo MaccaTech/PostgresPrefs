@@ -207,7 +207,6 @@
     NSString *name = TrimToNil(ToString(data[@"Label"]));
     NSString *username = TrimToNil(ToString(data[@"UserName"]));
     NSArray *programArgs = ToArray(data[@"ProgramArguments"]);
-    BOOL runAtLoad = ToBOOL(data[@"RunAtLoad"]);
     NSDictionary *environmentVars = ToDictionary(data[@"EnvironmentVariables"]);
     NSString *stdout = TrimToNil(ToString(data[@"StandardOutPath"]));
     NSString *stderr = TrimToNil(ToString(data[@"StandardErrorPath"]));
@@ -275,11 +274,6 @@
     }
     if (!NonBlank(PGPORT)) {
         PGPORT = ToString(environmentVars[@"PGPORT"]);
-    }
-    
-    // PGSTART
-    if (runAtLoad) {
-        PGSTART = [agentFile hasPrefix:@"/LibraryLaunchDaemons"] ? PGServerStartupAtBoot : PGServerStartupAtLogin;
     }
     
     // Create servers

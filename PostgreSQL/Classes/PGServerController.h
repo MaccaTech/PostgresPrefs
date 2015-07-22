@@ -66,6 +66,8 @@ ServerActionDescription(PGServerAction value)
 
 /**
  * Controller for starting, stopping and checking status of a Postgre Server.
+ *
+ * All actions are carried out using launchctl.
  */
 @interface PGServerController : NSObject
 
@@ -77,12 +79,12 @@ ServerActionDescription(PGServerAction value)
 - (id)initWithDelegate:(id<PGServerDelegate>)delegate;
 
 /**
- * Runs pg_ctl with the action for the server
+ * Runs the action on the PostgreSQL server using launchctl
  */
 - (void)runAction:(PGServerAction)action server:(PGServer *)server authorization:(AuthorizationRef)authorization;
 
 /**
- * Runs pg_ctl with the action for the server.
+ * Runs the action on the PostgreSQL server using launchctl
  *
  * If succeeded (or failed) parameter is non-nil, then instead of notifying the delegate
  * on success (failure), it runs the succeeded block. Thus allows chaining of actions

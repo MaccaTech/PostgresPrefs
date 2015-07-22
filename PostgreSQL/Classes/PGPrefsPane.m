@@ -184,6 +184,25 @@
     self.startStopButton.enabled = self.enabled && startStopEnabled;
 }
 
+- (PGServerStartup)startup
+{
+    NSCell *cell = [self.startupMatrix selectedCell];
+    if (cell == self.startupAtBootCell) return PGServerStartupAtBoot;
+    else if (cell == self.startupAtLoginCell) return PGServerStartupAtLogin;
+    else return PGServerStartupManual;
+}
+
+- (void)setStartup:(PGServerStartup)startup
+{
+    switch (startup) {
+        case PGServerStartupAtBoot:
+            [self.startupMatrix selectCell:self.startupAtBootCell]; break;
+        case PGServerStartupAtLogin:
+            [self.startupMatrix selectCell:self.startupAtLoginCell]; break;
+        default:
+            [self.startupMatrix selectCell:self.startupManualCell]; break;
+    }
+}
 
 
 #pragma mark PGServerSettings
@@ -205,14 +224,7 @@
 {
     if (self.updatingDisplay) return;
  
-    NSCell *cell = [sender selectedCell];
-    PGServerStartup startup;
-    if (cell == self.startupAtBootCell) startup = PGServerStartupAtBoot;
-    else if (cell == self.startupAtLoginCell) startup = PGServerStartupAtLogin;
-    else if (cell == self.startupManualCell) startup = PGServerStartupManual;
-    else return;
-    
-    [self.controller performSelector:@selector(userDidChangeServerStartup:) withObject:ServerStartupDescription(startup) afterDelay:0.1];
+    [self.controller performSelector:@selector(userDidChangeServerStartup:) withObject:ServerStartupDescription(self.startup) afterDelay:0.1];
 }
 
 - (IBAction)viewLogClicked:(id)sender
@@ -611,18 +623,10 @@
 {
     self.updatingDisplay = YES;
     
-    [self performSelector:@selector(showServerStartup:) withObject:server afterDelay:0.0];
+    if (server.settings.startup != self.startup) [self performSelector:@selector(showServerStartup:) withObject:server afterDelay:0.0];
     
     self.updatingDisplay = NO;
     
-}
-- (void)revertServerStartup:(PGServer *)server
-{
-    self.updatingDisplay = YES;
-    
-    [self showServerStartup:server];
-    
-    self.updatingDisplay = NO;
 }
 - (void)prefsController:(PGPrefsController *)controller didChangeSearchServers:(NSArray *)servers
 {
@@ -809,18 +813,13 @@
     self.portField.stringValue = settings.port?:@"";
     
     self.viewLogButton.enabled = server.logExists;
+    self.startupAtLoginCell.enabled = server.canStartAtLogin;
     
     [self showServerStartup:self.server];
 }
 - (void)showServerStartup:(PGServer *)server;
 {
-    NSCell *cell;
-    switch (server.settings.startup) {
-        case PGServerStartupAtBoot: cell = self.startupAtBootCell; break;
-        case PGServerStartupAtLogin: cell = self.startupAtLoginCell; break;
-        default: cell = self.startupManualCell; break;
-    }
-    [self.startupMatrix selectCell:cell];
+    self.startup = server.settings.startup;
 }
 - (void)showStatusInMainServerView:(PGServer *)server
 {
@@ -840,6 +839,7 @@
     }
     
     self.viewLogButton.enabled = server.logExists;
+    self.startupAtLoginCell.enabled = server.canStartAtLogin;
     
     self.startStopButton.hidden = server.status == PGServerStatusUnknown;
     self.enabled = !server.processing;
@@ -861,7 +861,8 @@
         self.serversButtons.hidden = YES;
         self.noServersButtons.hidden = NO;
         
-        // Reset startup button to Manual
+        // Reset startup button
+        self.startupAtLoginCell.enabled = YES;
         [self.startupMatrix selectCell:self.startupManualCell];
         
         // Disable everything except "Add server" button

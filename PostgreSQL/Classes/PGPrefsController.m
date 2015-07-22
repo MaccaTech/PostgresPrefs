@@ -61,6 +61,12 @@ ObjectBefore(id object, NSArray *array)
  */
 - (void)validateSettings:(PGServerSettings *)settings;
 /**
+ * Saves the server's dirty settings to the data store
+ *
+ * @return YES if succeeded
+ */
+- (BOOL)saveServer:(PGServer *)server;
+/**
  * Populates transient properties in server, and validates server settings.
  */
 - (void)initializeServer:(PGServer *)server;
@@ -343,15 +349,12 @@ ObjectBefore(id object, NSArray *array)
     dirtySettings.startup = newStartup;
     
     // Commit the user's new settings
-    BOOL saved = [self.dataStore saveServer:self.server];
+    BOOL saved = [self saveServer:self.server];
     if (!saved) {
         dirtySettings.startup = oldStartup;
         [self.viewController prefsController:self didRevertServerStartup:self.server];
         return;
     }
-    
-    // Re-initialize the modified server
-    [self initializeServer:self.server];
     
     // Run script
     PGServerAction action = self.server.status == PGServerStarted || self.server.status == PGServerRetrying ? PGServerStart : PGServerCreate;
@@ -399,11 +402,8 @@ ObjectBefore(id object, NSArray *array)
         [self.serverController runAction:PGServerDelete server:self.server authorization:authorization succeeded:^{
 
             // Commit the user's new settings
-            BOOL saved = [self.dataStore saveServer:server];
+            BOOL saved = [self saveServer:server];
             if (!saved) return;
-            
-            // Re-initialize the modified server
-            [self initializeServer:server];
             
             // Create and start (if needed) the new server
             [self.serverController runAction:finalAction server:server authorization:authorization succeeded:^{
@@ -494,6 +494,18 @@ ObjectBefore(id object, NSArray *array)
 - (PGServerSettings *)dirty:(PGServer *)server
 {
     return server.dirtySettings ?: (server.dirtySettings = [[PGServerSettings alloc] initWithSettings:server.settings]);
+}
+
+- (BOOL)saveServer:(PGServer *)server
+{
+    // Change startup setting if invalid
+    BOOL oldStartup = server.dirtySettings.startup;
+    if (oldStartup == PGServerStartupAtLogin && server.dirtySettings.hasDifferentUser) server.dirtySettings.startup = PGServerStartupAtBoot;
+    
+    BOOL succeeded = [self.dataStore saveServer:server];
+    if (succeeded) [self initializeServer:server];
+    else server.dirtySettings.startup = oldStartup;
+    return succeeded;
 }
 
 - (void)initializeServer:(PGServer *)server

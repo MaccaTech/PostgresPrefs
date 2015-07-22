@@ -104,6 +104,7 @@
 @property (weak) IBOutlet NSButtonCell *startupAtBootCell;
 @property (weak) IBOutlet NSButtonCell *startupAtLoginCell;
 @property (weak) IBOutlet NSButtonCell *startupManualCell;
+@property (nonatomic) PGServerStartup startup;
 - (void)controlTextDidChange:(NSNotification *)notification;
 - (IBAction)startupClicked:(id)sender;
 
