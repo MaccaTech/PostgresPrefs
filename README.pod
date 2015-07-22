@@ -5,8 +5,8 @@
 =begin html
 
 <br />
-<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/elephant.png" />
-<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/logo.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/elephant.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/logo.png" />
 
 =end html
 
@@ -112,7 +112,7 @@ When installing, you will be asked if you want to install it for this user only,
     
 =begin html
 
-<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/screenshot_install.png" />
+<img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/screenshot_install.png" />
 
 =end html
 
