@@ -300,7 +300,7 @@ NSString *const PGServerDeleteName      = @"Delete";
             server.error = @"Unrecognized response from launchctl";
             
         // Not loaded
-        } else if ([output rangeOfString:@"unknown response"].location != NSNotFound) {
+        } else if ([output rangeOfString:@"unknown response"].location != NSNotFound || [output rangeOfString:@"Could not find service"].location != NSNotFound) {
             server.status = PGServerStopped;
             
         // Output is not in plist format

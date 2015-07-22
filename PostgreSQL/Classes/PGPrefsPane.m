@@ -708,7 +708,7 @@
 {
     [self showStatusWithName:@"Starting..."
                       colour:PGServerStartingColor
-                       image:@"checking"
+                       image:@"starting"
                         info:nil
              startStopButton:nil];
 }
@@ -716,8 +716,8 @@
 - (void)showStopping
 {
     [self showStatusWithName:@"Stopping..."
-                      colour:PGServerStoppingColor
-                       image:@"checking"
+                      colour:PGServerRetryingColor
+                       image:@"stopping"
                         info:nil
              startStopButton:nil];
 }
@@ -725,7 +725,7 @@
 - (void)showChecking
 {
     [self showStatusWithName:@"Checking..."
-                      colour:PGServerCheckingColor
+                      colour:PGServerStoppingColor
                        image:@"checking"
                         info:@"The running status of the PostgreSQL Database Server is currently being checked."
              startStopButton:@"PostgreSQL"];
