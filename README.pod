@@ -124,37 +124,43 @@ When installing, you will be asked if you want to install it for this user only,
 
 B<Delete all server configurations>
 
-=item * Open C<PostgreSQL Preferences> and click the C<-> button in the servers list for each server
+Open C<PostgreSQL Preferences> and click the C<-> button in the servers list for each server
 
 =item 2
 
 B<Uninstall from System Preferences>
 
-=item * Right-click on the C<PostgreSQL icon> in System Preferences, and click C<Remove>
+Right-click on the C<PostgreSQL icon> in System Preferences, and click C<Remove>
 
 =item 3
 
 B<Delete all server logs>
 
-=item * Delete the following directories if they exist:
+Delete the following directories if they exist:
 
-C</Library/Logs/PostgreSQL>
-C<~/Library/Logs/PostgreSQL>
+=over 4
+
+=item * C</Library/Logs/PostgreSQL>
+
+=item * C<~/Library/Logs/PostgreSQL>
+
+=back
 
 =back
 
 =head2 Upgrading
 
 Please follow the uninstall instructions described
-
 =for html <a href="https://github.com/mckenfra/postgresql-mac-preferences/README-v1">here</a>
-
 =for text here: https://github.com/mckenfra/postgresql-mac-preferences/README-v1
 
 In particular, please ensure you delete the file C<com.hkwebentrepreneurs.postgresql.plist> if it exists in either of these directories:
 
-C</Library/LaunchAgents>
-C<~/Library/LaunchAgents>
+=over 4
+
+=item * C</Library/LaunchAgents>
+
+=item * C<~/Library/LaunchAgents>
 
 =back
 
@@ -191,23 +197,17 @@ B<Does this tool affect my existing installations?>
 =item * No, this tool creates its own C<launchd> configuration files for starting and stopping servers, and leaves all existing configurations untouched.
 
 Note that this means, for example, that there may be other PostgreSQL servers that are configured to startup at system login/boot. For example, a fresh install of PostgreSQL
-
 =for html <a href="https://www.enterprisedb.com">www.enterprisedb.com</a>
-
 =for text http://www.enterprisedb.com
-
- will create a configuration file in C</Library/LaunchDaemons> that will startup a server automatically on boot. To disable this, you can delete the file named C<com.edb.launchd.postgresql*.plist> in that directory.
+will create a configuration file in C</Library/LaunchDaemons> that will startup a server automatically on boot. To disable this, you can delete the file named C<com.edb.launchd.postgresql*.plist> in that directory.
 
 =item *
 
 B<Who is Macca Tech, and why did you make this tool?>
 
 =item * At the moment, 
-
 =for html <a href="https://www.maccatech.com">Macca Tech</a>
-
 =for text Macca Tech http://www.maccatech.com
-
 consists of just me, a developer who enjoys creating tools and apps on Mac OS X and iOS. I created this tool partly for fun, and partly because I was using PostgreSQL and found it far too complicated to do something as simple as starting and stopping a database! 
 
 =back    
