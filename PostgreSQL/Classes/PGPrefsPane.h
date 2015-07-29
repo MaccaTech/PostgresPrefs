@@ -131,7 +131,8 @@
 // Servers
 @property (weak) IBOutlet NSTableView *serversTableView;
 @property (strong) IBOutlet NSMenu *serversMenu;
-@property (strong) IBOutlet PGPrefsRenameWindow *serversRenameWindow;
+@property (strong) IBOutlet PGPrefsRenameWindow *renameServerWindow;
+@property (weak) IBOutlet NSMenuItem *renameServerButton;
 @property (weak) IBOutlet NSSegmentedControl *serversButtons;
 @property (weak) IBOutlet NSSegmentedControl *noServersButtons;
 - (IBAction)serversButtonClicked:(id)sender;
@@ -164,7 +165,8 @@
 - (void)prefsController:(PGPrefsController *)controller didChangeServers:(NSArray *)servers;
 - (void)prefsController:(PGPrefsController *)controller didChangeSelectedServer:(PGServer *)server;
 - (void)prefsController:(PGPrefsController *)controller didChangeServerStatus:(PGServer *)server;
-- (void)prefsController:(PGPrefsController *)controller didDirtyServerSettings:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didChangeServerSetting:(NSString *)setting server:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didChangeServerSettings:(PGServer *)server;
 - (void)prefsController:(PGPrefsController *)controller didApplyServerSettings:(PGServer *)server;
 - (void)prefsController:(PGPrefsController *)controller didRevertServerSettings:(PGServer *)server;
 - (void)prefsController:(PGPrefsController *)controller didRevertServerStartup:(PGServer *)server;

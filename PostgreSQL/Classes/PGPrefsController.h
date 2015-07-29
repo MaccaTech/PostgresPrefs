@@ -29,7 +29,8 @@
 - (void)prefsController:(PGPrefsController *)controller didChangeServers:(NSArray *)servers;
 - (void)prefsController:(PGPrefsController *)controller didChangeSelectedServer:(PGServer *)server;
 - (void)prefsController:(PGPrefsController *)controller didChangeServerStatus:(PGServer *)server;
-- (void)prefsController:(PGPrefsController *)controller didDirtyServerSettings:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didChangeServerSetting:(NSString *)setting server:(PGServer *)server;
+- (void)prefsController:(PGPrefsController *)controller didChangeServerSettings:(PGServer *)server;
 - (void)prefsController:(PGPrefsController *)controller didApplyServerSettings:(PGServer *)server;
 - (void)prefsController:(PGPrefsController *)controller didRevertServerSettings:(PGServer *)server;
 - (void)prefsController:(PGPrefsController *)controller didRevertServerStartup:(PGServer *)server;
@@ -99,6 +100,7 @@
 - (void)userDidViewLog;
 
 // PGServerDelegate
+- (void)didChangeServerStatus:(PGServer *)server;
 - (void)postgreServer:(PGServer *)server willRunAction:(PGServerAction)action;
 - (void)postgreServer:(PGServer *)server didSucceedAction:(PGServerAction)action;
 - (void)postgreServer:(PGServer *)server didFailAction:(PGServerAction)action error:(NSString *)error;

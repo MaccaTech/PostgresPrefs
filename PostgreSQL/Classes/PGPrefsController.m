@@ -56,20 +56,6 @@ ObjectBefore(id object, NSArray *array)
  * @return nil if user cancelled
  */
 - (AuthorizationRef)authorize;
-/**
- * Checks settings and marks invalid as appropriate
- */
-- (void)validateSettings:(PGServerSettings *)settings;
-/**
- * Saves the server's dirty settings to the data store
- *
- * @return YES if succeeded
- */
-- (BOOL)saveServer:(PGServer *)server;
-/**
- * Populates transient properties in server, and validates server settings.
- */
-- (void)initializeServer:(PGServer *)server;
 
 @end
 
@@ -90,10 +76,14 @@ ObjectBefore(id object, NSArray *array)
     self = [super init];
     if (self) {
         self.viewController = viewController;
-        self.searchController = [[PGSearchController alloc] initWithDelegate:self];
-        self.serverController = [[PGServerController alloc] initWithDelegate:self];
+        self.serverController = [[PGServerController alloc] init];
+        self.searchController = [[PGSearchController alloc] init];
         self.dataStore = [[PGServerDataStore alloc] init];
-        self.authorization = NULL;
+        self.serverController.delegate = self;
+        self.searchController.delegate = self;
+        self.searchController.serverController = self.serverController;
+        self.dataStore.serverController = self.serverController;
+        self.authorization = nil;
     }
     return self;
 }
@@ -108,9 +98,6 @@ ObjectBefore(id object, NSArray *array)
     [self.dataStore loadServers];
     self.servers = self.dataStore.servers;
     self.server = self.servers.firstObject;
-    
-    // Validate servers
-    for (PGServer *server in self.servers) [self initializeServer:server];
     
     [self.viewController prefsController:self didChangeServers:self.servers];
     [self.viewController prefsController:self didChangeSelectedServer:self.server];
@@ -141,15 +128,11 @@ ObjectBefore(id object, NSArray *array)
 - (void)viewDidAuthorize:(AuthorizationRef)authorization
 {
     self.authorization = authorization;
-    if (authorization == NULL) return;
+    if (!authorization) return;
     
     // Refresh display of protected servers
     for (PGServer *server in self.servers) {
-        if (!server.needsAuthorization) continue;
-        server.error = nil;
-        [self.viewController prefsController:self didChangeServerStatus:server];
-        
-        [self checkStatus:server];
+        if (server.daemonInRootContext) [self checkStatus:server];
     }
 }
 //
@@ -162,13 +145,11 @@ ObjectBefore(id object, NSArray *array)
 {
     DLog(@"Deauthorized");
     
-    self.authorization = NULL;
+    self.authorization = nil;
     
     // Refresh display of protected servers
     for (PGServer *server in self.servers) {
-        if (!server.needsAuthorization) continue;
-        server.error = nil;
-        [self.viewController prefsController:self didChangeServerStatus:server];
+        if (server.daemonInRootContext) [self checkStatus:server];
     }
 }
 - (AuthorizationRights *)authorizationRights
@@ -197,9 +178,6 @@ ObjectBefore(id object, NSArray *array)
     // Select the new server
     self.server = server;
     
-    // Initialize the new server
-    [self initializeServer:server];
-    
     // Start monitoring
     [self startMonitoringServer:server];
     
@@ -214,30 +192,14 @@ ObjectBefore(id object, NSArray *array)
     if (!self.server) return;
     
     AuthorizationRef authorization = [self authorize];
-    if (authorization == NULL) return;
+    if (!authorization) return;
     
     // Run script
     PGServer *server = self.server;
     BackgroundThread(^{
         [self.serverController runAction:PGServerDelete server:server authorization:authorization succeeded:^{
             
-            MainThread(^{
-                // Calculate which server to select after delete
-                PGServer *nextServer = ObjectAfter(server, self.servers);
-                if (!nextServer) nextServer = ObjectBefore(server, self.servers);
-                
-                // Delete the server
-                [self.dataStore removeServer:server];
-                
-                // Get the new servers list after delete
-                self.servers = self.dataStore.servers;
-                
-                // Select the next server
-                self.server = nextServer;
-                
-                [self.viewController prefsController:self didChangeServers:self.servers];
-                [self.viewController prefsController:self didChangeSelectedServer:self.server];
-            });
+            MainThread(^{ [self removeServer:server]; });
         } failed:nil];
     });
 }
@@ -248,7 +210,7 @@ ObjectBefore(id object, NSArray *array)
 - (void)userDidRenameServer:(NSString *)name
 {
     AuthorizationRef authorization = [self authorize];
-    if (authorization == NULL) return;
+    if (!authorization) return;
     
     PGServer *server = self.server;
     PGServerAction finalAction = self.server.status == PGServerStarted ? PGServerStart : PGServerCreate;
@@ -256,23 +218,33 @@ ObjectBefore(id object, NSArray *array)
         // First stop and delete the existing server
         [self.serverController runAction:PGServerDelete server:server authorization:authorization succeeded:^{
             
-            // Commit the user's new settings
-            BOOL succeeded = [self.dataStore setName:name forServer:server];
-            if (!succeeded) return;
-            
-            // Re-initialize the modified server
-            [self initializeServer:server];
-            
             MainThread(^{
+                // Backup existing
+                NSString *oldName = server.name;
+                NSString *newName = name;
+
+                // Apply the change
+                BOOL succeeded = [self.serverController setName:newName forServer:server];
+                
+                // Save
+                if (succeeded) succeeded = [self.dataStore saveServer:self.server];
+                
+                // Save failed - restore backup
+                if (!succeeded) {
+                    [self.serverController setName:oldName forServer:server];
+                    return;
+                }
+            
                 [self.viewController prefsController:self didChangeServers:self.servers];
             });
             
             // Create and start (if needed) the new server
             [self.serverController runAction:finalAction server:server authorization:authorization succeeded:^{
                 
-                [self.viewController prefsController:self didApplyServerSettings:server];
+                MainThread(^{ [self.viewController prefsController:self didApplyServerSettings:server]; });
                 
                 [self checkStatus:server];
+
             } failed:nil];
         } failed:nil];
     });
@@ -303,12 +275,16 @@ ObjectBefore(id object, NSArray *array)
     if (action == PGServerStart || action == PGServerStop) {
         
         AuthorizationRef authorization = [self authorize];
-        if (authorization == NULL) return;
+        if (!authorization) return;
         
         PGServer *server = self.server;
-        BackgroundThread(^{ [self.serverController runAction:action server:server authorization:authorization succeeded:^{
-            [self checkStatus:server];
-        } failed:nil]; });
+        BackgroundThread(^{
+            [self.serverController runAction:action server:server authorization:authorization succeeded:^{
+                
+                [self checkStatus:server];
+                
+            } failed:nil];
+        });
         
     // Check Status
     } else {
@@ -320,106 +296,120 @@ ObjectBefore(id object, NSArray *array)
 
 #pragma mark Settings
 
-- (void)userDidSelectSearchServer:(PGServer *)server
-{
-    PGServerSettings *dirtySettings = [self dirty:self.server];
-    dirtySettings.properties = server.settings.properties;
-    
-    [self.viewController prefsController:self didRevertServerSettings:self.server];
-}
 - (void)userWillEditSettings
 {
-    [self.searchController startFindServers];
+    [self.searchController findInstalledServers];
+    
+    [self.serverController clean:self.server];
     
     [self.viewController prefsController:self willEditServerSettings:self.server];
 }
-- (void)userDidChangeServerStartup:(NSString *)startup
+- (void)userDidSelectSearchServer:(PGServer *)server
 {
-    // Revert startup in GUI if user cancelled authorization
-    AuthorizationRef authorization = [self authorize];
-    if (authorization == NULL) {
-        [self.viewController prefsController:self didRevertServerStartup:self.server];
-        return;
-    }
+    [self.serverController setDirtySettings:server.settings forServer:self.server];
     
-    // Update server
-    PGServerStartup oldStartup = self.server.settings.startup;
-    PGServerStartup newStartup = ToServerStartup(startup);
-    PGServerSettings *dirtySettings = [self dirty:self.server];
-    dirtySettings.startup = newStartup;
-    
-    // Commit the user's new settings
-    BOOL saved = [self saveServer:self.server];
-    if (!saved) {
-        dirtySettings.startup = oldStartup;
-        [self.viewController prefsController:self didRevertServerStartup:self.server];
-        return;
-    }
-    
-    // Run script
-    PGServerAction action = self.server.status == PGServerStarted || self.server.status == PGServerRetrying ? PGServerStart : PGServerCreate;
-    PGServer *server = self.server;
-    BackgroundThread(^{
-        [self.serverController runAction:action server:server authorization:authorization succeeded:^{
-            [self checkStatus:server];
-        } failed:nil];
-    });
+    [self.viewController prefsController:self didChangeServerSettings:self.server];
 }
 - (void)userDidChangeSetting:(NSString *)setting value:(NSString *)value
 {
-    PGServerSettings *dirtySettings = [self dirty:self.server];
+    [self.serverController setDirtySetting:setting value:value forServer:self.server];
     
-    if ([setting isEqualToString:PGServerUsernameKey]) {
-        dirtySettings.username = value;
-    } else if ([setting isEqualToString:PGServerBinDirectoryKey]) {
-        dirtySettings.binDirectory = value;
-    } else if ([setting isEqualToString:PGServerDataDirectoryKey]) {
-        dirtySettings.dataDirectory = value;
-    } else if ([setting isEqualToString:PGServerLogFileKey]) {
-        dirtySettings.logFile = value;
-    } else if ([setting isEqualToString:PGServerPortKey]) {
-        dirtySettings.port = value;
-    } else return;
-
-    [self validateSettings:dirtySettings];
-    [self.viewController prefsController:self didDirtyServerSettings:self.server];
+    [self.viewController prefsController:self didChangeServerSetting:setting server:self.server];
+}
+- (void)userDidCancelSettings
+{
+    [self.serverController clean:self.server];
+    
+    [self.viewController prefsController:self didRevertServerSettings:self.server];
 }
 - (void)userDidRevertSettings
 {
-    self.server.dirtySettings = nil;
-
+    [self.serverController clean:self.server];
+    
     [self.viewController prefsController:self didRevertServerSettings:self.server];
 }
 - (void)userDidApplySettings
 {
     AuthorizationRef authorization = [self authorize];
-    if (authorization == NULL) return;
+    if (!authorization) return;
     
     PGServer *server = self.server;
     PGServerAction finalAction = self.server.status == PGServerStarted || self.server.status == PGServerRetrying ? PGServerStart : PGServerCreate;
     BackgroundThread(^{
+        if (!server.dirtySettings) return;
+        
         // First stop and delete the existing server
         [self.serverController runAction:PGServerDelete server:self.server authorization:authorization succeeded:^{
 
-            // Commit the user's new settings
-            BOOL saved = [self saveServer:server];
-            if (!saved) return;
+            MainThread(^{
+                // Backup existing
+                PGServerSettings *oldSettings = server.settings;
+                PGServerSettings *newSettings = server.dirtySettings;
+                
+                // Apply the change
+                [self.serverController setSettings:newSettings forServer:server];
+                
+                // Save
+                BOOL succeeded = [self.dataStore saveServer:server];
+                
+                // Save failed - restore backup
+                if (!succeeded) {
+                    [self.serverController setSettings:oldSettings forServer:server];
+                    return;
+                }
+                
+                // Clear dirty settings
+                [self.serverController clean:server];
+            });
             
             // Create and start (if needed) the new server
             [self.serverController runAction:finalAction server:server authorization:authorization succeeded:^{
                 
+                MainThread(^{ [self.viewController prefsController:self didApplyServerSettings:server]; });
+                
                 [self checkStatus:server];
                 
-                [self.viewController prefsController:self didApplyServerSettings:server];
             } failed:nil];
         } failed:nil];
     });
 }
-- (void)userDidCancelSettings
+- (void)userDidChangeServerStartup:(NSString *)startup
 {
-    self.server.dirtySettings = nil;
+    // Revert startup in GUI if user cancelled authorization
+    AuthorizationRef authorization = [self authorize];
+    if (!authorization) {
+        [self.viewController prefsController:self didRevertServerStartup:self.server];
+        return;
+    }
     
-    [self.viewController prefsController:self didRevertServerSettings:self.server];
+    PGServer *server = self.server;
+    
+    // Backup existing
+    PGServerStartup oldStartup = server.settings.startup;
+    PGServerStartup newStartup = ToServerStartup(startup);
+    
+    // Apply the change
+    BOOL succeeded = [self.serverController setStartup:newStartup forServer:server];
+    
+    // Save
+    if (succeeded) succeeded = [self.dataStore saveServer:server];
+    
+    // Save failed - restore backup
+    if (!succeeded) {
+        [self.serverController setStartup:oldStartup forServer:server];
+        [self.viewController prefsController:self didRevertServerStartup:server];
+        return;
+    }
+    
+    // Run script
+    PGServerAction action = server.status == PGServerStarted || server.status == PGServerRetrying ? PGServerStart : PGServerCreate;
+    BackgroundThread(^{
+        [self.serverController runAction:action server:server authorization:authorization succeeded:^{
+            
+            [self checkStatus:server];
+            
+        } failed:nil];
+    });
 }
 
 
@@ -428,13 +418,13 @@ ObjectBefore(id object, NSArray *array)
 
 - (void)userDidViewLog
 {
-    if (!self.server.logExists) return;
+    if (!self.server.daemonLogExists) return;
 
     NSString *source = [NSString stringWithFormat:@""
                         "tell application \"Console\"\n"
                         "activate\n"
                         "open \"%@\"\n"
-                        "end tell", self.server.log];
+                        "end tell", [self.server.daemonLog stringByExpandingTildeInPath]];
     [[[NSAppleScript alloc] initWithSource:source] executeAndReturnError:nil];
 }
 
@@ -442,6 +432,12 @@ ObjectBefore(id object, NSArray *array)
 
 #pragma mark PGServerDelegate
 
+- (void)didChangeServerStatus:(PGServer *)server
+{
+    MainThread(^{
+        [self.viewController prefsController:self didChangeServerStatus:server];
+    });
+}
 - (void)postgreServer:(PGServer *)server willRunAction:(PGServerAction)action
 {
     MainThread(^{
@@ -484,56 +480,38 @@ ObjectBefore(id object, NSArray *array)
     else return [self.viewController authorize];
 }
 
-- (void)validateSettings:(PGServerSettings *)settings
-{
-    [settings setValid];
-    settings.invalidBinDirectory = !NonBlank(settings.binDirectory);
-    settings.invalidDataDirectory = !NonBlank(settings.dataDirectory);
-}
-
-- (PGServerSettings *)dirty:(PGServer *)server
-{
-    return server.dirtySettings ?: (server.dirtySettings = [[PGServerSettings alloc] initWithSettings:server.settings]);
-}
-
-- (BOOL)saveServer:(PGServer *)server
-{
-    // Change startup setting if invalid
-    BOOL oldStartup = server.dirtySettings.startup;
-    if (oldStartup == PGServerStartupAtLogin && server.dirtySettings.hasDifferentUser) server.dirtySettings.startup = PGServerStartupAtBoot;
-    
-    BOOL succeeded = [self.dataStore saveServer:server];
-    if (succeeded) [self initializeServer:server];
-    else server.dirtySettings.startup = oldStartup;
-    return succeeded;
-}
-
-- (void)initializeServer:(PGServer *)server
-{
-    [self validateSettings:server.settings];
-    
-    // Generate log file path
-    if (NonBlank(server.name)) {
-        NSString *logFile = [NSString stringWithFormat:@"/Library/Logs/PostgreSQL/%@.%@.log", PGPrefsAppID, server.name];
-        if (!server.needsAuthorization) logFile = [NSHomeDirectory() stringByAppendingPathComponent:logFile];
-        server.log = logFile;
-    }
-}
-
 - (void)checkStatus:(PGServer *)server
 {
-    if (!server) return;
-    
-    if (server.needsAuthorization) {
-        AuthorizationRef authorization = self.authorization;
-        if (authorization == NULL) {
-            [self.viewController prefsController:self didChangeServerStatus:server];
-            return;
-        }
+    if (![self.serverController shouldCheckStatusForServer:server authorization:self.authorization]) return;
         
-        BackgroundThread(^{ [self.serverController runAction:PGServerCheckStatus server:server authorization:authorization]; });
-    } else {
-        BackgroundThread(^{ [self.serverController runAction:PGServerCheckStatus server:server authorization:nil]; });
+    BackgroundThread(^{
+        [self.serverController runAction:PGServerCheckStatus server:server authorization:self.authorization];
+    });
+}
+
+- (void)removeServer:(PGServer *)server
+{
+    if (![self.servers containsObject:server]) return;
+    
+    DLog(@"%@", server);
+    
+    // Calculate which server to select after delete
+    PGServer *nextServer = ObjectAfter(server, self.servers);
+    if (!nextServer) nextServer = ObjectBefore(server, self.servers);
+    
+    // Delete the server
+    [self.dataStore removeServer:server];
+    
+    // Get the new servers list after delete
+    self.servers = self.dataStore.servers;
+    
+    // Tell view controller to update servers list
+    [self.viewController prefsController:self didChangeServers:self.servers];
+    
+    // Select the next server
+    if (!self.server || self.server == server || self.servers.count == 0) {
+        self.server = nextServer;
+        [self.viewController prefsController:self didChangeSelectedServer:self.server];
     }
 }
 
@@ -541,17 +519,22 @@ ObjectBefore(id object, NSArray *array)
 {
     self.serversMonitorKey = [NSDate date];
     for (PGServer *server in self.servers) [self startMonitoringServer:server];
+    
+    [self startMonitoringLaunchd];
+}
+- (void)stopMonitoringServers
+{
+    self.serversMonitorKey = nil;
+    
 }
 - (void)startMonitoringServer:(PGServer *)server
 {
-    BackgroundThread(^{ [self poll:server key:self.serversMonitorKey]; });
+    BackgroundThread(^{ [self pollServer:server key:self.serversMonitorKey]; });
 }
-- (void)poll:(PGServer *)server key:(id)key
+- (void)pollServer:(PGServer *)server key:(id)key
 {
     if (!key) return;
 
-    NSTimeInterval secondsBetweenStatusUpdates = 5;
-    
     // Ensure not stopped
     if (key != self.serversMonitorKey) return;
     
@@ -560,12 +543,12 @@ ObjectBefore(id object, NSArray *array)
     MainThread(^{ serverExists = [self.servers containsObject:server]; });
     if (!serverExists) return;
     
-    // Ensure server not already processing
-    if (!server.processing) {
-        
-        // Run check status command
-        AuthorizationRef authorization = self.authorization;
-        if (!server.needsAuthorization || authorization != NULL) [self.serverController runAction:PGServerQuickStatus server:server authorization:authorization];
+    // Run check status
+    [self checkStatus:server];
+    
+    // If stopped external server with no daemon file, delete it
+    if (server.external && server.status == PGServerStopped && !server.daemonFileExists) {
+        MainThread(^{ [self removeServer:server]; });
     }
     
     // Ensure not stopped
@@ -575,11 +558,62 @@ ObjectBefore(id object, NSArray *array)
     if (!PGPrefsMonitorServersEnabled) return;
     
     // Schedule re-run
-    BackgroundThreadAfterDelay(^{ [self poll:server key:key]; }, secondsBetweenStatusUpdates);
+    BackgroundThreadAfterDelay(^{ [self pollServer:server key:key]; }, PGServersPollTime);
 }
-- (void)stopMonitoringServers
+- (void)startMonitoringLaunchd
 {
-    self.serversMonitorKey = nil;
+    BackgroundThread(^{ [self pollLaunchd:self.serversMonitorKey]; });
+}
+- (void)pollLaunchd:(id)key
+{
+    if (!key) return;
+    
+    // Ensure not stopped
+    if (key != self.serversMonitorKey) return;
+    
+    AuthorizationRef authorization = self.authorization;
+    [self.searchController findLoadedServers:^(NSArray *loadedServers) {
+        
+        // Get existing servers by name
+        NSArray *existingServers = self.dataStore.servers;
+        NSMutableDictionary *existingLookup = existingServers.count == 0 ? nil : [NSMutableDictionary dictionaryWithCapacity:existingServers.count];
+        for (PGServer *server in existingServers) {
+            if (!NonBlank(server.name) || !server.external) continue;
+            existingLookup[server.name] = server;
+        }
+        
+        // Calculcate servers to add
+        NSMutableArray *toAdd = loadedServers.count == 0 ? nil : [NSMutableArray arrayWithCapacity:loadedServers.count];
+        for (PGServer *server in loadedServers) {
+            if (NonBlank(server.name) && !existingLookup[server.name]) [toAdd addObject:server];
+        }
+        if (toAdd.count == 0) {
+            DLog(@"No loaded servers to add!");
+            return;
+        }
+        
+        // Add servers
+        MainThread(^{
+            for (PGServer *server in toAdd) {
+                [self.dataStore saveServer:server];
+                [self startMonitoringServer:server];
+            }
+            
+            self.servers = self.dataStore.servers;
+            [self.viewController prefsController:self didChangeServers:self.servers];
+            if (!self.server) {
+                self.server = self.servers.firstObject;
+                [self.viewController prefsController:self didChangeSelectedServer:self.server];
+            }
+        });
+     
+    } authorization:authorization authStatus:nil];
+    
+    // Global disable auto-monitoring
+    if (!PGPrefsMonitorServersEnabled) return;
+    
+    // Schedule re-run
+    BackgroundThreadAfterDelay(^{ [self pollLaunchd:key]; }, PGServersPollTime);
 }
 
 @end

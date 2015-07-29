@@ -18,6 +18,12 @@
 @property (nonatomic) BOOL enabled;
 /// If NO, then the start/stop button will be greyed-out
 @property (nonatomic) BOOL startStopEnabled;
+/// If NO, then the view log button will be greyed-out (if log doesn't exist)
+@property (nonatomic) BOOL logEnabled;
+/// If NO, then the editing server settings will be greyed-out (if server not editable)
+@property (nonatomic) BOOL editEnabled;
+/// If NO, then the startup-at-login will be greyed-out (if server has different username)
+@property (nonatomic) BOOL startupAtLoginEnabled;
 
 - (void)initAuthorization;
 
@@ -116,13 +122,18 @@
     // Set servers menu
     [self.serversMenu setDelegate:self];
     [self.serversButtons setMenu:self.serversMenu forSegment:2];
+
+    // Reset initial view states
+    self.updatingDisplay = YES;
+    self.logEnabled = YES;
+    self.editEnabled = YES;
+    self.startupAtLoginEnabled = YES;
+    self.startStopEnabled = YES;
+    self.enabled = YES;
+    self.updatingDisplay = NO;
     
     // Set new delegate
     self.controller = [[PGPrefsController alloc] initWithViewController:self];
-    
-    // Reset internal variables
-    _startStopEnabled = self.startStopButton.enabled;
-    _enabled = YES;
     
     // Setup subview delegates
     self.serverSettingsWindow.usernameField.delegate = self;
@@ -163,26 +174,54 @@
 
 #pragma mark Properties
 
+- (void)refreshEnabled
+{
+    self.viewLogButton.enabled = self.enabled && self.logEnabled;
+    self.renameServerButton.enabled = self.enabled && self.editEnabled;
+    self.changeSettingsButton.enabled = self.enabled && self.editEnabled;
+    self.startupAtLoginCell.enabled = self.enabled && self.editEnabled && self.startupAtLoginEnabled;
+    self.startupAtBootCell.enabled = self.enabled && self.editEnabled;;
+    self.startupManualCell.enabled = self.enabled && self.editEnabled;;
+    self.startupMatrix.enabled = self.enabled && self.editEnabled;
+    self.startStopButton.enabled = self.enabled && self.startStopEnabled;
+    
+    self.serversButtons.enabled = self.enabled;
+    self.noServersButtons.enabled = YES; // Always enabled, not always visible
+}
 - (void)setEnabled:(BOOL)enabled
 {
     if (enabled == _enabled) return;
     _enabled = enabled;
     
-    self.startStopButton.enabled = enabled && self.startStopEnabled;
-    self.changeSettingsButton.enabled = enabled;
-    self.startupAtBootCell.enabled = enabled;
-    self.startupAtLoginCell.enabled = enabled;
-    self.startupManualCell.enabled = enabled;
-    
-    self.serversButtons.enabled = enabled;
-    self.noServersButtons.enabled = YES; // Always enabled, not always visible
+    [self refreshEnabled];
 }
 - (void)setStartStopEnabled:(BOOL)startStopEnabled
 {
     if (startStopEnabled == _startStopEnabled) return;
     _startStopEnabled = startStopEnabled;
+    
+    [self refreshEnabled];
+}
+- (void)setLogEnabled:(BOOL)logEnabled
+{
+    if (logEnabled == _logEnabled) return;
+    _logEnabled = logEnabled;
 
-    self.startStopButton.enabled = self.enabled && startStopEnabled;
+    [self refreshEnabled];
+}
+- (void)setEditEnabled:(BOOL)editEnabled
+{
+    if (editEnabled == _editEnabled) return;
+    _editEnabled = editEnabled;
+    
+    [self refreshEnabled];
+}
+- (void)setStartupAtLoginEnabled:(BOOL)startupAtLoginEnabled
+{
+    if (startupAtLoginEnabled == _startupAtLoginEnabled) return;
+    _startupAtLoginEnabled = startupAtLoginEnabled;
+    
+    [self refreshEnabled];
 }
 
 - (PGServerStartup)startup
@@ -245,7 +284,7 @@
 - (AuthorizationRef)authorization
 {
     SFAuthorization *authorization = self.authorizationView.authorization;
-    return authorization ? authorization.authorizationRef : NULL;
+    return authorization ? authorization.authorizationRef : nil;
 }
 
 - (void)initAuthorization
@@ -271,7 +310,7 @@
     BOOL authorized = [self.authorizationView authorize:self];
     self.authorizationView.flags = authorized ? kAuthorizationFlagDefaults : kAuthorizationFlagDefaults | kAuthorizationFlagExtendRights;
     [self.authorizationView updateStatus:nil];
-    return authorized ? self.authorizationView.authorization.authorizationRef : NULL;
+    return authorized ? self.authorizationView.authorization.authorizationRef : nil;
 }
 
 - (void)deauthorize
@@ -348,21 +387,21 @@
 
 - (IBAction)cancelRenameServerClicked:(id)sender
 {
-    [NSApp endSheet:self.serversRenameWindow returnCode:NSCancelButton];
+    [NSApp endSheet:self.renameServerWindow returnCode:NSCancelButton];
 }
 
 - (IBAction)okRenameServerClicked:(id)sender
 {
-    if (![self.controller userCanRenameServer:self.serversRenameWindow.nameField.stringValue]) return;
+    if (![self.controller userCanRenameServer:self.renameServerWindow.nameField.stringValue]) return;
     
-    [NSApp endSheet:self.serversRenameWindow returnCode:NSOKButton];
+    [NSApp endSheet:self.renameServerWindow returnCode:NSOKButton];
 }
      
 - (void)sheetDidEnd:(NSWindow *)sheet returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
 {
     // Rename
-    if (sheet == self.serversRenameWindow) {
-        [self.serversRenameWindow orderOut:self];
+    if (sheet == self.renameServerWindow) {
+        [self.renameServerWindow orderOut:self];
         
         // Cancelled
         if (returnCode == NSCancelButton) {
@@ -370,7 +409,7 @@
             
         // Apply
         } else {
-            [self.controller userDidRenameServer:self.serversRenameWindow.nameField.stringValue];
+            [self.controller userDidRenameServer:self.renameServerWindow.nameField.stringValue];
         }
         
     // Settings
@@ -496,7 +535,7 @@
         // Name
         if ([tableColumn.identifier isEqualToString:@"Name"]) {
             cellIdentifier = @"NameCell";
-            value = server.name;
+            value = server.shortName;
             
         // Domain
         } else if ([tableColumn.identifier isEqualToString:@"Domain"]) {
@@ -516,12 +555,12 @@
 - (void)configureServersCell:(PGPrefsServersCell *)cell forServer:(PGServer *)server
 {
     // Name
-    cell.textField.stringValue = server.name?:@"Name Not Found";
+    cell.textField.stringValue = server.shortName?:@"Name Not Found";
     
     // Icon & Status
     NSString *statusText = nil;
     NSString *imageName = nil;
-    if (server.needsAuthorization && !self.authorized) {
+    if (server.daemonInRootContext && !self.authorized) {
         imageName = NSImageNameLockLockedTemplate;
         statusText = @"Protected";
     } else {
@@ -591,12 +630,21 @@
     self.updatingDisplay = NO;
 }
 
-- (void)prefsController:(PGPrefsController *)controller didDirtyServerSettings:(PGServer *)server
+- (void)prefsController:(PGPrefsController *)controller didChangeServerSetting:(NSString *)setting server:(PGServer *)server
 {
     self.updatingDisplay = YES;
     
     [self showDirtyInSettingsWindow:server];
 
+    self.updatingDisplay = NO;
+}
+
+- (void)prefsController:(PGPrefsController *)controller didChangeServerSettings:(PGServer *)server
+{
+    self.updatingDisplay = YES;
+    
+    [self showSettingsInSettingsWindow:server];
+    
     self.updatingDisplay = NO;
 }
 
@@ -635,7 +683,7 @@
     
     NSArray *sortDescriptors = self.serverSettingsWindow.serversTableView.sortDescriptors;
     
-    if (sortDescriptors.count == 0) sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES]];
+    if (sortDescriptors.count == 0) sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"shortName" ascending:YES]];
     
     self.searchServers = [servers sortedArrayUsingDescriptors:sortDescriptors];
     self.serverSettingsWindow.serversTableView.sortDescriptors = sortDescriptors;
@@ -776,16 +824,26 @@
 
 - (void)showDirtyInSettingsWindow:(PGServer *)server
 {
-    self.serverSettingsWindow.revertSettingsButton.enabled = server.dirtySettings != nil;
-    self.serverSettingsWindow.applySettingsButton.enabled = server.dirtySettings != nil;
+    self.serverSettingsWindow.revertSettingsButton.enabled = server.dirty;
+    self.serverSettingsWindow.applySettingsButton.enabled = server.dirty;
     
-    PGServerSettings *settings = server.dirtySettings ?: server.settings;
-    self.serverSettingsWindow.invalidBinDirectoryImage.hidden = !settings.invalidBinDirectory;
-    self.serverSettingsWindow.invalidDataDirectoryImage.hidden = !settings.invalidDataDirectory;
+    self.serverSettingsWindow.invalidBinDirectoryImage.hidden = !server.dirtySettings.invalidBinDirectory;
+    self.serverSettingsWindow.invalidDataDirectoryImage.hidden = !server.dirtySettings.invalidDataDirectory;
+}
+- (void)focusInvalidInSettingsWindow:(PGServer *)server
+{
+    // Focus on problem field
+    NSControl *focus = self.serverSettingsWindow.serversTableView;
+    PGServerSettings *settings = server.dirtySettings;
+    if (settings.invalidBinDirectory)
+        focus = self.serverSettingsWindow.binDirectoryField;
+    else if (settings.invalidDataDirectory)
+        focus = self.serverSettingsWindow.dataDirectoryField;
+    [self.serverSettingsWindow makeFirstResponder:focus];
 }
 - (void)showSettingsInSettingsWindow:(PGServer *)server
 {
-    PGServerSettings *settings = server.dirtySettings ?: server.settings;
+    PGServerSettings *settings = server.dirtySettings;
     self.serverSettingsWindow.usernameField.stringValue = settings.username?:@"";
     self.serverSettingsWindow.binDirectoryField.stringValue = settings.binDirectory?:@"";
     self.serverSettingsWindow.dataDirectoryField.stringValue = settings.dataDirectory?:@"";
@@ -793,12 +851,6 @@
     self.serverSettingsWindow.portField.stringValue = settings.port?:@"";
     
     [self showDirtyInSettingsWindow:server];
-    
-    // Focus on problem field
-    NSControl *focus = self.serverSettingsWindow.serversTableView;
-    if (settings.invalidBinDirectory) focus = self.serverSettingsWindow.binDirectoryField;
-    else if (settings.invalidDataDirectory) focus = self.serverSettingsWindow.dataDirectoryField;
-    [self.serverSettingsWindow makeFirstResponder:focus];
 }
 - (void)showSettingsInMainServerView:(PGServer *)server
 {
@@ -809,8 +861,10 @@
     self.logFileField.stringValue = settings.logFile?:@"";
     self.portField.stringValue = settings.port?:@"";
     
-    self.viewLogButton.enabled = server.logExists;
-    self.startupAtLoginCell.enabled = server.canStartAtLogin;
+    self.logEnabled = server.daemonLogExists;
+    self.editEnabled = server.editable;
+    self.startupAtLoginEnabled = server.canStartAtLogin;
+    self.startStopEnabled = server.actionable;
     
     [self showServerStartup:self.server];
 }
@@ -822,7 +876,7 @@
 {
     [self showError:server.error];
     
-    if (server.needsAuthorization && !self.authorized) {
+    if (server.daemonInRootContext && !self.authorized) {
         [self showProtected];
     } else {
         switch (server.status) {
@@ -835,8 +889,10 @@
         }
     }
     
-    self.viewLogButton.enabled = server.logExists;
-    self.startupAtLoginCell.enabled = server.canStartAtLogin;
+    self.logEnabled = server.daemonLogExists;
+    self.editEnabled = server.editable;
+    self.startupAtLoginEnabled = server.canStartAtLogin;
+    self.startStopEnabled = server.actionable;
     
     self.startStopButton.hidden = server.status == PGServerStatusUnknown;
     self.enabled = !server.processing;
@@ -847,7 +903,7 @@
 
 - (void)showServerInMainServerView:(PGServer *)server
 {
-    DLog(@"Server: %@", server);
+    DLog(@"%@", server);
     
     self.server = server;
     
@@ -858,9 +914,12 @@
         self.serversButtons.hidden = YES;
         self.noServersButtons.hidden = NO;
         
-        // Reset startup button
-        self.startupAtLoginCell.enabled = YES;
-        [self.startupMatrix selectCell:self.startupManualCell];
+        // Reset buttons
+        self.editEnabled = YES;
+        self.logEnabled = YES;
+        self.startupAtLoginEnabled = YES;
+        self.startStopEnabled = YES;
+        self.startup = PGServerStartupManual;
         
         // Disable everything except "Add server" button
         self.enabled = NO;
@@ -891,16 +950,17 @@
     [self.serverSettingsWindow.serversTableView deselectAll:self];
     [self.serverSettingsWindow.serversTableView scrollRowToVisible:0];
     [self showSettingsInSettingsWindow:server];
+    [self focusInvalidInSettingsWindow:server];
     [NSApp beginSheet:self.serverSettingsWindow modalForWindow:self.mainView.window modalDelegate:self didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:nil];
     [self.serverSettingsWindow orderFront:self];
 }
 
 - (void)showServerRenameWindow:(PGServer *)server
 {
-    self.serversRenameWindow.nameField.stringValue = server.name;
+    self.renameServerWindow.nameField.stringValue = server.name;
     
-    [NSApp beginSheet:self.serversRenameWindow modalForWindow:self.mainView.window modalDelegate:self didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:nil];
-    [self.serversRenameWindow orderFront:self];
+    [NSApp beginSheet:self.renameServerWindow modalForWindow:self.mainView.window modalDelegate:self didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    [self.renameServerWindow orderFront:self];
 }
 
 @end

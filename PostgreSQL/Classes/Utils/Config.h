@@ -11,6 +11,12 @@
 
 // App
 #define PGPrefsAppID @"org.postgresql.preferences"
+#define PGServersPollTime 5
+#define PGLaunchdDaemonFileBootDir @"/Library/LaunchDaemons"
+#define PGLaunchdDaemonFileLoginGlobalDir @"/Library/LaunchAgents"
+#define PGLaunchdDaemonFileLoginUserDir @"~/Library/LaunchAgents"
+#define PGLaunchdDaemonLogRootDir @"/Library/Logs/PostgreSQL"
+#define PGLaunchdDaemonLogUserDir @"~/Library/Logs/PostgreSQL"
 
 // Debugging
 #ifdef DEBUG
@@ -52,9 +58,11 @@
 #define PGServerDataStore ComMaccatechPostgreServerDataStore
 
 #define PGSearchController ComMaccatechPostgreSearchController
+#define PGSearchDelegate ComMaccatechPostgreSearchDelegate
 
 #define PGServerDefaultName ComMaccatechPostgreServerDefaultName
 #define PGServerNameKey ComMaccatechPostgreServerNameKey
+#define PGServerDomainKey ComMaccatechPostgreServerDomainKey
 #define PGServerUsernameKey ComMaccatechPostgreServerUsernameKey
 #define PGServerBinDirectoryKey ComMaccatechPostgreServerBinDirectoryKey
 #define PGServerDataDirectoryKey ComMaccatechPostgreServerDataDirectoryKey
@@ -76,15 +84,17 @@
 #define PGServerRetryingName ComMaccatechPostgreServerRetrying
 #define PGServerUpdatingName ComMaccatechPostgreServerUpdating
 
+#define PGServerDaemonContext ComMaccatechPostgreServerDaemonContext
+
 #define PGServerAction ComMaccatechPostgreServerAction
 #define PGServerCheckStatusName ComMaccatechPostgreServerCheckStatusName
-#define PGServerQuickStatusName ComMaccatechPostgreServerQuickStatusName
 #define PGServerStartName ComMaccatechPostgreServerStartName
 #define PGServerStopName ComMaccatechPostgreServerStopName
 #define PGServerCreateName ComMaccatechPostgreServerCreateName
 #define PGServerDeleteName ComMaccatechPostgreServerDeleteName
 
 #define PGData ComMaccatechPostgreData
+#define PGLaunchd ComMaccatechPostgreLaunchd
 #define PGProcess ComMaccatechPostgreProcess
 
 #endif /* PostgreSQL_Config_h */

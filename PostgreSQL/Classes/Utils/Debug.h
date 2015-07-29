@@ -23,7 +23,7 @@ CG_INLINE void DebugLog(NSString *logFile, Class clazz, const char *func, NSStri
     static NSDateFormatter *dateFormatter = nil;
     if (!dateFormatter) {
         NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-        formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
+        formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss.SSS";
         dateFormatter = formatter;
     }
     NSString *formattedMsg =
@@ -43,7 +43,7 @@ CG_INLINE void DebugLog(NSString *logFile, Class clazz, const char *func, NSStri
     if (logFile) {
         // Create log dir
         if (! [[NSFileManager defaultManager] fileExistsAtPath:logFile]) {
-            [[NSFileManager defaultManager] createDirectoryAtPath:[logFile stringByDeletingLastPathComponent] withIntermediateDirectories:YES attributes:nil error:NULL];
+            [[NSFileManager defaultManager] createDirectoryAtPath:[logFile stringByDeletingLastPathComponent] withIntermediateDirectories:YES attributes:nil error:nil];
         }
         
         // Redirect stderr

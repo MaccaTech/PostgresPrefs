@@ -12,19 +12,22 @@
 
 @interface PGServerDataStore()
 
+/// Used to peform the load/save using CFPreferences
 @property (nonatomic, strong) PGData *data;
+
+/// Used to keep track of last-saved name for server
+@property (nonatomic, strong) NSMutableDictionary *namesCache;
+
+/// Used to cache servers by name
 @property (nonatomic, strong) NSMutableDictionary *serversCache;
+
+/// Used to return ordered servers list externally
 @property (nonatomic, strong) NSMutableArray *serversOrderedByName;
 
 /**
  * Gets the next available unique server name for the specified prefix.
  */
 - (NSString *)unusedServerNameWithPrefix:(NSString *)prefix;
-
-/**
- * Clears cached data whens servers change
- */
-- (void)didChangeServers;
 
 @end
 
@@ -38,6 +41,7 @@
 {
     self = [super init];
     if (self) {
+        self.namesCache = [NSMutableDictionary dictionary];
         self.serversCache = [NSMutableDictionary dictionary];
         self.data = [[PGData alloc] initWithAppID:[NSString stringWithFormat:@"%@.%@", PGPrefsAppID, @"servers"]];
     }
@@ -60,18 +64,19 @@
 
 - (void)loadServers
 {
-    [self.serversCache removeAllObjects];
-    [self didChangeServers];
+    [self clearCache];
     
     NSDictionary *servers = [self.data allData];
     if (servers.count == 0) return;
     
     for (NSString *name in servers.allKeys) {
-        NSDictionary *serverProperties = servers[name];
         
-        if (![PGServerSettings containsServerSettings:serverProperties]) continue;
+        // Create the server
+        PGServer *server = [self.serverController serverFromProperties:servers[name] name:name];
+        if (!server) continue;
         
-        self.serversCache[name] = [[PGServer alloc] initWithName:name domain:PGPrefsAppID settings:[[PGServerSettings alloc] initWithProperties:serverProperties]];
+        // Cache
+        [self addToCache:server];
     }
 
 }
@@ -89,55 +94,49 @@
 - (PGServer *)addServer
 {
     NSString *name = [self unusedServerNameWithPrefix:PGServerDefaultName];
-    PGServer *result = [[PGServer alloc] initWithName:name domain:PGPrefsAppID];
+    PGServer *server = [self.serverController serverFromSettings:nil name:name domain:PGPrefsAppID];
+    if (!server) return nil;
     
-    [self.data setData:result.settings.properties forKey:name];
+    [self addToCache:server];
+    
+    [self.data setData:server.properties forKey:name];
     [self.data synchronize];
-    self.serversCache[name] = result;
-
-    [self didChangeServers];
     
-    return result;
+    return server;
 }
 
 - (BOOL)saveServer:(PGServer *)server
 {
     if (!server) return NO;
     if (!NonBlank(server.name)) return NO;
+ 
+    PGServer *serverForNameInCache = self.serversCache[server.name];
     
-    if (!server.dirtySettings) return YES;
-    
-    [self.data setData:server.dirtySettings.properties forKey:server.name];
-    [self.data synchronize];
-    server.settings = server.dirtySettings;
-    server.dirtySettings = nil;
-    
-    [self didChangeServers];
-    
-    return YES;
-}
-
-- (BOOL)setName:(NSString *)name forServer:(PGServer *)server
-{
-    if (!server) return NO;
-    if (!NonBlank(name)) return NO;
-    
-    PGServer *existing = self.serversCache[name];
-    if (existing) return NO;
-    
-    // Remove old name
-    if (NonBlank(server.name)) {
-        [self.data removeKey:server.name];
-        [self.serversCache removeObjectForKey:server.name];
+    // Name change
+    if (serverForNameInCache != server) {
+        
+        // Clash with existing server
+        if (serverForNameInCache) return NO;
+        
+        // Remove old name
+        if (server.saveable) {
+            NSString *oldName = self.namesCache[server.uid];
+            if (NonBlank(oldName)) {
+                [self.data removeKey:oldName];
+                [self.data synchronize];
+            }
+        }
+        [self removeFromCache:server];
+        
+        // Cache new name
+        [self addToCache:server];
     }
     
-    // Set new name
-    [self.data setData:server.settings.properties forKey:name];
-    [self.data synchronize];
-    self.serversCache[name] = server;
-    server.name = name;
-    
-    [self didChangeServers];
+    DLog(@"%@", server);
+    if (server.saveable) {
+        [self.data setData:server.properties forKey:server.name];
+        [self.data synchronize];
+    }
     
     return YES;
 }
@@ -147,11 +146,12 @@
     if (!server) return;
     if (!NonBlank(server.name)) return;
     
-    [self.data removeKey:server.name];
-    [self.data synchronize];
-    [self.serversCache removeObjectForKey:server.name];
-    
-    [self didChangeServers];
+    if (server.saveable) {
+        [self.data removeKey:server.name];
+        [self.data synchronize];
+    }
+
+    [self removeFromCache:server];
 }
 
 - (void)removeAllServers
@@ -161,17 +161,35 @@
     
     [self.data removeKeys:names];
     [self.data synchronize];
-    [self.serversCache removeObjectsForKeys:names];
 
-    [self didChangeServers];
+    [self clearCache];
 }
 
 
 
 #pragma mark Private
 
-- (void)didChangeServers
+- (void)addToCache:(PGServer *)server
 {
+    if (!server) return;
+    self.namesCache[server.uid] = server.name;
+    self.serversCache[server.name] = server;
+    
+    self.serversOrderedByName = nil;
+}
+- (void)removeFromCache:(PGServer *)server
+{
+    if (!server) return;
+    NSString *nameInCache = self.namesCache[server.uid];
+    [self.namesCache removeObjectForKey:server.uid];
+    if (nameInCache) [self.serversCache removeObjectForKey:nameInCache];
+
+    self.serversOrderedByName = nil;
+}
+- (void)clearCache
+{
+    [self.namesCache removeAllObjects];
+    [self.serversCache removeAllObjects];
     self.serversOrderedByName = nil;
 }
 

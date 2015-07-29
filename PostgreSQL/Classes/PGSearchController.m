@@ -56,10 +56,6 @@
  * Utility method - scan all nested dirs for files matching predicate
  */
 - (NSArray *)findFilesInDir:(NSString *)dir predicate:(NSPredicate *)predicate;
-/**
- * Utility method - check if directory exists
- */
-- (BOOL)dirExists:(NSString *)dir;
 
 @end
 
@@ -70,16 +66,12 @@
 @implementation PGSearchController
 
 #pragma mark Lifecycle
+
 - (id)init
-{
-    return [self initWithDelegate:nil];
-}
-- (id)initWithDelegate:(id<PGSearchDelegate>)delegate
 {
     self = [super init];
     if (self) {
         self.mutableServers = [NSMutableArray array];
-        self.delegate = delegate;
     }
     return self;
 }
@@ -135,7 +127,7 @@
 
 #pragma mark Main Methods
 
-- (void)startFindServers
+- (void)findInstalledServers
 {
     // Only re-scan if 1 minute has elapsed since last scan
     if (self.lastUpdated && [self.lastUpdated timeIntervalSinceNow] > -60) return;
@@ -149,9 +141,34 @@
     [self findServersFromEnterpriseDB];
 }
 
+- (void)findLoadedServers:(void(^)(NSArray *servers))found authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus
+{
+    BackgroundThread(^{
+        
+        NSMutableArray *servers = [NSMutableArray array];
+        [self addLoadedServersForRootUser:YES authorization:authorization authStatus:authStatus toServers:servers];
+        [self addLoadedServersForRootUser:NO authorization:authorization authStatus:authStatus toServers:servers];
+        
+        if (servers.count > 0 && found) found(servers);
+    });
+}
+
 
 
 #pragma mark Servers
+
+- (void)addLoadedServersForRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus toServers:(NSMutableArray *)servers
+{
+    NSString *error = nil;
+    NSArray *names = [PGLaunchd loadedDaemonsWithNameLike:@".*postgre.*" forRootUser:root authorization:authorization authStatus:authStatus error:&error];
+    if (names.count == 0) return;
+    
+    for (NSString *name in names) {
+        NSString *error = nil;
+        PGServer *server = [self.serverController loadedServerWithName:name forRootUser:root authorization:authorization authStatus:authStatus error:&error];
+        if (server) [servers addObject:server];
+    }
+}
 
 - (void)findServersFromEnterpriseDB
 {
@@ -166,7 +183,7 @@
 - (void)findServersFromPostgresapp
 {
     // Postgres.app not installed
-    if (![self dirExists:@"/Applications/Postgres.app"]) return;
+    if (!DirExists(@"/Applications/Postgres.app")) return;
     
     // Postgres.app installed, do a spotlight search for data dirs
     NSMetadataQuery *query = [[NSMetadataQuery alloc] init];
@@ -187,101 +204,6 @@
     [query startQuery];
 }
 
-- (PGServer *)serverFromLaunchAgent:(NSString *)agentFile
-{
-    NSString *PGNAME = nil;
-    NSString *PGDOMAIN = nil;
-    NSString *PGUSER = nil;
-    NSString *PGBIN  = nil;
-    NSString *PGDATA = nil;
-    NSString *PGLOG  = nil;
-    NSString *PGPORT = nil;
-    PGServerStartup PGSTART = PGServerStartupManual;
-    NSString *filepath = nil;
-    NSString *executable = nil;
-    NSUInteger index = 0;
-    
-    NSDictionary *data = [[NSDictionary alloc] initWithContentsOfFile:agentFile];
-    DLog(@"Launch Agent: %@", data);
-    
-    NSString *name = TrimToNil(ToString(data[@"Label"]));
-    NSString *username = TrimToNil(ToString(data[@"UserName"]));
-    NSArray *programArgs = ToArray(data[@"ProgramArguments"]);
-    NSDictionary *environmentVars = ToDictionary(data[@"EnvironmentVariables"]);
-    NSString *stdout = TrimToNil(ToString(data[@"StandardOutPath"]));
-    NSString *stderr = TrimToNil(ToString(data[@"StandardErrorPath"]));
-    NSString *workingDir = TrimToNil(ToString(data[@"WorkingDirectory"]));
-    
-    // PGNAME
-    if (!name) return nil;
-    name = [name stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
-    // Name may end in a version number, e.g. com.blah.postgressql-9.4
-    // So the final dot may not be a real "package-separator"
-    // Hence the need for an ugly regex...
-    PGNAME = [name stringByReplacingOccurrencesOfString:@"\\A.*\\.(.*?[\\p{Ll}\\p{Lu}\\p{Lt}\\p{Lo}].*?)\\z" withString:@"$1" options:NSRegularExpressionSearch range:NSMakeRange(0, name.length)];
-    PGDOMAIN = [name substringToIndex:name.length-(PGNAME.length+1)];
-    
-    // PGUSER
-    PGUSER = username;
-    
-    // PGBIN
-    if (programArgs.count == 0) return nil;
-    filepath = ToString(programArgs[0]);
-    executable = [filepath lastPathComponent];
-    
-    // Abort if not a Postgres agent, unless created by this tool
-    if (! (
-           [executable isEqualToString:@"postgres"] ||
-           [executable isEqualToString:@"pg_ctl"] ||
-           [executable isEqualToString:@"postmaster"] ||
-           [PGNAME hasPrefix:PGPrefsAppID])
-        ) return nil;
-    PGBIN = [filepath stringByDeletingLastPathComponent];
-    
-    // PGDATA
-    index = [programArgs indexOfObject:@"-D"];
-    if (index != NSNotFound && index+1 < programArgs.count) {
-        PGDATA = ToString(programArgs[index+1]);
-    }
-    if (!NonBlank(PGDATA)) {
-        for (NSString *programArg in programArgs) {
-            NSString *arg = TrimToNil(programArg);
-            if ([arg hasPrefix:@"-D"]) PGDATA = [arg substringFromIndex:2];
-        }
-    }
-    if (!NonBlank(PGDATA)) {
-        PGDATA = ToString(environmentVars[@"PGDATA"]);
-    }
-    if (!NonBlank(PGDATA)) {
-        PGDATA = workingDir;
-    }
-    
-    // PGLOG
-    index = [programArgs indexOfObject:@"-r"];
-    if (index != NSNotFound && index+1 < programArgs.count) {
-        PGLOG = ToString(programArgs[index+1]);
-    }
-    // Only use STDOUT/STDERR if agent was not created by this tool
-    if (!NonBlank(PGLOG) && ![name hasPrefix:PGPrefsAppID]) {
-        PGLOG = ToString(stderr);
-        if (!NonBlank(PGLOG)) PGLOG = ToString(stdout);
-    }
-
-    // PGPORT
-    index = [programArgs indexOfObject:@"-p"];
-    if (index != NSNotFound && index+1 < programArgs.count) {
-        PGPORT = ToString(programArgs[index+1]);
-    }
-    if (!NonBlank(PGPORT)) {
-        PGPORT = ToString(environmentVars[@"PGPORT"]);
-    }
-    
-    // Create servers
-    PGServerSettings *settings = [[PGServerSettings alloc] initWithUsername:PGUSER binDirectory:PGBIN dataDirectory:PGDATA logFile:PGLOG port:PGPORT startup:PGSTART];
-    PGServer *server = [[PGServer alloc] initWithName:PGNAME domain:PGDOMAIN settings:settings];
-    [self simplifyServerSettings:server];
-    return server;
-}
 - (NSArray *)serversFromEnterpriseDBFiles:(NSArray *)files
 {
     DLog(@"EnterpriseDB files: %@", @(files.count));
@@ -298,20 +220,24 @@
                              "    \\\"%@\\\": \\\"${PGDATA}\\\",\n"
                              "    \\\"%@\\\": \\\"${PGUSER}\\\",\n"
                              "    \\\"%@\\\": \\\"${PGPORT}\\\"\n"
-                             "}\"", PGServerBinDirectoryKey, PGServerDataDirectoryKey, PGServerUsernameKey, PGServerPortKey];
+                             "}\"",
+                             PGServerBinDirectoryKey,
+                             PGServerDataDirectoryKey,
+                             PGServerUsernameKey,
+                             PGServerPortKey];
     
     // Create servers
     NSMutableArray *result = [NSMutableArray arrayWithCapacity:files.count];
     for (NSString *file in files) {
         
         // Execute pg_env.sh in shell and print environment variables.
-        NSString *json = [PGProcess runShellCommand:[NSString stringWithFormat:command, file] withArgs:nil];
+        NSString *json = [PGProcess runShellCommand:[NSString stringWithFormat:command, file] error:nil];
         DLog(@"RESULT: %@", json);
         if (!NonBlank(json)) continue;
         
         // Parse json
-        NSError *error;
-        NSDictionary *properties = JsonToDictionary(json, error);
+        NSString *error;
+        NSDictionary *properties = JsonToDictionary(json, &error);
         if (error) {
             DLog(@"%@\n\n%@", json, error);
             continue;
@@ -319,10 +245,10 @@
         if (properties.count == 0) continue;
         
         // Create server
-        PGServerSettings *settings = [[PGServerSettings alloc] initWithProperties:properties];
-        PGServer *server = [[PGServer alloc] initWithName:@"postgresql" domain:@"com.enterprisedb" settings:settings];
-        [self simplifyServerSettings:server];
-        [result addObject:server];
+        PGServerSettings *settings = [[PGServerSettings alloc] initWithUsername:properties[PGServerUsernameKey] binDirectory:properties[PGServerBinDirectoryKey] dataDirectory:properties[PGServerDataDirectoryKey] logFile:nil port:properties[PGServerPortKey] startup:PGServerStartupManual];
+        PGServer *server = [self.serverController serverFromSettings:settings name:@"postgresql" domain:@"com.enterprisedb"];
+        
+        if (server) [result addObject:server];
     }
     
     return result.count == 0 ? nil : result;
@@ -349,10 +275,11 @@
     NSMutableArray *result = [NSMutableArray arrayWithCapacity:files.count];
     for (NSString *file in files) {
         NSString *dataDir = [file stringByDeletingLastPathComponent];
+        NSString *name = [dataDir lastPathComponent];
         PGServerSettings *settings = [[PGServerSettings alloc] initWithUsername:nil binDirectory:binDir dataDirectory:dataDir logFile:nil port:nil startup:PGServerStartupManual];
-        PGServer *server = [[PGServer alloc] initWithName:[dataDir lastPathComponent] domain:@"postgresapp.com" settings:settings];
-        [self simplifyServerSettings:server];
-        [result addObject:server];
+        PGServer *server = [self.serverController serverFromSettings:settings name:name domain:@"postgresapp.com"];
+        
+        if (server) [result addObject:server];
     }
     
     return result;
@@ -364,22 +291,12 @@
     
     NSMutableArray *result = [NSMutableArray arrayWithCapacity:files.count];
     for (NSString *file in files) {
-        PGServer *server = [self serverFromLaunchAgent:file];
-        if (!server) continue;
+        NSDictionary *daemon = [[NSDictionary alloc] initWithContentsOfFile:file];
+        PGServer *server = [self.serverController serverFromDaemon:daemon file:file];
         
-        [self simplifyServerSettings:server];
-        [result addObject:server];
+        if (server) [result addObject:server];
     }
     return result;
-}
-
-- (void)simplifyServerSettings:(PGServer *)server
-{
-    PGServerSettings *settings = server.settings;
-    if ([settings.username isEqualToString:NSUserName()]) settings.username = nil;
-    settings.binDirectory = [settings.binDirectory stringByAbbreviatingWithTildeInPath];
-    settings.dataDirectory = [settings.dataDirectory stringByAbbreviatingWithTildeInPath];
-    settings.logFile = [settings.logFile stringByAbbreviatingWithTildeInPath];
 }
 
 
@@ -431,7 +348,7 @@
 
 - (NSArray *)findFilesInDir:(NSString *)dir predicate:(NSPredicate *)predicate
 {
-    if (![self dirExists:dir]) return nil;
+    if (!DirExists(dir)) return nil;
     
     // Search
     NSMutableArray *result = [NSMutableArray array];
@@ -441,12 +358,6 @@
         if ([predicate evaluateWithObject:file]) [result addObject:[dir stringByAppendingPathComponent:file]];
     }
     return result.count > 0 ? result : nil;
-}
-
-- (BOOL)dirExists:(NSString *)dir
-{
-    BOOL isDirectory = NO;
-    return [[NSFileManager defaultManager] fileExistsAtPath:dir isDirectory:&isDirectory] && isDirectory;
 }
 
 @end

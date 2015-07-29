@@ -74,16 +74,40 @@ NonBlank(NSString *string)
     if (!NonBlanks) NonBlanks = [[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet];
     return string && [string rangeOfCharacterFromSet:NonBlanks].location != NSNotFound;
 }
+// Return YES if both nil or equal
+CG_INLINE BOOL
+BothNilOrEqual(id a, id b)
+{
+    return a == b || [a isEqual:b];
+}
 // Convert JSON string to dictionary. If JSON string is array, returns first element.
 CG_INLINE NSDictionary *
-JsonToDictionary(NSString *json, NSError *error)
+JsonToDictionary(NSString *json, NSString **error)
 {
     NSData *jsonData = [json dataUsingEncoding:NSUTF8StringEncoding];
-    id jsonSerialized = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
-    if (error) return nil;
+    NSError *jsonError = nil;
+    id jsonSerialized = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&jsonError];
+    if (error) *error = jsonError ? [jsonError description] : nil;
+    if (jsonError) return nil;
     if ([jsonSerialized isKindOfClass:[NSArray class]])
         jsonSerialized = ((NSArray *)jsonSerialized).firstObject;
     return ToDictionary(jsonSerialized);
+}
+// Check if file exists
+CG_INLINE BOOL
+FileExists(NSString *path)
+{
+    if (!NonBlank(path)) return NO;
+    BOOL isDirectory = NO;
+    return [[NSFileManager defaultManager] fileExistsAtPath:[path stringByExpandingTildeInPath] isDirectory:&isDirectory] && !isDirectory;
+}
+// Check if dir exists
+CG_INLINE BOOL
+DirExists(NSString *path)
+{
+    if (!NonBlank(path)) return NO;
+    BOOL isDirectory = NO;
+    return [[NSFileManager defaultManager] fileExistsAtPath:[path stringByExpandingTildeInPath] isDirectory:&isDirectory] && isDirectory;
 }
 
 #endif /* PostgreSQL_Common_h */

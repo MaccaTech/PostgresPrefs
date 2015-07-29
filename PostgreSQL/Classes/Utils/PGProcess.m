@@ -18,9 +18,23 @@
 + (NSString *)authorizingScript;
 
 /**
+ * Catch-all method for running an unauthorized shell command, with or without capturing output.
+ */
++ (BOOL)runShellCommand:(NSString *)command output:(NSString **)output error:(NSString **)error;
+
+/**
+ * Runs executable with or without authorization, with or without capturing output, and wrapped in a try/catch to capture any thrown exception.
+ *
+ * @param output If nil, does not wait for command to complete. Otherwise, captures output.
+ * @return YES if succeeded without throwing an exception or authorization error
+ */
++ (BOOL)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString **)output error:(NSString **)error;
+
+/**
  * Runs executable without authorization and either returns output or returns immediately with no output
  */
 + (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args waitForOutput:(BOOL)waitForOutput;
+
 /**
  * Runs executable with authorization and either returns output or returns immediately with no output
  */
@@ -76,76 +90,98 @@
 
 #pragma mark Shell Commands
 
-+ (NSString*)runShellCommand:(NSString *)command withArgs:(NSArray *)args
++ (BOOL)startShellCommand:(NSString *)command error:(NSString *__autoreleasing *)error
 {
-    return [self runShellCommand:command withArgs:args authorization:nil authStatus:NULL];
+    return [self runShellCommand:command output:nil error:error];
 }
-+ (NSString*)runShellCommand:(NSString *)command withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus
++ (NSString *)runShellCommand:(NSString *)command error:(NSString *__autoreleasing *)error
 {
-    if (authorization == NULL) {
-        return [self runExecutable:@"/bin/bash" withArgs:[@[@"-c", command] arrayByAddingObjectsFromArray:args]];
-    }
+    NSString *result = nil;
+    [self runShellCommand:command output:&result error:error];
+    return result;
+}
++ (BOOL)runShellCommand:(NSString *)command output:(NSString *__autoreleasing *)output error:(NSString *__autoreleasing *)error
+{
+    return [self runExecutable:@"/bin/bash" withArgs:@[@"-c", command] authorization:nil authStatus:nil output:output error:error];
+}
++ (BOOL)startShellCommand:(NSString *)command authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
+{
+    return [self runShellCommand:command authorization:authorization authStatus:authStatus output:nil error:error];
+}
++ (BOOL)runShellCommand:(NSString *)command authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString *__autoreleasing *)output error:(NSString *__autoreleasing *)error
+{
+    if (!authorization) return [self runShellCommand:command output:output error:error];
     
     // Program error - authorization script missing!
     NSString *authorizingScript = [self authorizingScript];
     if (!authorizingScript) {
-        if (authStatus != NULL) *authStatus = errAuthorizationInternal;
-        return nil;
+        if (authStatus) *authStatus = errAuthorizationInternal;
+        return NO;
     }
     
     // Execute
-    return [self runExecutable:@"/usr/bin/osascript" withArgs:[@[authorizingScript, command] arrayByAddingObjectsFromArray:args] authorization:authorization authStatus:authStatus];
-}
-+ (void)startShellCommand:(NSString *)command withArgs:(NSArray *)args
-{
-    [self startShellCommand:command withArgs:args authorization:nil authStatus:NULL];
-}
-+ (void)startShellCommand:(NSString *)command withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus
-{
-    if (authorization == NULL) {
-        [self startExecutable:@"/bin/bash" withArgs:[@[@"-c", command] arrayByAddingObjectsFromArray:args]];
-        return;
-    }
-    
-    // Program error - authorization script missing!
-    NSString *authorizingScript = [self authorizingScript];
-    if (!authorizingScript) {
-        if (authStatus != NULL) *authStatus = errAuthorizationInternal;
-        return;
-    }
-
-    // Execute
-    [self startExecutable:@"/usr/bin/osascript" withArgs:[@[authorizingScript, command] arrayByAddingObjectsFromArray:args] authorization:authorization authStatus:authStatus];
+    return [self runExecutable:@"/usr/bin/osascript" withArgs:@[authorizingScript, command] authorization:authorization authStatus:authStatus output:output error:error];
 }
 
 
 
 #pragma mark Executabless
 
-+ (void)startExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args
++ (BOOL)startExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args error:(NSString *__autoreleasing *)error
 {
-    [self runExecutable:pathToExecutable withArgs:args waitForOutput:NO];
+    return [self runExecutable:pathToExecutable withArgs:args authorization:nil authStatus:nil output:nil error:error];
 }
-+ (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args
++ (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args error:(NSString *__autoreleasing *)error
 {
-    return [self runExecutable:pathToExecutable withArgs:args waitForOutput:YES];
+    NSString *result = nil;
+    [self runExecutable:pathToExecutable withArgs:args authorization:nil authStatus:nil output:&result error:error];
+    return result;
 }
-+ (void)startExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus
++ (BOOL)startExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
 {
-    if (authorization == NULL) {
-        [self startExecutable:pathToExecutable withArgs:args];
-        return;
-    }
+    return [self runExecutable:pathToExecutable withArgs:args authorization:authorization authStatus:authStatus output:nil error:error];
+}
++ (BOOL)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString *__autoreleasing *)output error:(NSString *__autoreleasing *)error
+{
+    BOOL ignoreOutput = !output;
+    BOOL unauthorized = !authorization;
     
-    [self runExecutable:pathToExecutable withArgs:args authorization:authorization authStatus:authStatus waitForOutput:NO];
-}
-+ (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus
-{
-    if (authorization == NULL) {
-        return [self runExecutable:pathToExecutable withArgs:args];
-    }
+    NSString *resultOutput = nil;
+    NSString *resultError = nil;
+    OSStatus resultAuthStatus = errAuthorizationSuccess;
     
-    return [self runExecutable:pathToExecutable withArgs:args authorization:authorization authStatus:authStatus waitForOutput:YES];
+    @try {
+        
+        // Unauthorized
+        if (unauthorized) {
+            resultOutput = [self runExecutable:pathToExecutable withArgs:args waitForOutput:!ignoreOutput];
+        
+        // Authorized
+        } else {
+            resultOutput = [self runExecutable:pathToExecutable withArgs:args authorization:authorization authStatus:&resultAuthStatus waitForOutput:!ignoreOutput];
+            
+            // Pass on auth status
+            if (authorization) {
+                if (authStatus) *authStatus = resultAuthStatus;
+                
+                // User cancelled auth
+                if (resultAuthStatus != errAuthorizationSuccess) return NO;
+            }
+        }
+        
+        // Pass on output
+        if (output) *output = resultOutput;
+        
+        return YES;
+    }
+    @catch (NSException *err) {
+        resultError = [NSString stringWithFormat:@"%@\n%@", [err name], [err reason]];
+        
+        // Pass on error
+        if (error) *error = resultError;
+        
+        return NO;
+    }
 }
 
 
@@ -186,8 +222,8 @@
 + (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus waitForOutput:(BOOL)waitForOutput
 {
     // Pre-check the authorization - it may have timed-out
-    OSStatus status = authorization == NULL ? errAuthorizationInvalidRef :AuthorizationCopyRights(authorization, self.authorizationRights, kAuthorizationEmptyEnvironment, kAuthorizationFlagDefaults, NULL);
-    if (authStatus != NULL) *authStatus = status;
+    OSStatus status = !authorization ? errAuthorizationInvalidRef : AuthorizationCopyRights(authorization, self.authorizationRights, kAuthorizationEmptyEnvironment, kAuthorizationFlagDefaults, NULL);
+    if (authStatus) *authStatus = status;
     if (status != errAuthorizationSuccess) return nil;
     
     // Convert command into const char*;
@@ -212,7 +248,7 @@
     // Run command with authorization
     FILE **processOutputRef = waitForOutput ? &processOutput : NULL;
     status = AuthorizationExecuteWithPrivileges(authorization, commandArg, kAuthorizationFlagDefaults, (char *const *)argv, processOutputRef);
-    if (authStatus != NULL) *authStatus = status;
+    if (authStatus) *authStatus = status;
     
     // Release command and args
     free((char*)commandArg);

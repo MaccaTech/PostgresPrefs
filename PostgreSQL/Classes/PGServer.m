@@ -8,11 +8,12 @@
 
 #import "PGServer.h"
 
-#pragma mark - Constants
+#pragma mark - Constants / Functions
 
 NSString *const PGServerDefaultName            = @"PostgreSQL";
 
 NSString *const PGServerNameKey                = @"Name";
+NSString *const PGServerDomainKey              = @"Domain";
 NSString *const PGServerUsernameKey            = @"Username";
 NSString *const PGServerBinDirectoryKey        = @"BinDirectory";
 NSString *const PGServerDataDirectoryKey       = @"DataDirectory";
@@ -36,8 +37,34 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
 
 #pragma mark - Interfaces
 
+/**
+ * A class for generating unique identifiers.
+ */
+@interface PGUID : NSObject
++ (NSString *)uid;
+@end
+
 @interface PGServerSettings()
-@property (nonatomic, strong) NSMutableSet *invalidProperties;
+@end
+
+@interface PGServer()
+@end
+
+
+
+#pragma mark - PGUID
+
+@implementation PGUID
++ (NSString *)uid
+{
+    static NSUInteger uid = 0;
+    NSUInteger result;
+    @synchronized(self) {
+        result = uid;
+        uid++;
+    }
+    return [NSNumber numberWithUnsignedInteger:uid].description;
+}
 @end
 
 
@@ -61,13 +88,9 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
 }
 - (id)initWithSettings:(PGServerSettings *)settings
 {
-    return [self initWithUsername:settings.username binDirectory:settings.binDirectory dataDirectory:settings.dataDirectory logFile:settings.logFile port:settings.port startup:settings.startup];
-}
-- (id)initWithProperties:(NSDictionary *)properties
-{
     self = [super init];
     if (self) {
-        self.properties = properties;
+        [self importAllSettings:settings];
     }
     return self;
 }
@@ -109,26 +132,9 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
 {
     _logFile = TrimToNil(logFile);
 }
-- (NSDictionary *)properties
+- (void)setPort:(NSString *)port
 {
-    return @{
-             PGServerUsernameKey:self.username?:@"",
-             PGServerBinDirectoryKey:self.binDirectory?:@"",
-             PGServerDataDirectoryKey:self.dataDirectory?:@"",
-             PGServerLogFileKey:self.logFile?:@"",
-             PGServerPortKey:self.port?:@"",
-             PGServerStartupKey:ServerStartupDescription(self.startup)
-    };
-}
-- (void)setProperties:(NSDictionary *)properties
-{
-    if (properties == nil) return;
-    self.username = ToString(properties[PGServerUsernameKey]);
-    self.binDirectory = ToString(properties[PGServerBinDirectoryKey]);
-    self.dataDirectory = ToString(properties[PGServerDataDirectoryKey]);
-    self.logFile = ToString(properties[PGServerLogFileKey]);
-    self.port = ToString(properties[PGServerPortKey]);
-    self.startup = ToServerStartup(properties[PGServerStartupKey]);
+    _port = TrimToNil(port);
 }
 - (BOOL)hasDifferentUser
 {
@@ -143,19 +149,37 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
 {
     self.invalidUsername = self.invalidBinDirectory = self.invalidDataDirectory = self.invalidLogFile = self.invalidPort = NO;
 }
-+ (BOOL)containsServerSettings:(NSDictionary *)properties
+
+- (void)importAllSettings:(PGServerSettings *)settings
 {
-    if (!properties[PGServerUsernameKey]) return NO;
-    if (!properties[PGServerBinDirectoryKey]) return NO;
-    if (!properties[PGServerDataDirectoryKey]) return NO;
-    if (!properties[PGServerLogFileKey]) return NO;
-    if (!properties[PGServerPortKey]) return NO;
-    if (!properties[PGServerStartupKey]) return NO;
-    return YES;
+    self.username = settings.username;
+    self.port = settings.port;
+    self.binDirectory = settings.binDirectory;
+    self.dataDirectory = settings.dataDirectory;
+    self.logFile = settings.logFile;
+    self.startup = settings.startup;
+    self.invalidUsername = settings.invalidUsername;
+    self.invalidPort = settings.invalidPort;
+    self.invalidBinDirectory = settings.invalidBinDirectory;
+    self.invalidDataDirectory = settings.invalidDataDirectory;
+    self.invalidLogFile = settings.invalidLogFile;
 }
+
++ (PGServerSettings *)settingsWithSettings:(PGServerSettings *)settings
+{
+    return [[PGServerSettings alloc] initWithSettings:settings];
+}
+
 - (NSString *)description
 {
-    return self.properties.description;
+    return [@{
+             PGServerUsernameKey:self.username?:@"",
+             PGServerBinDirectoryKey:self.binDirectory?:@"",
+             PGServerDataDirectoryKey:self.dataDirectory?:@"",
+             PGServerLogFileKey:self.logFile?:@"",
+             PGServerPortKey:self.port?:@"",
+             PGServerStartupKey:ServerStartupDescription(self.startup)
+    } description];
 }
 
 @end
@@ -165,8 +189,6 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
 #pragma mark - PGServer
 
 @implementation PGServer
-
-@synthesize fullName = _fullName;
 
 #pragma mark Lifecycle
 
@@ -184,9 +206,11 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
 {
     self = [super init];
     if (self) {
+        _uid = [PGUID uid];
         self.name = name;
         self.domain = domain;
         self.settings = settings;
+        self.dirtySettings = [PGServerSettings settingsWithSettings:settings];
         self.dirtySettings = nil;
         self.status = PGServerStatusUnknown;
         self.error = nil;
@@ -197,19 +221,11 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
 - (void)setName:(NSString *)name
 {
     _name = TrimToNil(name) ?: @"";
-    _fullName = nil;
 }
 
 - (void)setDomain:(NSString *)domain
 {
     _domain = TrimToNil(domain) ?: @"";
-    _fullName = nil;
-}
-
-- (NSString *)fullName
-{
-    if (_fullName) return _fullName;
-    return _fullName = !(_domain&&_name) ? @"" : [NSString stringWithFormat:@"%@.%@", _domain?:@"", _name?:@""];
 }
 
 - (void)setSettings:(PGServerSettings *)settings
@@ -217,33 +233,158 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
     _settings = settings ?: [[PGServerSettings alloc] init];
 }
 
+- (void)setDirtySettings:(PGServerSettings *)dirtySettings
+{
+    _dirtySettings = dirtySettings ?: [[PGServerSettings alloc] init];
+}
+
+- (NSDictionary *)properties
+{
+    PGServerSettings *settings = self.settings;
+    return @{
+             PGServerUsernameKey:settings.username?:@"",
+             PGServerBinDirectoryKey:settings.binDirectory?:@"",
+             PGServerDataDirectoryKey:settings.dataDirectory?:@"",
+             PGServerLogFileKey:settings.logFile?:@"",
+             PGServerPortKey:settings.port?:@"",
+             PGServerStartupKey:ServerStartupDescription(settings.startup)
+     };
+}
+- (void)setProperties:(NSDictionary *)properties
+{
+    if (properties == nil) return;
+    if (properties[PGServerNameKey]) self.name = ToString(properties[PGServerNameKey]);
+    if (properties[PGServerDomainKey]) self.domain = ToString(properties[PGServerDomainKey]);
+    if (properties[PGServerUsernameKey]) self.settings.username = ToString(properties[PGServerUsernameKey]);
+    if (properties[PGServerBinDirectoryKey]) self.settings.binDirectory = ToString(properties[PGServerBinDirectoryKey]);
+    if (properties[PGServerDataDirectoryKey]) self.settings.dataDirectory = ToString(properties[PGServerDataDirectoryKey]);
+    if (properties[PGServerLogFileKey]) self.settings.logFile = ToString(properties[PGServerLogFileKey]);
+    if (properties[PGServerPortKey]) self.settings.port = ToString(properties[PGServerPortKey]);
+    if (properties[PGServerStartupKey]) self.settings.startup = ToServerStartup(properties[PGServerStartupKey]);
+}
+
 - (BOOL)canStartAtLogin
 {
     return !self.settings.hasDifferentUser;
 }
 
-- (BOOL)needsAuthorization
+- (BOOL)daemonInRootContext
 {
-    if (self.settings.hasDifferentUser) return YES;
-    if (self.settings.startup == PGServerStartupAtBoot) return YES;
-    return NO;
+    // Internal server
+    if (!self.external) {
+        if (self.settings.hasDifferentUser) return YES;
+        if (self.settings.startup == PGServerStartupAtBoot) return YES;
+        return NO;
+        
+    // External server
+    } else {
+        return self.daemonAllowedContext == PGServerDaemonContextRootOnly;
+    }
 }
 
-- (BOOL)logExists
+- (NSString *)daemonFileBoot
 {
-    if (!NonBlank(self.log)) return NO;
+    return [NSString stringWithFormat:@"%@/%@.plist", PGLaunchdDaemonFileBootDir, self.daemonName];
+}
+- (NSString *)daemonFileGlobal
+{
+    return [NSString stringWithFormat:@"%@/%@.plist", PGLaunchdDaemonFileLoginGlobalDir, self.daemonName];
+}
+- (NSString *)daemonFileUser
+{
+    return [NSString stringWithFormat:@"%@/%@.plist", PGLaunchdDaemonFileLoginUserDir, self.daemonName];
+}
+- (NSString *)daemonFile
+{
+    // Internal
+    if (!self.external) {
+        return self.settings.startup == PGServerStartupAtBoot ?
+            self.daemonFileBoot :
+            self.daemonFileUser;
     
-    BOOL isDirectory = NO;
-    return [[NSFileManager defaultManager] fileExistsAtPath:self.log isDirectory:&isDirectory] && !isDirectory;
+    // External
+    } else {
+        if (self.daemonInRootContext) {
+            return FileExists(self.daemonFileBoot) ?
+                self.daemonFileBoot :
+                self.daemonFileGlobal;
+        } else {
+            return self.daemonFileUser;
+        }
+        
+    }
+}
+
+- (BOOL)daemonFileExists
+{
+    return FileExists(self.daemonFile);
+}
+
+- (NSString *)daemonLog
+{
+    NSString *logDir = self.daemonInRootContext ? PGLaunchdDaemonLogRootDir : PGLaunchdDaemonLogUserDir;
+    return [NSString stringWithFormat:@"%@/%@.log", logDir, self.daemonName];
+}
+
+- (BOOL)daemonLogExists
+{
+    return FileExists(self.daemonLog);
+}
+
+- (BOOL)editable
+{
+    return !self.external;
+}
+
+- (BOOL)actionable
+{
+    if (!self.external) return YES;
+    
+    switch (self.status) {
+        case PGServerStarted:  return YES;
+        case PGServerRetrying: return YES;
+        case PGServerStopped:  return self.daemonFileExists;
+        default:               return NO;
+    }
+}
+
+- (BOOL)saveable
+{
+    return !self.external;
 }
 
 - (NSString *)description
 {
-    return [NSString stringWithFormat:@"%@: %@\n"
-                                "Log:    %@\n"
-                                "Exists: %@\n"
-                                "Root:   %@",
-            self.name, self.settings.description, [self.log stringByAbbreviatingWithTildeInPath], self.logExists?@"YES":@"NO", self.needsAuthorization?@"YES":@"NO"];
+    return [NSString stringWithFormat:@""
+            "Name:         %@\n"
+            "Domain:       %@\n"
+            "Daemon Name:  %@\n"
+            "Daemon Log:   %@\n"
+            "Daemon Log?:  %@\n"
+            "Daemon File:  %@\n"
+            "Daemon File?: %@\n"
+            "Root:         %@\n"
+            "%@",
+            self.name,
+            self.domain,
+            self.daemonName,
+            [self.daemonLog stringByAbbreviatingWithTildeInPath],
+            self.daemonLogExists?@"YES":@"NO",
+            self.daemonFile,
+            self.daemonFileExists?@"YES":@"NO",
+            self.daemonInRootContext?@"YES":@"NO",
+            self.settings.description];
+}
+
++ (BOOL)hasAllKeys:(NSDictionary *)properties
+{
+    if (!properties[PGServerUsernameKey]) return NO;
+    if (!properties[PGServerBinDirectoryKey]) return NO;
+    if (!properties[PGServerDataDirectoryKey]) return NO;
+    if (!properties[PGServerLogFileKey]) return NO;
+    if (!properties[PGServerPortKey]) return NO;
+    if (!properties[PGServerStartupKey]) return NO;
+    return YES;
 }
 
 @end

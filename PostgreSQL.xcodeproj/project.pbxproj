@@ -34,6 +34,8 @@
 		20727F891B4C7971002BBCCC /* PGServerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 20727F871B4C7971002BBCCC /* PGServerController.m */; };
 		2086E18F1B57B55800F2B292 /* PGSearchController.h in Headers */ = {isa = PBXBuildFile; fileRef = 2086E18D1B57B55800F2B292 /* PGSearchController.h */; };
 		2086E1901B57B55800F2B292 /* PGSearchController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2086E18E1B57B55800F2B292 /* PGSearchController.m */; };
+		209E77861B60C38300E8AF69 /* PGLaunchd.h in Headers */ = {isa = PBXBuildFile; fileRef = 209E77841B60C38300E8AF69 /* PGLaunchd.h */; };
+		209E77871B60C38300E8AF69 /* PGLaunchd.m in Sources */ = {isa = PBXBuildFile; fileRef = 209E77851B60C38300E8AF69 /* PGLaunchd.m */; };
 		209F8F781B5FBC1B0049AD18 /* protected.png in Resources */ = {isa = PBXBuildFile; fileRef = 209F8F771B5FBC1B0049AD18 /* protected.png */; };
 		20A43B3F1B5FF7F5000E7D8A /* starting.png in Resources */ = {isa = PBXBuildFile; fileRef = 20A43B3D1B5FF7F5000E7D8A /* starting.png */; };
 		20A43B401B5FF7F5000E7D8A /* stopping.png in Resources */ = {isa = PBXBuildFile; fileRef = 20A43B3E1B5FF7F5000E7D8A /* stopping.png */; };
@@ -87,6 +89,8 @@
 		2078AE291B50095C00488526 /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Config.h; sourceTree = "<group>"; };
 		2086E18D1B57B55800F2B292 /* PGSearchController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGSearchController.h; sourceTree = "<group>"; };
 		2086E18E1B57B55800F2B292 /* PGSearchController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGSearchController.m; sourceTree = "<group>"; };
+		209E77841B60C38300E8AF69 /* PGLaunchd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGLaunchd.h; sourceTree = "<group>"; };
+		209E77851B60C38300E8AF69 /* PGLaunchd.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGLaunchd.m; sourceTree = "<group>"; };
 		209F8F771B5FBC1B0049AD18 /* protected.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = protected.png; sourceTree = "<group>"; };
 		20A43B3D1B5FF7F5000E7D8A /* starting.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = starting.png; sourceTree = "<group>"; };
 		20A43B3E1B5FF7F5000E7D8A /* stopping.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = stopping.png; sourceTree = "<group>"; };
@@ -147,6 +151,8 @@
 				201A6A7C1B5C2F3F005B691B /* Debug.h */,
 				20E969881B51AEB900013B0E /* PGData.h */,
 				20E969891B51AEB900013B0E /* PGData.m */,
+				209E77841B60C38300E8AF69 /* PGLaunchd.h */,
+				209E77851B60C38300E8AF69 /* PGLaunchd.m */,
 				20B628C51B4973BE003F8557 /* PGProcess.h */,
 				20B628C61B4973BE003F8557 /* PGProcess.m */,
 			);
@@ -260,6 +266,7 @@
 				20079E771B48061100521807 /* PGPrefsPane.h in Headers */,
 				20079E751B48061100521807 /* PGPrefsController.h in Headers */,
 				20079E791B48061100521807 /* Common.h in Headers */,
+				209E77861B60C38300E8AF69 /* PGLaunchd.h in Headers */,
 				20E969821B51574600013B0E /* PGServerDataStore.h in Headers */,
 				2086E18F1B57B55800F2B292 /* PGSearchController.h in Headers */,
 				20E9698A1B51AEB900013B0E /* PGData.h in Headers */,
@@ -357,6 +364,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				20727F891B4C7971002BBCCC /* PGServerController.m in Sources */,
+				209E77871B60C38300E8AF69 /* PGLaunchd.m in Sources */,
 				20B628C21B495154003F8557 /* PGServer.m in Sources */,
 				2086E1901B57B55800F2B292 /* PGSearchController.m in Sources */,
 				20079E8B1B4807E200521807 /* PGPrefsRunAsAdmin.applescript in Sources */,

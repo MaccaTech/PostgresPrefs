@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "PGServerController.h"
 #import "PGServer.h"
 #import "PGData.h"
 
@@ -16,6 +17,8 @@
  * Loads and saves a list of servers using CFPreferences.
  */
 @interface PGServerDataStore : NSObject
+
+@property (nonatomic, weak) PGServerController *serverController;
 
 /// List of saved servers, ordered by name
 @property (nonatomic, strong, readonly) NSArray *servers;
@@ -43,14 +46,7 @@
 - (PGServer *)addServer;
 
 /**
- * Rename server
- *
- * @return YES if succeeded
- */
-- (BOOL)setName:(NSString *)name forServer:(PGServer *)server;
-
-/**
- * Save dirty server settings to server
+ * Save server to data store
  *
  * @return YES if succeeded
  */

@@ -17,38 +17,57 @@
  * The rights required to run an authorized command.
  */
 + (AuthorizationRights *)authorizationRights;
-/**
- * Runs command in shell without authorization. Returns output.
- */
-+ (NSString*)runShellCommand:(NSString *)command withArgs:(NSArray *)command;
-/**
- * Runs command in shell with authorization (if not NULL). Returns output.
- */
-+ (NSString*)runShellCommand:(NSString *)command withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus;
-/**
- * Runs command in shell without authorization. Does not wait for output.
- */
-+ (void)startShellCommand:(NSString *)command withArgs:(NSArray *)args;
-/**
- * Runs command in shell with authorization (if not NULL). Does not wait for output.
- */
-+ (void)startShellCommand:(NSString *)command withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus;
 
 /**
- * Runs executable without authorization, using specified args. Does not wait for output.
+ * Starts command in shell without authorization. Does not wait for output.
+ *
+ * @return YES if started without throwing an exception
  */
-+ (void)startExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args;
++ (BOOL)startShellCommand:(NSString *)command error:(NSString **)error;
 /**
- * Runs executable without authorization with specified args. Returns output.
+ * Runs command in shell without authorization. Returns output.
+ *
+ * @return output of running command, or nil if exception was thrown
  */
-+ (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args;
++ (NSString *)runShellCommand:(NSString *)command error:(NSString **)error;
+
 /**
- * Runs executable with authorization (if not NULL) with specified args. Does not wait for output.
+ * Starts command in shell with authorization (if not nil). Does not wait for output.
+ *
+ * @return YES if started without throwing an exception or authorization error
  */
-+ (void)startExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus;
++ (BOOL)startShellCommand:(NSString *)command authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error;
 /**
- * Runs executable with authorization (if not NULL) with specified args. Returns output.
+ * Runs command in shell with authorization (if not nil). Returns output.
+ *
+ * @return YES if ran without throwing an exception or authorization error
  */
-+ (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus;
++ (BOOL)runShellCommand:(NSString *)command authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString **)output error:(NSString **)error;
+
+/**
+ * Starts executable without authorization. Does not wait for output.
+ *
+ * @return YES if started without throwing an exception or authorization error
+ */
++ (BOOL)startExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args error:(NSString **)error;
+/**
+ * Runs executable without authorization. Returns output.
+ *
+ * @return output of running executable, or nil if exception was thrown
+ */
++ (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args error:(NSString **)error;
+
+/**
+ * Starts executable with authorization (if not nil). Does not wait for output.
+ *
+ * @return YES if started without throwing an exception or authorization error
+ */
++ (BOOL)startExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error;
+/**
+ * Runs executable with authorization (if not nil) with specified args. Returns output.
+ *
+ * @return YES if ran without throwing an exception or authorization error
+ */
++ (BOOL)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString **)output error:(NSString **)error;
 
 @end

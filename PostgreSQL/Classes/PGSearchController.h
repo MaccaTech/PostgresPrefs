@@ -7,7 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "PGServerController.h"
 #import "PGServer.h"
+#import "PGLaunchd.h"
 #import "PGProcess.h"
 
 @class PGSearchController;
@@ -34,12 +36,16 @@
 @property (nonatomic, strong, readonly) NSArray *servers;
 
 @property (nonatomic, weak) id<PGSearchDelegate> delegate;
-
-- (id)initWithDelegate:(id<PGSearchDelegate>)delegate;
+@property (nonatomic, weak) PGServerController *serverController;
 
 /**
- * Runs server search in background
+ * Searches for installed servers in background. Results returned to delegate.
  */
-- (void)startFindServers;
+- (void)findInstalledServers;
+
+/**
+ * Searches for loaded servers in background. Results returned in callback.
+ */
+- (void)findLoadedServers:(void(^)(NSArray *servers))found authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus;
 
 @end

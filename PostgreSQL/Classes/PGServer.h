@@ -14,6 +14,7 @@
 extern NSString *const PGServerDefaultName;
 
 extern NSString *const PGServerNameKey;
+extern NSString *const PGServerDomainKey;
 extern NSString *const PGServerUsernameKey;
 extern NSString *const PGServerBinDirectoryKey;
 extern NSString *const PGServerDataDirectoryKey;
@@ -47,6 +48,12 @@ typedef NS_ENUM(NSInteger, PGServerStatus) {
     PGServerStopped,
     PGServerRetrying,
     PGServerUpdating
+};
+
+typedef NS_ENUM(NSInteger, PGServerDaemonContext) {
+    PGServerDaemonContextBoth = 0,
+    PGServerDaemonContextRootOnly,
+    PGServerDaemonContextUserOnly
 };
 
 CG_INLINE NSString *
@@ -91,8 +98,6 @@ ServerStartupDescription(PGServerStartup value)
 
 
 
-@class PGServer;
-
 #pragma mark - PGServerSettings
 
 /**
@@ -106,16 +111,16 @@ ServerStartupDescription(PGServerStartup value)
 @property (nonatomic, strong) NSString *logFile;
 @property (nonatomic, strong) NSString *port;
 @property (nonatomic) PGServerStartup startup;
-@property (nonatomic, strong) NSDictionary *properties;
 
 - (id)initWithUsername:(NSString *)username binDirectory:(NSString *)binDirectory dataDirectory:(NSString *)dataDirectory logFile:(NSString *)logFile port:(NSString *)port startup:(PGServerStartup)startup;
 - (id)initWithSettings:(PGServerSettings *)settings;
-- (id)initWithProperties:(NSDictionary *)properties;
+
 - (BOOL)isEqualToSettings:(PGServerSettings *)settings;
 
 /// If YES, the username is different to the current user
 - (BOOL)hasDifferentUser;
 
+// Validity
 - (BOOL)valid;
 - (void)setValid;
 @property (nonatomic) BOOL invalidUsername;
@@ -125,9 +130,14 @@ ServerStartupDescription(PGServerStartup value)
 @property (nonatomic) BOOL invalidPort;
 
 /**
- * @return YES if properties contains all PGServerSettings keys
+ * Overrides all values from other settings.
  */
-+ (BOOL)containsServerSettings:(NSDictionary *)properties;
+- (void)importAllSettings:(PGServerSettings *)settings;
+
+/**
+ * Returns a new settings initialised with the specified settings.
+ */
++ (PGServerSettings *)settingsWithSettings:(PGServerSettings *)settings;
 
 @end
 
@@ -145,26 +155,26 @@ ServerStartupDescription(PGServerStartup value)
  */
 @interface PGServer : NSObject
 
+/// A unique runtime ID for the server. Not preserved between application launches.
+@property (nonatomic, strong, readonly) NSString *uid;
+
 /// The name of the server must be unique, as it will be used as part of the name of the server's configuration file
 @property (nonatomic, strong) NSString *name;
 
 /// The domain of the server, e.g. org.postgresql.preferences
 @property (nonatomic, strong) NSString *domain;
 
-/// The full name of the server, equal to ${domain}.${name}
-@property (nonatomic, strong, readonly) NSString *fullName;
+/// This server's active settings - always non-nil
+@property (nonatomic, strong) PGServerSettings *settings;
 
-/// This server's current settings, which may have been changed in the GUI but not yet saved
+/// This server's dirty settings - always non-nil
 @property (nonatomic, strong) PGServerSettings *dirtySettings;
 
-/// This server's active settings (i.e. those that have been saved somewhere)
-@property (nonatomic, strong) PGServerSettings *settings;
+/// If YES, this server's dirty settings are different to the active settings
+@property (nonatomic) BOOL dirty;
 
 /// If NO, the server cannot be started at login, only at boot. This is the case when the username is different to the current user.
 @property (nonatomic, readonly) BOOL canStartAtLogin;
-
-/// If YES, then the server is loaded into the root launchd context, so "check status" commands must be run as root. A server needs authorization if: (1) it has a different username or (2) it is run on boot
-@property (nonatomic, readonly) BOOL needsAuthorization;
 
 /// The current status of the server
 @property (nonatomic) PGServerStatus status;
@@ -175,13 +185,62 @@ ServerStartupDescription(PGServerStartup value)
 /// Any error that has been thrown when carrying out a server action
 @property (nonatomic, strong) NSString *error;
 
-/// The server's log file
-@property (nonatomic, strong) NSString *log;
+/// For external servers, the name without the domain. For internal servers, same as name.
+@property (nonatomic, strong) NSString *shortName;
 
-/// If YES, the log file exists
-@property (nonatomic, readonly) BOOL logExists;
+/// The fully-qualified name of the server
+@property (nonatomic, strong) NSString *daemonName;
 
+/// Only useful for external servers. Internal servers by default can use both contexts (root and user). But external servers are restricted to the context they were detected in.
+@property (nonatomic) PGServerDaemonContext daemonAllowedContext;
+
+/// If YES, then the server is loaded into the root launchd context, so "check status" commands must be run as root. A server needs authorization if: (1) it has a different username or (2) it is run on boot
+@property (nonatomic, readonly) BOOL daemonInRootContext;
+
+/// The daemon .plist file used to start the server using launchd
+@property (nonatomic, strong, readonly) NSString *daemonFile;
+
+/// If YES, the daemon file exists
+@property (nonatomic, readonly) BOOL daemonFileExists;
+
+/// The daemon's log file for stdout & stderr
+@property (nonatomic, strong, readonly) NSString *daemonLog;
+
+/// If YES, the daemon log file exists
+@property (nonatomic, readonly) BOOL daemonLogExists;
+
+/// If NO, then this server is read-only - i.e. created outside of this tool
+@property (nonatomic, readonly) BOOL editable;
+
+/// If NO, then this server cannot be started/stopped
+@property (nonatomic, readonly) BOOL actionable;
+
+/// If NO, then this server should not be saved (because it's external)
+@property (nonatomic, readonly) BOOL saveable;
+
+/// If YES, server's daemon file is owned by another piece of software
+@property (nonatomic) BOOL external;
+
+/// Used for importing and exporting server properties in a standard dictionary format.
+@property (nonatomic, strong) NSDictionary *properties;
+
+/**
+ * Used when user clicks Add New Server.
+ *
+ * Just creates a server with all blank settings.
+ */
 - (id)initWithName:(NSString *)name domain:(NSString *)domain;
+
+/**
+ * Used when creating a server from search results.
+ *
+ * The settings are manually constructed according to the type of search results.
+ */
 - (id)initWithName:(NSString *)name domain:(NSString *)domain settings:(PGServerSettings *)settings;
+
+/**
+ * @return YES if properties contains all required keys
+ */
++ (BOOL)hasAllKeys:(NSDictionary *)properties;
 
 @end
