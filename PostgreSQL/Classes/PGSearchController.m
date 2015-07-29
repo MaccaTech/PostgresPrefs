@@ -149,7 +149,7 @@
         [self addLoadedServersForRootUser:YES authorization:authorization authStatus:authStatus toServers:servers];
         [self addLoadedServersForRootUser:NO authorization:authorization authStatus:authStatus toServers:servers];
         
-        if (servers.count > 0 && found) found(servers);
+        if (found) found(servers);
     });
 }
 

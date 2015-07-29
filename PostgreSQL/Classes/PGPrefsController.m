@@ -571,8 +571,28 @@ ObjectBefore(id object, NSArray *array)
     // Ensure not stopped
     if (key != self.serversMonitorKey) return;
     
+    // For scheduling next cycle
+    void(^scheduleNextCycle)() = ^{
+        
+        // Ensure not stopped
+        if (key != self.serversMonitorKey) return;
+        
+        // Global disable auto-monitoring
+        if (!PGPrefsMonitorServersEnabled) return;
+        
+        // Schedule re-run
+        BackgroundThreadAfterDelay(^{ [self pollLaunchd:key]; }, PGServersPollTime);
+    };
+    
+    // Find servers in launchd
     AuthorizationRef authorization = self.authorization;
     [self.searchController findLoadedServers:^(NSArray *loadedServers) {
+        
+        // None found
+        if (loadedServers.count == 0) {
+            scheduleNextCycle();
+            return;
+        }
         
         // Get existing servers by name
         NSArray *existingServers = self.dataStore.servers;
@@ -607,13 +627,10 @@ ObjectBefore(id object, NSArray *array)
             }
         });
      
+        // Repeat
+        scheduleNextCycle();
+        
     } authorization:authorization authStatus:nil];
-    
-    // Global disable auto-monitoring
-    if (!PGPrefsMonitorServersEnabled) return;
-    
-    // Schedule re-run
-    BackgroundThreadAfterDelay(^{ [self pollLaunchd:key]; }, PGServersPollTime);
 }
 
 @end
