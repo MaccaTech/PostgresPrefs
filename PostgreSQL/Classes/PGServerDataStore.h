@@ -46,6 +46,15 @@
 - (PGServer *)addServer;
 
 /**
+ * Create a new server with specified name and add to saved server list.
+ *
+ * Note if another server exists with the same name, then (1), (2), (3), etc. is added to the name.
+ *
+ * @return a new server with the specified name and empty settings
+ */
+- (PGServer *)addServerWithName:(NSString *)name;
+
+/**
  * Save server to data store
  *
  * @return YES if succeeded

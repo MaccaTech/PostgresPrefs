@@ -291,8 +291,7 @@
     
     NSMutableArray *result = [NSMutableArray arrayWithCapacity:files.count];
     for (NSString *file in files) {
-        NSDictionary *daemon = [[NSDictionary alloc] initWithContentsOfFile:file];
-        PGServer *server = [self.serverController serverFromDaemon:daemon file:file];
+        PGServer *server = [self.serverController serverFromDaemonFile:file];
         
         if (server) [result addObject:server];
     }

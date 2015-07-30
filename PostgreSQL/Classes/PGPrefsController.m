@@ -191,17 +191,21 @@ ObjectBefore(id object, NSArray *array)
 {
     if (!self.server) return;
     
-    AuthorizationRef authorization = [self authorize];
-    if (!authorization) return;
+    // Internal
+    if (!self.server.external || [self.server.domain isEqualToString:PGPrefsAppIDVersion1]) {
+        [self deleteServerAndDeleteFile:YES];
     
-    // Run script
-    PGServer *server = self.server;
-    BackgroundThread(^{
-        [self.serverController runAction:PGServerDelete server:server authorization:authorization succeeded:^{
+    // External
+    } else {
+        // Daemon file exists
+        if (self.server.daemonFileExists) {
+            [self.viewController prefsController:self willConfirmDeleteServer:self.server];
             
-            MainThread(^{ [self removeServer:server]; });
-        } failed:nil];
-    });
+        // Daemon file not found
+        } else {
+            [self deleteServerAndDeleteFile:NO];
+        }
+    }
 }
 - (BOOL)userCanRenameServer:(NSString *)name
 {
@@ -252,6 +256,60 @@ ObjectBefore(id object, NSArray *array)
 - (void)userDidCancelRenameServer
 {
     // Do nothing
+}
+- (void)userDidDuplicateServer
+{
+    if (!self.server) return;
+    
+    // Create the server and copy over the settings
+    PGServer *server = [self.dataStore addServerWithName:self.server.shortName];
+    if (!server) return;
+    [self.serverController setSettings:self.server.settings forServer:server];
+    
+    // Get the new servers list after add
+    self.servers = self.dataStore.servers;
+    
+    // Select the new server
+    self.server = server;
+    
+    // Start monitoring
+    [self startMonitoringServer:server];
+    
+    // Update view
+    [self.viewController prefsController:self didChangeServers:self.servers];
+    [self.viewController prefsController:self didChangeSelectedServer:self.server];
+}
+- (void)userDidRefreshServers
+{
+    [self startMonitoringServers];
+}
+
+
+
+#pragma mark Delete Confirmation
+
+- (void)userDidDeleteServerShowInFinder
+{
+    if (!self.server.daemonFileExists) return;
+    
+    NSString *source = [NSString stringWithFormat:@""
+                        "tell application \"Finder\"\n"
+                        "reveal POSIX file \"%@\"\n"
+                        "activate\n"
+                        "end tell", [self.server.daemonFile stringByExpandingTildeInPath]];
+    [[[NSAppleScript alloc] initWithSource:source] executeAndReturnError:nil];
+}
+- (void)userDidCancelDeleteServer
+{
+    // Do nothing
+}
+- (void)userDidDeleteServerKeepFile
+{
+    [self deleteServerAndDeleteFile:NO];
+}
+- (void)userDidDeleteServerDeleteFile
+{
+    [self deleteServerAndDeleteFile:YES];
 }
 
 
@@ -489,6 +547,23 @@ ObjectBefore(id object, NSArray *array)
     });
 }
 
+- (void)deleteServerAndDeleteFile:(BOOL)delete
+{
+    AuthorizationRef authorization = [self authorize];
+    if (!authorization) return;
+    
+    PGServerAction action = delete ? PGServerDelete : PGServerStop;
+    
+    // Run script
+    PGServer *server = self.server;
+    BackgroundThread(^{
+        [self.serverController runAction:action server:server authorization:authorization succeeded:^{
+            
+            MainThread(^{ [self removeServer:server]; });
+        } failed:nil];
+    });
+}
+
 - (void)removeServer:(PGServer *)server
 {
     if (![self.servers containsObject:server]) return;
@@ -610,6 +685,17 @@ ObjectBefore(id object, NSArray *array)
         if (toAdd.count == 0) {
             DLog(@"No loaded servers to add!");
             return;
+        }
+        
+        // If the server's daemon file exists, get more information from that
+        for (PGServer *serverFromLaunchd in toAdd) {
+            if (!serverFromLaunchd.daemonFileExists) continue;
+            
+            PGServer *serverFromFile = [self.serverController serverFromDaemonFile:serverFromLaunchd.daemonFile ];
+            if (![serverFromFile.daemonName isEqualToString:serverFromLaunchd.daemonName]) continue;
+            
+            // Replace settings with file settings (because they're always more complete!)
+            [self.serverController setSettings:serverFromFile.settings forServer:serverFromLaunchd];
         }
         
         // Add servers

@@ -93,7 +93,13 @@
 
 - (PGServer *)addServer
 {
-    NSString *name = [self unusedServerNameWithPrefix:PGServerDefaultName];
+    return [self addServerWithName:PGServerDefaultName];
+}
+
+- (PGServer *)addServerWithName:(NSString *)prefix
+{
+    if (!NonBlank(prefix)) prefix = PGServerDefaultName;
+    NSString *name = [self unusedServerNameWithPrefix:prefix];
     PGServer *server = [self.serverController serverFromSettings:nil name:name domain:PGPrefsAppID];
     if (!server) return nil;
     
@@ -195,6 +201,8 @@
 
 - (NSString *)unusedServerNameWithPrefix:(NSString *)prefix
 {
+    if (!NonBlank(prefix)) return prefix;
+    
     // First, if no other servers exist with this prefix, then use it as-is
     if (!self.serversCache[prefix]) return prefix;
     

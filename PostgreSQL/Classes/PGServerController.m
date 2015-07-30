@@ -224,10 +224,12 @@ EqualUsernames(NSString *user1, NSString *user2)
     return [self serverFromDaemon:daemon forRootUser:root];
 }
 
-- (PGServer *)serverFromDaemon:(NSDictionary *)daemon file:(NSString *)file
+- (PGServer *)serverFromDaemonFile:(NSString *)file
 {
-    PGServer *result = [self serverFromDaemon:daemon];
+    if (!FileExists(file)) return nil;
     
+    NSDictionary *daemon = [[NSDictionary alloc] initWithContentsOfFile:[file stringByExpandingTildeInPath]];
+    PGServer *result = [self serverFromDaemon:daemon];
     return result;
 }
 
@@ -249,7 +251,7 @@ EqualUsernames(NSString *user1, NSString *user2)
 {
     if (daemon.count == 0) return nil;
     
-    DLog(@"Launch Daemon: %@", daemon);
+    DLog(@"Daemon: %@", daemon);
     
     NSString *daemonName = TrimToNil(ToString(daemon[@"Label"]));
     NSString *daemonUsername = TrimToNil(ToString(daemon[@"UserName"]));
@@ -643,21 +645,21 @@ EqualUsernames(NSString *user1, NSString *user2)
             [self setStatus:loaded.status error:nil forServer:server];
             
             // Validate Bin Directory
-            if (!EqualPaths(loaded.settings.binDirectory, server.settings.binDirectory)) {
+            if (NonBlank(loaded.settings.binDirectory) && !EqualPaths(loaded.settings.binDirectory, server.settings.binDirectory)) {
                 server.error = @"Running with different bin directory!";
             
             // Validate Data Directory
-            } else if (!EqualPaths(loaded.settings.dataDirectory, server.settings.dataDirectory)) {
+            } else if (NonBlank(loaded.settings.dataDirectory) && !EqualPaths(loaded.settings.dataDirectory, server.settings.dataDirectory)) {
                 server.error = @"Running with different data directory!";
             
             // Validate Port
-            } else if (loaded.settings.port != server.settings.port && ![loaded.settings.port isEqualToString:server.settings.port]) {
+            } else if (NonBlank(loaded.settings.port) && loaded.settings.port != server.settings.port && ![loaded.settings.port isEqualToString:server.settings.port]) {
                 if (NonBlank(loaded.settings.port)) server.error = [NSString stringWithFormat:@"Running on port %@!", loaded.settings.port];
                 else
                     server.error = @"Running on a different port!";
             
             // Validate Username
-            } else if (!EqualUsernames(loaded.settings.username, server.settings.username)) {
+            } else if (NonBlank(loaded.settings.username) && !EqualUsernames(loaded.settings.username, server.settings.username)) {
                 if (NonBlank(loaded.settings.username)) server.error = [NSString stringWithFormat:@"Running as user %@", loaded.settings.username];
                 else server.error = @"Running as a different user!";
             }
@@ -754,8 +756,6 @@ EqualUsernames(NSString *user1, NSString *user2)
         nameResult = nil;
     else
         nameResult = [fullName substringWithRange:[result rangeAtIndex:3]];
-    
-    DLog(@"%@ -> [user:%@] [domain:%@] [name:%@]", fullName, userResult, domainResult, nameResult);
     
     if (user) *user = userResult;
     if (domain) *domain = domainResult;

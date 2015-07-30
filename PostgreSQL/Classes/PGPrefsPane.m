@@ -8,6 +8,14 @@
 
 #import "PGPrefsPane.h"
 
+#pragma mark - Constants
+
+NSInteger const PGDeleteServerCancelButton = 1234;
+NSInteger const PGDeleteServerKeepFileButton = 2345;
+NSInteger const PGDeleteServerDeleteFileButton = 3456;
+
+
+
 #pragma mark - Interfaces
 
 @interface PGPrefsPane()
@@ -44,6 +52,7 @@
 - (void)showServerInServersTable:(PGServer *)server;
 - (void)showServerRenameWindow:(PGServer *)server;
 - (void)showServerSettingsWindow:(PGServer *)server;
+- (void)showServerDeleteWindow:(PGServer *)server;
 
 @end
 
@@ -90,9 +99,23 @@
 
 
 
+#pragma mark - PGPrefsDeleteWindow
+
+@implementation PGPrefsDeleteWindow
+@end
+
+
+
 #pragma mark - PGPrefsServerSettingsWindow
 
 @implementation PGPrefsServerSettingsWindow
+@end
+
+
+
+#pragma mark - PGPrefsServersHeaderCell
+
+@implementation PGPrefsServersHeaderCell
 @end
 
 
@@ -396,6 +419,16 @@
     
     [NSApp endSheet:self.renameServerWindow returnCode:NSOKButton];
 }
+
+- (IBAction)duplicateServerClicked:(id)sender
+{
+    [self.controller userDidDuplicateServer];
+}
+
+- (IBAction)refreshServersClicked:(id)sender
+{
+    [self.controller userDidRefreshServers];
+}
      
 - (void)sheetDidEnd:(NSWindow *)sheet returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
 {
@@ -410,6 +443,23 @@
         // Apply
         } else {
             [self.controller userDidRenameServer:self.renameServerWindow.nameField.stringValue];
+        }
+
+    // Delete
+    } else if (sheet == self.deleteServerWindow) {
+        [self.deleteServerWindow orderOut:self];
+        
+        // Cancelled
+        if (returnCode == PGDeleteServerCancelButton) {
+            [self.controller userDidCancelDeleteServer];
+        
+        // Keep File
+        } else if (returnCode == PGDeleteServerKeepFileButton) {
+            [self.controller userDidDeleteServerKeepFile];
+            
+        // Delete File
+        } else {
+            [self.controller userDidDeleteServerDeleteFile];
         }
         
     // Settings
@@ -474,13 +524,37 @@
 
 
 
+#pragma mark Delete Confirmation
+
+- (IBAction)cancelDeleteServerClicked:(id)sender
+{
+    [NSApp endSheet:self.deleteServerWindow returnCode:PGDeleteServerCancelButton];
+}
+
+- (IBAction)deleteServerDeleteFileClicked:(id)sender
+{
+    [NSApp endSheet:self.deleteServerWindow returnCode:PGDeleteServerDeleteFileButton];
+}
+
+- (IBAction)deleteServerKeepFileClicked:(id)sender
+{
+    [NSApp endSheet:self.deleteServerWindow returnCode:PGDeleteServerKeepFileButton];
+}
+
+- (IBAction)deleteServerShowInFinderClicked:(id)sender
+{
+    [self.controller userDidDeleteServerShowInFinder];
+}
+
+
+
 #pragma mark NSTableViewDelegate
 
 - (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)row
 {
     // Servers
     if (tableView == self.serversTableView) {
-        return row == 0 ? 16 : 36;
+        return row == 0 ? 17 : 36;
         
     // Search servers
     } else if (tableView == self.serverSettingsWindow.serversTableView) {
@@ -513,8 +587,9 @@
     if (tableView == self.serversTableView) {
         // Header
         if (row == 0) {
-            NSTableCellView *result = [tableView makeViewWithIdentifier:@"HeaderCell" owner:self];
+            PGPrefsServersHeaderCell *result = [tableView makeViewWithIdentifier:@"HeaderCell" owner:self];
             result.textField.stringValue = @"DATABASE SERVERS";
+            result.refreshButton.hidden = !PGPrefsRefreshServersEnabled;
             return result;
             
         // Server
@@ -555,7 +630,8 @@
 - (void)configureServersCell:(PGPrefsServersCell *)cell forServer:(PGServer *)server
 {
     // Name
-    cell.textField.stringValue = server.shortName?:@"Name Not Found";
+    cell.textField.stringValue = server.shortName ?: @"Name Not Found";
+    cell.externalIcon.hidden = !server.external;
     
     // Icon & Status
     NSString *statusText = nil;
@@ -689,6 +765,14 @@
     self.serverSettingsWindow.serversTableView.sortDescriptors = sortDescriptors;
     
     [self.serverSettingsWindow.serversTableView reloadData];
+    
+    self.updatingDisplay = NO;
+}
+- (void)prefsController:(PGPrefsController *)controller willConfirmDeleteServer:(PGServer *)server
+{
+    self.updatingDisplay = YES;
+    
+    [self showServerDeleteWindow:server];
     
     self.updatingDisplay = NO;
 }
@@ -961,6 +1045,15 @@
     
     [NSApp beginSheet:self.renameServerWindow modalForWindow:self.mainView.window modalDelegate:self didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:nil];
     [self.renameServerWindow orderFront:self];
+}
+
+- (void)showServerDeleteWindow:(PGServer *)server
+{
+    self.deleteServerWindow.daemonFile.stringValue = [server.daemonFile lastPathComponent];
+    self.deleteServerWindow.daemonDir.stringValue = [NSString stringWithFormat:@"In: %@", [server.daemonFile stringByDeletingLastPathComponent]];
+    
+    [NSApp beginSheet:self.deleteServerWindow modalForWindow:self.mainView.window modalDelegate:self didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    [self.deleteServerWindow orderFront:self];
 }
 
 @end

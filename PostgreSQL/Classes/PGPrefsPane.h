@@ -45,6 +45,18 @@
 
 
 
+#pragma mark - PGPrefsDeleteWindow
+
+/**
+ * A popup window with buttons for confirming deletion of external server.
+ */
+@interface PGPrefsDeleteWindow : NSWindow
+@property (weak) IBOutlet NSTextField *daemonFile;
+@property (weak) IBOutlet NSTextField *daemonDir;
+@end
+
+
+
 #pragma mark - PGPrefsServerSettingsWindow
 
 /**
@@ -65,6 +77,17 @@
 
 
 
+#pragma mark - PGPrefsServersHeaderCell
+
+/**
+ * The custom header cell used in the Postgre Database Servers table on the preference pane.
+ */
+@interface PGPrefsServersHeaderCell : NSTableCellView
+@property (nonatomic, weak) IBOutlet NSButton *refreshButton;
+@end
+
+
+
 #pragma mark - PGPrefsServersCell
 
 /**
@@ -72,6 +95,7 @@
  */
 @interface PGPrefsServersCell : NSTableCellView
 @property (nonatomic, weak) IBOutlet NSTextField *statusTextField;
+@property (nonatomic, weak) IBOutlet NSImageView *externalIcon;
 @end
 
 
@@ -139,7 +163,15 @@
 - (IBAction)renameServerClicked:(id)sender;
 - (IBAction)cancelRenameServerClicked:(id)sender;
 - (IBAction)okRenameServerClicked:(id)sender;
+- (IBAction)duplicateServerClicked:(id)sender;
+- (IBAction)refreshServersClicked:(id)sender;
 
+// Delete Confirmation
+@property (strong) IBOutlet PGPrefsDeleteWindow *deleteServerWindow;
+- (IBAction)cancelDeleteServerClicked:(id)sender;
+- (IBAction)deleteServerDeleteFileClicked:(id)sender;
+- (IBAction)deleteServerKeepFileClicked:(id)sender;
+- (IBAction)deleteServerShowInFinderClicked:(id)sender;
 
 // Start/Stop
 @property (weak) IBOutlet NSButton *startStopButton;
@@ -171,6 +203,7 @@
 - (void)prefsController:(PGPrefsController *)controller didRevertServerSettings:(PGServer *)server;
 - (void)prefsController:(PGPrefsController *)controller didRevertServerStartup:(PGServer *)server;
 - (void)prefsController:(PGPrefsController *)controller didChangeSearchServers:(NSArray *)servers;
+- (void)prefsController:(PGPrefsController *)controller willConfirmDeleteServer:(PGServer *)server;
 
 @end
 

@@ -11,6 +11,7 @@
 
 // App
 #define PGPrefsAppID @"org.postgresql.preferences"
+#define PGPrefsAppIDVersion1 @"com.hkwebentrepreneurs"
 #define PGServersPollTime 5
 #define PGLaunchdDaemonFileBootDir @"/Library/LaunchDaemons"
 #define PGLaunchdDaemonFileLoginGlobalDir @"/Library/LaunchAgents"
@@ -23,10 +24,12 @@
 #
 #   define LOG_FILE [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Logs/PostgreSQL/org.postgresql.preferences.DEBUG.log"]
 #   define PGPrefsMonitorServersEnabled NO
+#   define PGPrefsRefreshServersEnabled YES
 #
 #else /* !DEBUG */
 #
 #   define PGPrefsMonitorServersEnabled YES
+#   define PGPrefsRefreshServersEnabled NO
 #
 #endif /* DEBUG */
 
@@ -47,7 +50,9 @@
 #define PGPrefsController ComMaccatechPostgrePrefsController
 #define PGPrefsSegmentedControl ComMaccatechPostgrePrefsSegmentedControl
 #define PGPrefsRenameWindow ComMaccatechPostgrePrefsRenameWindow
+#define PGPrefsDeleteWindow ComMaccatechPostgrePrefsDeleteWindow
 #define PGPrefsServerSettingsWindow ComMaccatechPostgrePrefsServerSettingsWindow
+#define PGPrefsServersHeaderCell ComMaccatechPostgrePrefsServersHeaderCell
 #define PGPrefsServersCell ComMaccatechPostgrePrefsServersCell
 #define PGPrefsCenteredTextFieldCell ComMaccatechPostgrePrefsCenteredTextFieldCell
 

@@ -35,6 +35,7 @@
 - (void)prefsController:(PGPrefsController *)controller didRevertServerSettings:(PGServer *)server;
 - (void)prefsController:(PGPrefsController *)controller didRevertServerStartup:(PGServer *)server;
 - (void)prefsController:(PGPrefsController *)controller didChangeSearchServers:(NSArray *)servers;
+- (void)prefsController:(PGPrefsController *)controller willConfirmDeleteServer:(PGServer *)server;
 
 @end
 
@@ -83,6 +84,14 @@
 - (BOOL)userCanRenameServer:(NSString *)name;
 - (void)userDidRenameServer:(NSString *)name;
 - (void)userDidCancelRenameServer;
+- (void)userDidDuplicateServer;
+- (void)userDidRefreshServers;
+
+// Delete Confirmation
+- (void)userDidDeleteServerShowInFinder;
+- (void)userDidCancelDeleteServer;
+- (void)userDidDeleteServerKeepFile;
+- (void)userDidDeleteServerDeleteFile;
 
 // Start/Stop
 - (void)userDidStartStopServer;
