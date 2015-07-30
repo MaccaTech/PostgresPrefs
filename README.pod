@@ -18,8 +18,6 @@
 
 =item * L<Uninstall Instructions|/"Uninstall Instructions">
 
-=item * L<Upgrading from Version 1.x|/"Upgrading from Version 1.x">
-    
 =item * L<FAQ|/"FAQ">
 
 =item * L<Version History|/"Version History">
@@ -70,7 +68,7 @@ Control B<multiple> PostgreSQL servers in the same window - B<NEW IN v2.x>
 
 =end html
 
-=head3 Modify Settings
+=head3 Change Settings
 
 =begin html
 
@@ -120,19 +118,7 @@ When installing, you will be asked if you want to install it for this user only,
 
 =item 1
 
-Delete all server configurations
-
-=over 4
-
-=item
-
-Open C<PostgreSQL Preferences> and click the C<'-'> button in the servers list for each server
-
-=back
-
-=item 2
-
-Uninstall from System Preferences
+Remove from System Preferences
 
 =over 4
 
@@ -142,9 +128,25 @@ Right-click on the C<PostgreSQL icon> in System Preferences, and click C<Remove>
 
 =back
 
+=item 2
+
+Delete files named C<org.postgresql.preferences.*.plist> in the following directories:
+
+=over 4
+
+=item
+
+C</Library/LaunchDaemons>
+
+=item
+
+C<~/Library/LaunchAgents>
+
+=back
+
 =item 3
 
-Delete the following log directories if they exist:
+Delete the following log directories:
 
 =over 4
 
@@ -157,18 +159,6 @@ C</Library/Logs/PostgreSQL>
 C<~/Library/Logs/PostgreSQL>
 
 =back
-
-=back
-
-=head2 Upgrading from Version 1.x 
-
-Please ensure you delete the file C<com.hkwebentrepreneurs.postgresql.plist> if it exists in either of these directories:
-
-=over 4
-
-=item * C</Library/LaunchAgents>
-
-=item * C<~/Library/LaunchAgents>
 
 =back
 
@@ -186,7 +176,7 @@ Please ensure you delete the file C<com.hkwebentrepreneurs.postgresql.plist> if 
 
 =item * B<Can I run multiple instances of PostgreSQL on the same machine?>
 
-=item * Yes - this is new with Version 2! Note that each separate instance of PostgreSQL I<must have its own data directory and port>. You can specify a different port in the settings popup. However, to create a separate data directory you must create a new database cluster by running the C<initdb> command, as described in the L<PostgreSQL documentation|http://www.postgresql.org/docs/manuals/>.
+=item * Yes - this is new with Version 2! Note that each separate instance of PostgreSQL I<must have its own data directory and port>. It is easy to specify a different port using the settings popup. But to create a separate data directory you must run the C<initdb> command to create a new database cluster, as described in the L<PostgreSQL documentation|http://www.postgresql.org/docs/manuals/>.
 
 =back
 
@@ -210,8 +200,8 @@ Please ensure you delete the file C<com.hkwebentrepreneurs.postgresql.plist> if 
 
 =item * B<Does this tool affect my existing installations?>
         
-=item * No, this tool creates its own C<launchd> configuration files for starting and stopping servers, and leaves all existing configurations untouched.
-Note that this means, for example, that there may be other PostgreSQL servers that are configured to startup at system login/boot. For example, a fresh install of PostgreSQL from L<enterprisedb.com|http://www.enterprisedb.com/products-services-training/pgdownload#osx> will create a configuration file in C</Library/LaunchDaemons> that will startup a server automatically on boot. To disable this, you can delete the file named C<com.edb.launchd.postgresql*.plist> in that directory.
+=item * The short answer is: no, Postgre Preferences creates its own configuration files for starting/stopping servers, separate from any existing installations.
+However, from version 2.1 onwards, Postgre Preferences automatically detects and displays already-running servers I<that were started/configured elsewhere>. Any such 'external' servers can be started and stopped like normal servers (if a configuration file is found). If you click the C<'-'> button to delete one of the external servers, you will be prompted whether you also want to delete the server's configuration file, or leave it untouched.
 
 =back
 
@@ -219,7 +209,7 @@ Note that this means, for example, that there may be other PostgreSQL servers th
 
 =item * B<Who is Macca Tech, and why did you make this tool?>
 
-=item * At the moment, L<Macca Tech|http://www.maccatech.com> consists of just me, a developer who enjoys creating tools and apps on Mac OS X and iOS. I created this tool partly for fun, and partly because I was using PostgreSQL and found it far too complicated to do something as simple as starting and stopping a database! 
+=item * At the moment, L<Macca Tech|http://www.maccatech.com> consists of just me, a developer who enjoys creating tools and apps on Mac OS X and iOS. I created this tool partly for fun, and partly because I was using PostgreSQL and found it far too complicated to do something as simple as starting and stopping a database server!
 
 =back    
     
@@ -237,9 +227,20 @@ Note that this means, for example, that there may be other PostgreSQL servers th
 </thead>
 <tbody>
 <tr>
+    <td>v2.1</td>
+    <td>30-Jul 2015</td>
+    <td>Enhancement release
+        <ul>
+        <li>Automatically detect already-running servers configured elsewhere</li>
+        <li>Start/stop these 'external' servers like any others</li>
+        <li>New 'Duplicate Server' function</li>
+        </ul>
+    </td>
+</tr>
+<tr>
     <td>v2.0</td>
     <td>22-Jul 2015</td>
-    <td>Major Upgrade
+    <td>Major release
         <ul>
         <li>Control multiple servers from a single window</li>
 	<li>Start servers at computer bootup (previously only at login)</li>
@@ -314,7 +315,7 @@ Note that this means, for example, that there may be other PostgreSQL servers th
 <tr>
     <td>v1.0</td>
     <td>29-Dec 2011</td>
-    <td>Initial Release</td>
+    <td>Initial release</td>
 </tr>
 </tbody>
 </table>
