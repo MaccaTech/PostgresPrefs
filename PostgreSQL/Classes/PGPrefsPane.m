@@ -43,7 +43,6 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 - (void)showChecking;
 - (void)showRetrying;
 - (void)showUnknown;
-- (void)showProtected;
 - (void)showDirtyInSettingsWindow:(PGServer *)server;
 - (void)showSettingsInSettingsWindow:(PGServer *)server;
 - (void)showSettingsInMainServerView:(PGServer *)server;
@@ -634,30 +633,24 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     cell.externalIcon.hidden = !server.external;
     
     // Icon & Status
-    NSString *statusText = nil;
+    NSString *statusText = ServerStatusDescription(server.status);
     NSString *imageName = nil;
-    if (server.daemonInRootContext && !self.authorized) {
-        imageName = NSImageNameLockLockedTemplate;
-        statusText = @"Protected";
-    } else {
-        statusText = ServerStatusDescription(server.status);
-        switch (server.status) {
-            case PGServerStarted:
-                if (NonBlank(server.settings.port)) statusText = [NSString stringWithFormat:@"%@ on port %@", statusText, server.settings.port];
-                imageName = NSImageNameStatusAvailable;
-                break;
-            case PGServerStopped:
-                imageName = NSImageNameStatusUnavailable;
-                break;
-            case PGServerRetrying: // Fall through
-            case PGServerStarting: // Fall through
-            case PGServerStopping: // Fall through
-            case PGServerUpdating:
-                imageName = NSImageNameStatusPartiallyAvailable;
-                break;
-            default:
-                imageName = NSImageNameStatusNone;
-        }
+    switch (server.status) {
+        case PGServerStarted:
+            if (NonBlank(server.settings.port)) statusText = [NSString stringWithFormat:@"%@ on port %@", statusText, server.settings.port];
+            imageName = NSImageNameStatusAvailable;
+            break;
+        case PGServerStopped:
+            imageName = NSImageNameStatusUnavailable;
+            break;
+        case PGServerRetrying: // Fall through
+        case PGServerStarting: // Fall through
+        case PGServerStopping: // Fall through
+        case PGServerUpdating:
+            imageName = NSImageNameStatusPartiallyAvailable;
+            break;
+        default:
+            imageName = NSImageNameStatusNone;
     }
     cell.statusTextField.stringValue = statusText;
     cell.imageView.image = [NSImage imageNamed:imageName];
@@ -881,15 +874,6 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
              startStopButton:@"PostgreSQL"];
 }
 
-- (void)showProtected
-{
-    [self showStatusWithName:@"Protected"
-                      colour:PGServerStatusProtectedColor
-                       image:@"protected"
-                        info:@"The PostgreSQL Database Server is run under a different user account. Please click the lock."
-             startStopButton:@"PostgreSQL"];
-}
-
 - (void)showError:(NSString *)errMsg
 {
     // No error
@@ -960,17 +944,13 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 {
     [self showError:server.error];
     
-    if (server.daemonInRootContext && !self.authorized) {
-        [self showProtected];
-    } else {
-        switch (server.status) {
-            case PGServerStarted: [self showStarted]; break;
-            case PGServerStarting: [self showStarting]; break;
-            case PGServerStopping: [self showStopping]; break;
-            case PGServerStopped: [self showStopped]; break;
-            case PGServerRetrying: [self showRetrying]; break;
-            default: [self showUnknown]; break;
-        }
+    switch (server.status) {
+        case PGServerStarted: [self showStarted]; break;
+        case PGServerStarting: [self showStarting]; break;
+        case PGServerStopping: [self showStopping]; break;
+        case PGServerStopped: [self showStopped]; break;
+        case PGServerRetrying: [self showRetrying]; break;
+        default: [self showUnknown]; break;
     }
     
     self.logEnabled = server.daemonLogExists;

@@ -128,12 +128,6 @@ ObjectBefore(id object, NSArray *array)
 - (void)viewDidAuthorize:(AuthorizationRef)authorization
 {
     self.authorization = authorization;
-    if (!authorization) return;
-    
-    // Refresh display of protected servers
-    for (PGServer *server in self.servers) {
-        if (server.daemonInRootContext) [self checkStatus:server];
-    }
 }
 //
 // DidDauthorize method will be called in any of following situations:
@@ -146,11 +140,6 @@ ObjectBefore(id object, NSArray *array)
     DLog(@"Deauthorized");
     
     self.authorization = nil;
-    
-    // Refresh display of protected servers
-    for (PGServer *server in self.servers) {
-        if (server.daemonInRootContext) [self checkStatus:server];
-    }
 }
 - (AuthorizationRights *)authorizationRights
 {

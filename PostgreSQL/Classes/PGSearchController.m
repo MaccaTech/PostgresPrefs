@@ -160,12 +160,11 @@
 - (void)addLoadedServersForRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus toServers:(NSMutableArray *)servers
 {
     NSString *error = nil;
-    NSArray *names = [PGLaunchd loadedDaemonsWithNameLike:@".*postgre.*" forRootUser:root authorization:authorization authStatus:authStatus error:&error];
-    if (names.count == 0) return;
+    NSArray *daemons = [PGLaunchd loadedDaemonsWithNameLike:@"*postgre*" forRootUser:root authorization:authorization authStatus:authStatus error:&error];
+    if (daemons.count == 0) return;
     
-    for (NSString *name in names) {
-        NSString *error = nil;
-        PGServer *server = [self.serverController loadedServerWithName:name forRootUser:root authorization:authorization authStatus:authStatus error:&error];
+    for (NSDictionary *daemon in daemons) {
+        PGServer *server = [self.serverController serverFromDaemon:daemon forRootUser:root];
         if (server) [servers addObject:server];
     }
 }

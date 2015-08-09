@@ -117,11 +117,6 @@ EqualUsernames(NSString *user1, NSString *user2)
     if (!server) return NO;
     if (server.processing) return NO;
     
-    if (server.daemonInRootContext && !authorization) {
-        [self setStatus:PGServerStatusUnknown error:nil forServer:server];
-        return NO;
-    }
-    
     return YES;
 }
 

@@ -45,6 +45,7 @@
 		20B628C81B4973BE003F8557 /* PGProcess.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B628C61B4973BE003F8557 /* PGProcess.m */; };
 		20BBC29814AD1E7600BA0859 /* README.pod in Resources */ = {isa = PBXBuildFile; fileRef = 20BBC29714AD1E7600BA0859 /* README.pod */; };
 		20BBC29A14AD201A00BA0859 /* README.pod.html in Resources */ = {isa = PBXBuildFile; fileRef = 20BBC29914AD201A00BA0859 /* README.pod.html */; };
+		20BCE7351B775450000AA376 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20BCE7341B775450000AA376 /* ServiceManagement.framework */; };
 		20E969821B51574600013B0E /* PGServerDataStore.h in Headers */ = {isa = PBXBuildFile; fileRef = 20E969801B51574600013B0E /* PGServerDataStore.h */; };
 		20E969831B51574600013B0E /* PGServerDataStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 20E969811B51574600013B0E /* PGServerDataStore.m */; };
 		20E9698A1B51AEB900013B0E /* PGData.h in Headers */ = {isa = PBXBuildFile; fileRef = 20E969881B51AEB900013B0E /* PGData.h */; };
@@ -100,6 +101,7 @@
 		20B628C61B4973BE003F8557 /* PGProcess.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGProcess.m; sourceTree = "<group>"; };
 		20BBC29714AD1E7600BA0859 /* README.pod */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.pod; sourceTree = SOURCE_ROOT; };
 		20BBC29914AD201A00BA0859 /* README.pod.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = README.pod.html; sourceTree = "<group>"; };
+		20BCE7341B775450000AA376 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 		20E969801B51574600013B0E /* PGServerDataStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGServerDataStore.h; sourceTree = "<group>"; };
 		20E969811B51574600013B0E /* PGServerDataStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGServerDataStore.m; sourceTree = "<group>"; };
 		20E969881B51AEB900013B0E /* PGData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGData.h; sourceTree = "<group>"; };
@@ -112,6 +114,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				20BCE7351B775450000AA376 /* ServiceManagement.framework in Frameworks */,
 				20164599149E031E009ACF7A /* Security.framework in Frameworks */,
 				20164597149DFFC3009ACF7A /* SecurityInterface.framework in Frameworks */,
 				20164595149DFFBA009ACF7A /* AppleScriptObjC.framework in Frameworks */,
@@ -190,9 +193,6 @@
 		2035B17F149C8B83009A2972 = {
 			isa = PBXGroup;
 			children = (
-				20164598149E031E009ACF7A /* Security.framework */,
-				20164596149DFFC3009ACF7A /* SecurityInterface.framework */,
-				20164594149DFFBA009ACF7A /* AppleScriptObjC.framework */,
 				2035B197149C8B83009A2972 /* PostgreSQL */,
 				2035B18E149C8B83009A2972 /* Frameworks */,
 				2035B18D149C8B83009A2972 /* Products */,
@@ -211,6 +211,10 @@
 			isa = PBXGroup;
 			children = (
 				2035B18F149C8B83009A2972 /* Cocoa.framework */,
+				20BCE7341B775450000AA376 /* ServiceManagement.framework */,
+				20164598149E031E009ACF7A /* Security.framework */,
+				20164596149DFFC3009ACF7A /* SecurityInterface.framework */,
+				20164594149DFFBA009ACF7A /* AppleScriptObjC.framework */,
 				2035B191149C8B83009A2972 /* PreferencePanes.framework */,
 				201645A1149E68F4009ACF7A /* AppleScriptObjC.framework */,
 				2035B193149C8B83009A2972 /* Other Frameworks */,

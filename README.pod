@@ -227,6 +227,15 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
 </thead>
 <tbody>
 <tr>
+    <td>v2.2</td>
+    <td>9-Aug 2015</td>
+    <td>Enhancement release
+        <ul>
+        <li>See status of all servers without entering password</li>
+        </ul>
+    </td>
+</tr>
+<tr>
     <td>v2.1</td>
     <td>30-Jul 2015</td>
     <td>Enhancement release
