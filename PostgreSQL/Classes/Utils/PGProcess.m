@@ -53,14 +53,11 @@
 + (NSString *)authorizingScript
 {
     static NSString *script;
-    static BOOL initialized;
-    
-    // Find script in bundle
-    if (!initialized) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         script = [[NSBundle bundleForClass:[self class]] pathForResource:@"PGPrefsRunAsAdmin" ofType:@"scpt"];
         if (!script) DLog(@"Cannot find resource PGPrefsRunAsAdmin.scpt!");
-        initialized = YES;
-    }
+    });
 
     return script;
 }
@@ -69,10 +66,8 @@
     static NSString *authorizingScript;
     static AuthorizationItem authorizationItem;
     static AuthorizationRights authorizationRights;
-    static BOOL initialized;
-    
-    // Create rights
-    if (!initialized) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         authorizingScript = [self authorizingScript];
         if (authorizingScript) {
             AuthorizationItem item = {kAuthorizationRightExecute, authorizingScript.length, &authorizingScript, 0};
@@ -80,8 +75,7 @@
             authorizationItem = item;
             authorizationRights = rights;
         }
-        initialized = YES;
-    }
+    });
 
     return authorizationRights.count == 0 ? nil : &authorizationRights;
 }
@@ -102,15 +96,25 @@
 }
 + (BOOL)runShellCommand:(NSString *)command output:(NSString *__autoreleasing *)output error:(NSString *__autoreleasing *)error
 {
+    command = TrimToNil(command);
+    if (!command) return NO;
+    
     return [self runExecutable:@"/bin/bash" withArgs:@[@"-c", command] authorization:nil authStatus:nil output:output error:error];
 }
-+ (BOOL)startShellCommand:(NSString *)command authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
++ (BOOL)startShellCommand:(NSString *)command forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
 {
-    return [self runShellCommand:command authorization:authorization authStatus:authStatus output:nil error:error];
+    return [self runShellCommand:command forRootUser:root authorization:authorization authStatus:authStatus output:nil error:error];
 }
-+ (BOOL)runShellCommand:(NSString *)command authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString *__autoreleasing *)output error:(NSString *__autoreleasing *)error
++ (BOOL)runShellCommand:(NSString *)command forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString *__autoreleasing *)output error:(NSString *__autoreleasing *)error
 {
-    if (!authorization) return [self runShellCommand:command output:output error:error];
+    command = TrimToNil(command);
+    if (!command) return NO;
+    
+    // No authorization provided - run unauthorized or abort
+    if (!authorization) {
+        if (root) return NO;
+        else return [self runShellCommand:command output:output error:error];
+    }
     
     // Program error - authorization script missing!
     NSString *authorizingScript = [self authorizingScript];
@@ -118,6 +122,9 @@
         if (authStatus) *authStatus = errAuthorizationInternal;
         return NO;
     }
+    
+    // Script always runs as root, so need to switch user
+    if (!root) command = [NSString stringWithFormat:@"su \"%@\" -c '%@'", NSUserName(), command];
     
     // Execute
     return [self runExecutable:@"/usr/bin/osascript" withArgs:@[authorizingScript, command] authorization:authorization authStatus:authStatus output:output error:error];

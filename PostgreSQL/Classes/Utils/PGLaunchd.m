@@ -9,13 +9,6 @@
 #import "PGLaunchd.h"
 #import <ServiceManagement/ServiceManagement.h>
 
-#pragma mark - Interfaces
-
-@interface PGLaunchd()
-@end
-
-
-
 #pragma mark - PGLaunchd
 
 @implementation PGLaunchd
@@ -58,7 +51,7 @@
     
     NSString *command = [NSString stringWithFormat:@"launchctl load -F \"%@\"", file];
     NSString *output = nil;
-    BOOL succeeded = [self runShellCommand:command forRootUser:root authorization:authorization authStatus:authStatus output:&output error:error];
+    BOOL succeeded = [PGProcess runShellCommand:command forRootUser:root authorization:authorization authStatus:authStatus output:&output error:error];
     if (!succeeded) return NO;
     
     return YES;
@@ -71,27 +64,10 @@
     
     NSString *command = [NSString stringWithFormat:@"launchctl remove \"%@\"", name];
     NSString *output = nil;
-    BOOL succeeded = [self runShellCommand:command forRootUser:root authorization:authorization authStatus:authStatus output:&output error:error];
+    BOOL succeeded = [PGProcess runShellCommand:command forRootUser:root authorization:authorization authStatus:authStatus output:&output error:error];
     if (!succeeded) return NO;
     
     return YES;
-}
-
-
-
-#pragma mark Private
-
-+ (BOOL)runShellCommand:(NSString *)command forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString *__autoreleasing *)output error:(NSString *__autoreleasing *)error
-{
-    if (root && !authorization) return NO;
-    if (!NonBlank(command)) return NO;
-    
-    // Will run as root, but want user-specific launchd, so command must switch user
-    if (!root && authorization)
-        command = [NSString stringWithFormat:@"su \"%@\" -c '%@'", NSUserName(), command];
-    
-    // Run
-    return [PGProcess runShellCommand:command authorization:authorization authStatus:authStatus output:output error:error];
 }
 
 @end

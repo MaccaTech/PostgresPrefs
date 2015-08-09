@@ -175,7 +175,7 @@ EqualUsernames(NSString *user1, NSString *user2)
         
         // Execute
         @synchronized(server) {
-            [PGProcess runShellCommand:command authorization:authorization authStatus:&authStatus output:&output error:&error];
+            [PGProcess runShellCommand:command forRootUser:YES authorization:authorization authStatus:&authStatus output:&output error:&error];
         }
         
         result = output;

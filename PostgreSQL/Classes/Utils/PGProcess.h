@@ -36,13 +36,13 @@
  *
  * @return YES if started without throwing an exception or authorization error
  */
-+ (BOOL)startShellCommand:(NSString *)command authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error;
++ (BOOL)startShellCommand:(NSString *)command forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error;
 /**
  * Runs command in shell with authorization (if not nil). Returns output.
  *
  * @return YES if ran without throwing an exception or authorization error
  */
-+ (BOOL)runShellCommand:(NSString *)command authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString **)output error:(NSString **)error;
++ (BOOL)runShellCommand:(NSString *)command forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString **)output error:(NSString **)error;
 
 /**
  * Starts executable without authorization. Does not wait for output.
