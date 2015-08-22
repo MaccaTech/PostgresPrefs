@@ -305,7 +305,7 @@
 		2035B181149C8B83009A2972 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0620;
+				LastUpgradeCheck = 0640;
 			};
 			buildConfigurationList = 2035B184149C8B83009A2972 /* Build configuration list for PBXProject "PostgreSQL" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -419,6 +419,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREFIX_HEADER = "PostgreSQL/PostgreSQL-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -461,6 +462,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_PREFIX_HEADER = "PostgreSQL/PostgreSQL-Prefix.pch";
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
