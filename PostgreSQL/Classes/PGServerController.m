@@ -282,7 +282,7 @@ EqualUsernames(NSString *user1, NSString *user2)
     // Bin Directory
     if (daemonProgramArgs.count == 0) return nil;
     NSString *filepath = ToString(daemonProgramArgs[0]);
-    NSString *executable = [filepath lastPathComponent];
+    NSString *executable = [[filepath lastPathComponent] lowercaseString];
     
     // Abort if not a Postgres agent, unless created by this tool
     if (externalServer && !(

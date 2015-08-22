@@ -227,6 +227,15 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
 </thead>
 <tbody>
 <tr>
+    <td>v2.2.1</td>
+    <td>22-Aug 2015</td>
+    <td>Bug-fix release
+        <ul>
+        <li>Automatically detect running Postgres.app server</li>
+        </ul>
+    </td>
+</tr>
+<tr>
     <td>v2.2</td>
     <td>9-Aug 2015</td>
     <td>Enhancement release
