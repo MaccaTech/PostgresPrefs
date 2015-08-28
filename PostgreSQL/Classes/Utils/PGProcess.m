@@ -61,23 +61,14 @@
 
     return script;
 }
-+ (AuthorizationRights *)authorizationRights
++ (PGRights *)rights
 {
-    static NSString *authorizingScript;
-    static AuthorizationItem authorizationItem;
-    static AuthorizationRights authorizationRights;
+    static PGRights *rights;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        authorizingScript = [self authorizingScript];
-        if (authorizingScript) {
-            AuthorizationItem item = {kAuthorizationRightExecute, authorizingScript.length, &authorizingScript, 0};
-            AuthorizationRights rights = {1, &authorizationItem};
-            authorizationItem = item;
-            authorizationRights = rights;
-        }
+        rights = [PGRights rightsWithRightName:@kAuthorizationRightExecute value:self.authorizingScript];
     });
-
-    return authorizationRights.count == 0 ? nil : &authorizationRights;
+    return rights;
 }
 
 
@@ -104,6 +95,16 @@
 + (BOOL)startShellCommand:(NSString *)command forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
 {
     return [self runShellCommand:command forRootUser:root authorization:authorization authStatus:authStatus output:nil error:error];
+}
++ (BOOL)runShellCommand:(NSString *)command forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
+{
+    NSString *output = nil;
+    if (![self runShellCommand:command forRootUser:root authorization:authorization authStatus:authStatus output:&output error:error]) return NO;
+    if (output) {
+        if (error) *error = output;
+        return NO;
+    }
+    return YES;
 }
 + (BOOL)runShellCommand:(NSString *)command forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString *__autoreleasing *)output error:(NSString *__autoreleasing *)error
 {
@@ -229,9 +230,7 @@
 + (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus waitForOutput:(BOOL)waitForOutput
 {
     // Pre-check the authorization - it may have timed-out
-    OSStatus status = !authorization ? errAuthorizationInvalidRef : AuthorizationCopyRights(authorization, self.authorizationRights, kAuthorizationEmptyEnvironment, kAuthorizationFlagDefaults, NULL);
-    if (authStatus) *authStatus = status;
-    if (status != errAuthorizationSuccess) return nil;
+    if (![self.rights authorized:authorization authStatus:authStatus]) return nil;
     
     // Convert command into const char*;
     const char *commandArg = strdup([pathToExecutable UTF8String]);
@@ -254,7 +253,10 @@
     
     // Run command with authorization
     FILE **processOutputRef = waitForOutput ? &processOutput : NULL;
-    status = AuthorizationExecuteWithPrivileges(authorization, commandArg, kAuthorizationFlagDefaults, (char *const *)argv, processOutputRef);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    OSStatus status = AuthorizationExecuteWithPrivileges(authorization, commandArg, kAuthorizationFlagDefaults, (char *const *)argv, processOutputRef);
+#pragma clang diagnostic pop
     if (authStatus) *authStatus = status;
     
     // Release command and args

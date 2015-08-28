@@ -9,48 +9,48 @@
 #ifndef PostgreSQL_Common_h
 #define PostgreSQL_Common_h
 
-// Run block on main thread
+/// Run block on main thread
 CG_INLINE void
 MainThread(void(^block)(void))
 {
     if ([NSThread isMainThread]) block();
     else dispatch_sync(dispatch_get_main_queue(), block);
 }
-// Run block in background thread
+/// Run block in background thread
 CG_INLINE void
 BackgroundThread(void(^block)(void))
 {
     if (![NSThread isMainThread]) block();
     else dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0ul), block);
 }
-// Run block in background thread
+/// Run block in background thread after a delay
 CG_INLINE void
-BackgroundThreadAfterDelay(void(^block)(void), NSTimeInterval delay)
+BackgroundThreadAfterDelay(NSTimeInterval delay, void(^block)(void))
 {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0ul), block);
 }
-// Return value converted to NSString
+/// Return value converted to NSString
 CG_INLINE NSString *
 ToString(id value)
 {
     if (value == nil || value == [NSNull null]) return nil;
     return [value description];
 }
-// Return value converted to NSArray
+/// Return value converted to NSArray
 CG_INLINE NSArray *
 ToArray(id value)
 {
     if (value == nil || value == [NSNull null] || ![value isKindOfClass:[NSArray class]]) return nil;
     return (NSArray *)value;
 }
-// Return value converted to NSDictionary
+/// Return value converted to NSDictionary
 CG_INLINE NSDictionary *
 ToDictionary(id value)
 {
     if (value == nil || value == [NSNull null] || ![value isKindOfClass:[NSDictionary class]]) return nil;
     return (NSDictionary *)value;
 }
-// Return value converted to BOOL
+/// Return value converted to BOOL
 CG_INLINE BOOL
 ToBOOL(id value)
 {
@@ -59,14 +59,14 @@ ToBOOL(id value)
     NSString *description = [[value description] lowercaseString];
     return [description isEqualToString:@"true"] || [description isEqualToString:@"yes"];
 }
-// Return string with leading & trailing whitespace removed, or nil if only whitespace
+/// Return string with leading & trailing whitespace removed, or nil if only whitespace
 CG_INLINE NSString *
 TrimToNil(NSString *string)
 {
     NSString *trimmed = [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     return [trimmed length] > 0 ? trimmed : nil;
 }
-// Return YES if the string is non-blank
+/// Return YES if the string is non-blank
 CG_INLINE BOOL
 NonBlank(NSString *string)
 {
@@ -74,13 +74,13 @@ NonBlank(NSString *string)
     if (!NonBlanks) NonBlanks = [[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet];
     return string && [string rangeOfCharacterFromSet:NonBlanks].location != NSNotFound;
 }
-// Return YES if both nil or equal
+/// Return YES if both nil or equal
 CG_INLINE BOOL
 BothNilOrEqual(id a, id b)
 {
     return a == b || [a isEqual:b];
 }
-// Convert JSON string to dictionary. If JSON string is array, returns first element.
+/// Convert JSON string to dictionary. If JSON string is array, returns first element.
 CG_INLINE NSDictionary *
 JsonToDictionary(NSString *json, NSString **error)
 {
@@ -93,7 +93,7 @@ JsonToDictionary(NSString *json, NSString **error)
         jsonSerialized = ((NSArray *)jsonSerialized).firstObject;
     return ToDictionary(jsonSerialized);
 }
-// Check if file exists
+/// Check if file exists
 CG_INLINE BOOL
 FileExists(NSString *path)
 {
@@ -101,7 +101,7 @@ FileExists(NSString *path)
     BOOL isDirectory = NO;
     return [[NSFileManager defaultManager] fileExistsAtPath:[path stringByExpandingTildeInPath] isDirectory:&isDirectory] && !isDirectory;
 }
-// Check if dir exists
+/// Check if dir exists
 CG_INLINE BOOL
 DirExists(NSString *path)
 {

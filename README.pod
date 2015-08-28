@@ -130,7 +130,7 @@ Right-click on the C<PostgreSQL icon> in System Preferences, and click C<Remove>
 
 =item 2
 
-Delete files named C<org.postgresql.preferences.*.plist> in the following directories:
+Delete any files named C<org.postgresql.preferences.*.plist> in the following directories:
 
 =over 4
 
@@ -140,13 +140,17 @@ C</Library/LaunchDaemons>
 
 =item
 
+C</Library/LaunchAgents>
+
+=item
+
 C<~/Library/LaunchAgents>
 
 =back
 
 =item 3
 
-Delete the following log directories:
+Delete the following log directories if they exist:
 
 =over 4
 
@@ -227,11 +231,24 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
 </thead>
 <tbody>
 <tr>
+    <td>v2.3</td>
+    <td>28-Aug 2015</td>
+    <td>Enhancement release
+        <ul>
+        <li>Improved speed/security: replaced external shell script with native code</li>
+        <li>Invalid server settings now highlighted more clearly</li>
+        <li>Changing startup does not affect running server</li>
+        <li>Startup-at-login supported for all users, not just current</li>
+        <li>Fixed briefly showing server as started even though failed to start</li>
+        </ul>
+    </td>
+</tr>
+<tr>
     <td>v2.2.1</td>
     <td>22-Aug 2015</td>
     <td>Bug-fix release
         <ul>
-        <li>Automatically detect running Postgres.app server</li>
+        <li>Automatically detect running Postgresapp.com server</li>
         </ul>
     </td>
 </tr>

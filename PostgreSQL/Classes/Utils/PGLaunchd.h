@@ -8,12 +8,18 @@
 
 #import <Foundation/Foundation.h>
 #import "PGProcess.h"
+#import "PGRights.h"
 
 #pragma mark - PGLaunchd
 /**
  * Utility class for looking up and starting/stopping daemons in launchd
  */
 @interface PGLaunchd : NSObject
+
+/**
+ * The rights required to start and stop launchd daemons.
+ */
++ (PGRights *)rights;
 
 /**
  * Gets list of daemon names loaded in root user's or current user's launchd
@@ -32,6 +38,8 @@
 
 /**
  * Unloads the named daemon from launchd.
+ *
+ * Note: silently does nothing if daemon is not already loaded.
  */
 + (BOOL)stopDaemonWithName:(NSString *)name forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error;
 

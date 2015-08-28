@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "PGRights.h"
 
 /**
  * Utility class for running executables or shell commands/scripts as subprocesses.
@@ -16,7 +17,7 @@
 /**
  * The rights required to run an authorized command.
  */
-+ (AuthorizationRights *)authorizationRights;
++ (PGRights *)rights;
 
 /**
  * Starts command in shell without authorization. Does not wait for output.
@@ -38,7 +39,13 @@
  */
 + (BOOL)startShellCommand:(NSString *)command forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error;
 /**
- * Runs command in shell with authorization (if not nil). Returns output.
+ * Runs command in shell with authorization (if not nil). Any output is treated as an error.
+ *
+ * @return YES if ran without throwing an exception or authorization error and with no output
+ */
++ (BOOL)runShellCommand:(NSString *)command forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error;
+/**
+ * Runs command in shell with authorization (if not nil). Returns output separately.
  *
  * @return YES if ran without throwing an exception or authorization error
  */

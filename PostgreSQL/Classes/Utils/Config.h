@@ -13,9 +13,9 @@
 #define PGPrefsAppID @"org.postgresql.preferences"
 #define PGPrefsAppIDVersion1 @"com.hkwebentrepreneurs"
 #define PGServersPollTime 5
-#define PGLaunchdDaemonFileBootDir @"/Library/LaunchDaemons"
-#define PGLaunchdDaemonFileLoginGlobalDir @"/Library/LaunchAgents"
-#define PGLaunchdDaemonFileLoginUserDir @"~/Library/LaunchAgents"
+#define PGLaunchdDaemonForAllUsersAtBootDir @"/Library/LaunchDaemons"
+#define PGLaunchdDaemonForAllUsersAtLoginDir @"/Library/LaunchAgents"
+#define PGLaunchdDaemonForCurrentUserOnlyDir @"~/Library/LaunchAgents"
 #define PGLaunchdDaemonLogRootDir @"/Library/Logs/PostgreSQL"
 #define PGLaunchdDaemonLogUserDir @"~/Library/Logs/PostgreSQL"
 
@@ -35,14 +35,25 @@
 
 // Colours
 #define PGServerStatusUnknownColor [NSColor darkGrayColor]
-#define PGServerStatusProtectedColor [NSColor darkGrayColor]
 #define PGServerStartingColor [NSColor orangeColor]
 #define PGServerStartedColor [NSColor colorWithCalibratedRed:0 green:0.8f blue:0 alpha:1]
 #define PGServerStoppingColor [NSColor orangeColor]
 #define PGServerStoppedColor [NSColor redColor]
+#define PGServerDeletingColor [NSColor orangeColor]
 #define PGServerRetryingColor [NSColor orangeColor]
-#define PGServerUpdatingColor [NSColor darkGrayColor]
-#define PGServerCheckingColor [NSColor blueColor]
+#define PGServerUpdatingColor [NSColor orangeColor]
+#define PGServerCheckingColor [NSColor orangeColor]
+
+// Images
+#define PGServerStatusUnknownImage @"unknown"
+#define PGServerStartingImage @"starting"
+#define PGServerStartedImage @"started"
+#define PGServerStoppingImage @"stopping"
+#define PGServerStoppedImage @"stopped"
+#define PGServerDeletingImage @"stopping"
+#define PGServerRetryingImage @"retrying"
+#define PGServerUpdatingImage @"stopping"
+#define PGServerCheckingImage @"stopping"
 
 // Prevent naming conflicts, as described in Mac Developer Library documentation
 #define PGPrefsPane ComMaccatechPostgrePrefsPane
@@ -85,6 +96,7 @@
 #define PGServerStartingName ComMaccatechPostgreServerStarting
 #define PGServerStartedName ComMaccatechPostgreServerStarted
 #define PGServerStoppingName ComMaccatechPostgreServerStopping
+#define PGServerDeletingName ComMaccatechPostgreServerDeleting
 #define PGServerStoppedName ComMaccatechPostgreServerStopped
 #define PGServerRetryingName ComMaccatechPostgreServerRetrying
 #define PGServerUpdatingName ComMaccatechPostgreServerUpdating
@@ -99,7 +111,9 @@
 #define PGServerDeleteName ComMaccatechPostgreServerDeleteName
 
 #define PGData ComMaccatechPostgreData
+#define PGFile ComMaccatechPostgreFile
 #define PGLaunchd ComMaccatechPostgreLaunchd
 #define PGProcess ComMaccatechPostgreProcess
+#define PGRights ComMaccatechPostgreRights
 
 #endif /* PostgreSQL_Config_h */

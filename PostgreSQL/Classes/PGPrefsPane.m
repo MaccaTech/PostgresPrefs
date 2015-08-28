@@ -30,8 +30,6 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 @property (nonatomic) BOOL logEnabled;
 /// If NO, then the editing server settings will be greyed-out (if server not editable)
 @property (nonatomic) BOOL editEnabled;
-/// If NO, then the startup-at-login will be greyed-out (if server has different username)
-@property (nonatomic) BOOL startupAtLoginEnabled;
 
 - (void)initAuthorization;
 
@@ -40,8 +38,10 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 - (void)showStopped;
 - (void)showStarting;
 - (void)showStopping;
+- (void)showDeleting;
 - (void)showChecking;
 - (void)showRetrying;
+- (void)showUpdating;
 - (void)showUnknown;
 - (void)showDirtyInSettingsWindow:(PGServer *)server;
 - (void)showSettingsInSettingsWindow:(PGServer *)server;
@@ -149,7 +149,6 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     self.updatingDisplay = YES;
     self.logEnabled = YES;
     self.editEnabled = YES;
-    self.startupAtLoginEnabled = YES;
     self.startStopEnabled = YES;
     self.enabled = YES;
     self.updatingDisplay = NO;
@@ -201,9 +200,9 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     self.viewLogButton.enabled = self.enabled && self.logEnabled;
     self.renameServerButton.enabled = self.enabled && self.editEnabled;
     self.changeSettingsButton.enabled = self.enabled && self.editEnabled;
-    self.startupAtLoginCell.enabled = self.enabled && self.editEnabled && self.startupAtLoginEnabled;
-    self.startupAtBootCell.enabled = self.enabled && self.editEnabled;;
-    self.startupManualCell.enabled = self.enabled && self.editEnabled;;
+    self.startupAtLoginCell.enabled = self.enabled && self.editEnabled;
+    self.startupAtBootCell.enabled = self.enabled && self.editEnabled;
+    self.startupManualCell.enabled = self.enabled && self.editEnabled;
     self.startupMatrix.enabled = self.enabled && self.editEnabled;
     self.startStopButton.enabled = self.enabled && self.startStopEnabled;
     
@@ -235,13 +234,6 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 {
     if (editEnabled == _editEnabled) return;
     _editEnabled = editEnabled;
-    
-    [self refreshEnabled];
-}
-- (void)setStartupAtLoginEnabled:(BOOL)startupAtLoginEnabled
-{
-    if (startupAtLoginEnabled == _startupAtLoginEnabled) return;
-    _startupAtLoginEnabled = startupAtLoginEnabled;
     
     [self refreshEnabled];
 }
@@ -311,7 +303,7 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 
 - (void)initAuthorization
 {
-    AuthorizationRights *rights = self.controller.authorizationRights;
+    AuthorizationRights *rights = self.controller.rights.authorizationRights;
     if (!rights) {
         DLog(@"No Authorization Rights!");
         [self.authorizationView removeFromSuperview];
@@ -646,6 +638,7 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
         case PGServerRetrying: // Fall through
         case PGServerStarting: // Fall through
         case PGServerStopping: // Fall through
+        case PGServerDeleting: // Fall through
         case PGServerUpdating:
             imageName = NSImageNameStatusPartiallyAvailable;
             break;
@@ -815,7 +808,7 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 {
     [self showStatusWithName:@"Running"
                       colour:PGServerStartedColor
-                       image:@"started"
+                       image:PGServerStartedImage
                         info:@"The PostgreSQL Database Server is started and ready for client connections.\nTo shut down the server, use the \"Stop PostgreSQL\" button."
              startStopButton:@"Stop PostgreSQL"];
 }
@@ -824,7 +817,7 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 {
     [self showStatusWithName:@"Stopped"
                       colour:PGServerStoppedColor
-                       image:@"stopped"
+                       image:PGServerStoppedImage
                         info:@"The PostgreSQL Database Server is currently stopped.\nTo start it, use the \"Start PostgreSQL\" button."
              startStopButton:@"Start PostgreSQL"];
 }
@@ -833,7 +826,7 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 {
     [self showStatusWithName:@"Starting..."
                       colour:PGServerStartingColor
-                       image:@"starting"
+                       image:PGServerStartingImage
                         info:nil
              startStopButton:nil];
 }
@@ -841,8 +834,17 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 - (void)showStopping
 {
     [self showStatusWithName:@"Stopping..."
-                      colour:PGServerRetryingColor
-                       image:@"stopping"
+                      colour:PGServerStoppingColor
+                       image:PGServerStoppingImage
+                        info:nil
+             startStopButton:nil];
+}
+
+- (void)showDeleting
+{
+    [self showStatusWithName:@"Deleting..."
+                      colour:PGServerDeletingColor
+                       image:PGServerDeletingImage
                         info:nil
              startStopButton:nil];
 }
@@ -850,8 +852,8 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 - (void)showChecking
 {
     [self showStatusWithName:@"Checking..."
-                      colour:PGServerStoppingColor
-                       image:@"checking"
+                      colour:PGServerCheckingColor
+                       image:PGServerCheckingImage
                         info:@"The running status of the PostgreSQL Database Server is currently being checked."
              startStopButton:@"PostgreSQL"];
 }
@@ -860,16 +862,25 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 {
     [self showStatusWithName:@"Retrying..."
                       colour:PGServerRetryingColor
-                       image:@"retrying"
+                       image:PGServerRetryingImage
                         info:@"The PostgreSQL Database Server has failed to start. Please view the log for details."
              startStopButton:@"Stop PostgreSQL"];
+}
+
+- (void)showUpdating
+{
+    [self showStatusWithName:@"Updating..."
+                      colour:PGServerUpdatingColor
+                       image:PGServerUpdatingImage
+                        info:@"The running status of the PostgreSQL Database Server is not currently known.\nPlease check the server settings and try again."
+             startStopButton:@"PostgreSQL"];
 }
 
 - (void)showUnknown
 {
     [self showStatusWithName:@"Unknown"
                       colour:PGServerStatusUnknownColor
-                       image:@"unknown"
+                       image:PGServerStatusUnknownImage
                         info:@"The running status of the PostgreSQL Database Server is not currently known.\nPlease check the server settings and try again."
              startStopButton:@"PostgreSQL"];
 }
@@ -895,8 +906,12 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     self.serverSettingsWindow.revertSettingsButton.enabled = server.dirty;
     self.serverSettingsWindow.applySettingsButton.enabled = server.dirty;
     
-    self.serverSettingsWindow.invalidBinDirectoryImage.hidden = !server.dirtySettings.invalidBinDirectory;
-    self.serverSettingsWindow.invalidDataDirectoryImage.hidden = !server.dirtySettings.invalidDataDirectory;
+    PGServerSettings *settings = server.dirtySettings;
+    self.serverSettingsWindow.invalidUsernameImage.hidden = !settings.invalidUsername;
+    self.serverSettingsWindow.invalidBinDirectoryImage.hidden = !settings.invalidBinDirectory;
+    self.serverSettingsWindow.invalidDataDirectoryImage.hidden = !settings.invalidDataDirectory;
+    self.serverSettingsWindow.invalidLogFileImage.hidden = !settings.invalidLogFile;
+    self.serverSettingsWindow.invalidPortImage.hidden = !settings.invalidPort;
 }
 - (void)focusInvalidInSettingsWindow:(PGServer *)server
 {
@@ -918,6 +933,12 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     self.serverSettingsWindow.logFileField.stringValue = settings.logFile?:@"";
     self.serverSettingsWindow.portField.stringValue = settings.port?:@"";
     
+    self.serverSettingsWindow.invalidUsernameImage.hidden = !settings.invalidUsername;
+    self.serverSettingsWindow.invalidBinDirectoryImage.hidden = !settings.invalidBinDirectory;
+    self.serverSettingsWindow.invalidDataDirectoryImage.hidden = !settings.invalidDataDirectory;
+    self.serverSettingsWindow.invalidLogFileImage.hidden = !settings.invalidLogFile;
+    self.serverSettingsWindow.invalidPortImage.hidden = !settings.invalidPort;
+    
     [self showDirtyInSettingsWindow:server];
 }
 - (void)showSettingsInMainServerView:(PGServer *)server
@@ -929,9 +950,14 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     self.logFileField.stringValue = settings.logFile?:@"";
     self.portField.stringValue = settings.port?:@"";
     
+    self.invalidUsernameImage.hidden = !settings.invalidUsername;
+    self.invalidBinDirectoryImage.hidden = !settings.invalidBinDirectory;
+    self.invalidDataDirectoryImage.hidden = !settings.invalidDataDirectory;
+    self.invalidLogFileImage.hidden = !settings.invalidLogFile;
+    self.invalidPortImage.hidden = !settings.invalidPort;
+    
     self.logEnabled = server.daemonLogExists;
     self.editEnabled = server.editable;
-    self.startupAtLoginEnabled = server.canStartAtLogin;
     self.startStopEnabled = server.actionable;
     
     [self showServerStartup:self.server];
@@ -943,19 +969,21 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 - (void)showStatusInMainServerView:(PGServer *)server
 {
     [self showError:server.error];
+    [self showSettingsInMainServerView:server]; // Validity might have changed
     
     switch (server.status) {
         case PGServerStarted: [self showStarted]; break;
         case PGServerStarting: [self showStarting]; break;
         case PGServerStopping: [self showStopping]; break;
         case PGServerStopped: [self showStopped]; break;
+        case PGServerDeleting: [self showDeleting]; break;
         case PGServerRetrying: [self showRetrying]; break;
+        case PGServerUpdating: [self showUpdating]; break;
         default: [self showUnknown]; break;
     }
     
     self.logEnabled = server.daemonLogExists;
     self.editEnabled = server.editable;
-    self.startupAtLoginEnabled = server.canStartAtLogin;
     self.startStopEnabled = server.actionable;
     
     self.startStopButton.hidden = server.status == PGServerStatusUnknown;
@@ -981,7 +1009,6 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
         // Reset buttons
         self.editEnabled = YES;
         self.logEnabled = YES;
-        self.startupAtLoginEnabled = YES;
         self.startStopEnabled = YES;
         self.startup = PGServerStartupManual;
         

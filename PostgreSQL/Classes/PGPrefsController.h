@@ -63,8 +63,10 @@
 @property (nonatomic, strong, readonly) PGServer *server;
 @property (nonatomic, strong, readonly) NSArray *servers;
 
+/// The current authorization if authorized, or NULL if not authorized
 @property (nonatomic, readonly) AuthorizationRef authorization;
-- (AuthorizationRights *)authorizationRights;
+/// The rights required to perform controller actions
+- (PGRights *)rights;
 
 - (id)initWithViewController:(id<PGPrefsViewController>)viewController;
 

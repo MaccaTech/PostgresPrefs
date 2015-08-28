@@ -26,6 +26,7 @@ NSString *const PGServerStartingName           = @"Starting";
 NSString *const PGServerStartedName            = @"Started";
 NSString *const PGServerStoppingName           = @"Stopping";
 NSString *const PGServerStoppedName            = @"Stopped";
+NSString *const PGServerDeletingName           = @"Deleting";
 NSString *const PGServerRetryingName           = @"Retrying";
 NSString *const PGServerUpdatingName           = @"Updating";
 
@@ -147,7 +148,7 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
 }
 - (void)setValid
 {
-    self.invalidUsername = self.invalidBinDirectory = self.invalidDataDirectory = self.invalidLogFile = self.invalidPort = NO;
+    self.invalidUsername = self.invalidBinDirectory = self.invalidDataDirectory = self.invalidLogFile = self.invalidPort = nil;
 }
 
 - (void)importAllSettings:(PGServerSettings *)settings
@@ -263,12 +264,7 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
     if (properties[PGServerStartupKey]) self.settings.startup = ToServerStartup(properties[PGServerStartupKey]);
 }
 
-- (BOOL)canStartAtLogin
-{
-    return !self.settings.hasDifferentUser;
-}
-
-- (BOOL)daemonInRootContext
+- (BOOL)daemonForAllUsers
 {
     // Internal server
     if (!self.external) {
@@ -278,40 +274,37 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
         
     // External server
     } else {
-        return self.daemonAllowedContext == PGServerDaemonContextRootOnly;
+        return self.daemonAllowedContext == PGServerDaemonContextRoot;
     }
 }
 
-- (NSString *)daemonFileBoot
+- (NSString *)daemonFileForAllUsersAtBoot
 {
-    return [NSString stringWithFormat:@"%@/%@.plist", PGLaunchdDaemonFileBootDir, self.daemonName];
+    return [NSString stringWithFormat:@"%@/%@.plist", PGLaunchdDaemonForAllUsersAtBootDir, self.daemonName];
 }
-- (NSString *)daemonFileGlobal
+- (NSString *)daemonFileForAllUsersAtLogin
 {
-    return [NSString stringWithFormat:@"%@/%@.plist", PGLaunchdDaemonFileLoginGlobalDir, self.daemonName];
+    return [NSString stringWithFormat:@"%@/%@.plist", PGLaunchdDaemonForAllUsersAtLoginDir, self.daemonName];
 }
-- (NSString *)daemonFileUser
+- (NSString *)daemonFileForCurrentUserOnly
 {
-    return [NSString stringWithFormat:@"%@/%@.plist", PGLaunchdDaemonFileLoginUserDir, self.daemonName];
+    return [NSString stringWithFormat:@"%@/%@.plist", PGLaunchdDaemonForCurrentUserOnlyDir, self.daemonName];
 }
 - (NSString *)daemonFile
 {
+    if (!self.daemonForAllUsers) return self.daemonFileForCurrentUserOnly;
+    
     // Internal
     if (!self.external) {
         return self.settings.startup == PGServerStartupAtBoot ?
-            self.daemonFileBoot :
-            self.daemonFileUser;
+            self.daemonFileForAllUsersAtBoot :
+            self.daemonFileForAllUsersAtLogin;
     
     // External
     } else {
-        if (self.daemonInRootContext) {
-            return FileExists(self.daemonFileBoot) ?
-                self.daemonFileBoot :
-                self.daemonFileGlobal;
-        } else {
-            return self.daemonFileUser;
-        }
-        
+        return FileExists(self.daemonFileForAllUsersAtBoot) ?
+            self.daemonFileForAllUsersAtBoot :
+            self.daemonFileForAllUsersAtLogin;
     }
 }
 
@@ -322,8 +315,15 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
 
 - (NSString *)daemonLog
 {
-    NSString *logDir = self.daemonInRootContext ? PGLaunchdDaemonLogRootDir : PGLaunchdDaemonLogUserDir;
-    return [NSString stringWithFormat:@"%@/%@.log", logDir, self.daemonName];
+    // Internal
+    if (!self.external) {
+        NSString *logDir = self.daemonForAllUsers ? PGLaunchdDaemonLogRootDir : PGLaunchdDaemonLogUserDir;
+        return [NSString stringWithFormat:@"%@/%@.log", logDir, self.daemonName];
+        
+    // External
+    } else {
+        return self.settings.logFile;
+    }
 }
 
 - (BOOL)daemonLogExists
@@ -372,7 +372,7 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
             self.daemonLogExists?@"YES":@"NO",
             self.daemonFile,
             self.daemonFileExists?@"YES":@"NO",
-            self.daemonInRootContext?@"YES":@"NO",
+            self.daemonForAllUsers?@"YES":@"NO",
             self.settings.description];
 }
 

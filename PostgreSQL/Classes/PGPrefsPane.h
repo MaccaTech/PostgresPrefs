@@ -69,10 +69,13 @@
 @property (weak) IBOutlet NSTextField *dataDirectoryField;
 @property (weak) IBOutlet NSTextField *logFileField;
 @property (weak) IBOutlet NSTextField *portField;
-@property (weak) IBOutlet NSButton *revertSettingsButton;
-@property (weak) IBOutlet NSButton *applySettingsButton;
+@property (weak) IBOutlet NSImageView *invalidUsernameImage;
 @property (weak) IBOutlet NSImageView *invalidBinDirectoryImage;
 @property (weak) IBOutlet NSImageView *invalidDataDirectoryImage;
+@property (weak) IBOutlet NSImageView *invalidLogFileImage;
+@property (weak) IBOutlet NSImageView *invalidPortImage;
+@property (weak) IBOutlet NSButton *revertSettingsButton;
+@property (weak) IBOutlet NSButton *applySettingsButton;
 @end
 
 
@@ -124,6 +127,11 @@
 @property (weak) IBOutlet NSTextField *dataDirectoryField;
 @property (weak) IBOutlet NSTextField *logFileField;
 @property (weak) IBOutlet NSTextField *portField;
+@property (weak) IBOutlet NSImageView *invalidUsernameImage;
+@property (weak) IBOutlet NSImageView *invalidBinDirectoryImage;
+@property (weak) IBOutlet NSImageView *invalidDataDirectoryImage;
+@property (weak) IBOutlet NSImageView *invalidLogFileImage;
+@property (weak) IBOutlet NSImageView *invalidPortImage;
 @property (weak) IBOutlet NSMatrix *startupMatrix;
 @property (weak) IBOutlet NSButtonCell *startupAtBootCell;
 @property (weak) IBOutlet NSButtonCell *startupAtLoginCell;

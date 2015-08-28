@@ -71,7 +71,6 @@ CG_INLINE void DebugLog(NSString *logFile, Class clazz, const char *func, NSStri
 #else /* ! DEBUG */
 #
 #   define DLog(...)
-#   define DLogInit(...)
 #   define IsLogging NO
 #
 #endif /* DEBUG */

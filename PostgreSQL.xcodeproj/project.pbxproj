@@ -12,7 +12,6 @@
 		20079E771B48061100521807 /* PGPrefsPane.h in Headers */ = {isa = PBXBuildFile; fileRef = 20079E6D1B48061100521807 /* PGPrefsPane.h */; };
 		20079E781B48061100521807 /* PGPrefsPane.m in Sources */ = {isa = PBXBuildFile; fileRef = 20079E6E1B48061100521807 /* PGPrefsPane.m */; };
 		20079E791B48061100521807 /* Common.h in Headers */ = {isa = PBXBuildFile; fileRef = 20079E701B48061100521807 /* Common.h */; };
-		20079E8A1B4807E200521807 /* PGPrefsPostgreSQL.sh in Resources */ = {isa = PBXBuildFile; fileRef = 20079E871B4807E200521807 /* PGPrefsPostgreSQL.sh */; };
 		20079E8B1B4807E200521807 /* PGPrefsRunAsAdmin.applescript in Sources */ = {isa = PBXBuildFile; fileRef = 20079E881B4807E200521807 /* PGPrefsRunAsAdmin.applescript */; };
 		20079E981B48086300521807 /* checking.png in Resources */ = {isa = PBXBuildFile; fileRef = 20079E8D1B48086300521807 /* checking.png */; };
 		20079E991B48086300521807 /* elephant.png in Resources */ = {isa = PBXBuildFile; fileRef = 20079E8E1B48086300521807 /* elephant.png */; };
@@ -46,6 +45,10 @@
 		20BBC29814AD1E7600BA0859 /* README.pod in Resources */ = {isa = PBXBuildFile; fileRef = 20BBC29714AD1E7600BA0859 /* README.pod */; };
 		20BBC29A14AD201A00BA0859 /* README.pod.html in Resources */ = {isa = PBXBuildFile; fileRef = 20BBC29914AD201A00BA0859 /* README.pod.html */; };
 		20BCE7351B775450000AA376 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20BCE7341B775450000AA376 /* ServiceManagement.framework */; };
+		20D192BC1B8E109000F75981 /* PGFile.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D192BA1B8E109000F75981 /* PGFile.h */; };
+		20D192BD1B8E109000F75981 /* PGFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 20D192BB1B8E109000F75981 /* PGFile.m */; };
+		20D192C01B8FA3DA00F75981 /* PGRights.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D192BE1B8FA3DA00F75981 /* PGRights.h */; };
+		20D192C11B8FA3DA00F75981 /* PGRights.m in Sources */ = {isa = PBXBuildFile; fileRef = 20D192BF1B8FA3DA00F75981 /* PGRights.m */; };
 		20E969821B51574600013B0E /* PGServerDataStore.h in Headers */ = {isa = PBXBuildFile; fileRef = 20E969801B51574600013B0E /* PGServerDataStore.h */; };
 		20E969831B51574600013B0E /* PGServerDataStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 20E969811B51574600013B0E /* PGServerDataStore.m */; };
 		20E9698A1B51AEB900013B0E /* PGData.h in Headers */ = {isa = PBXBuildFile; fileRef = 20E969881B51AEB900013B0E /* PGData.h */; };
@@ -59,7 +62,6 @@
 		20079E6D1B48061100521807 /* PGPrefsPane.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGPrefsPane.h; sourceTree = "<group>"; };
 		20079E6E1B48061100521807 /* PGPrefsPane.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGPrefsPane.m; sourceTree = "<group>"; };
 		20079E701B48061100521807 /* Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
-		20079E871B4807E200521807 /* PGPrefsPostgreSQL.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = PGPrefsPostgreSQL.sh; sourceTree = "<group>"; };
 		20079E881B4807E200521807 /* PGPrefsRunAsAdmin.applescript */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.applescript; path = PGPrefsRunAsAdmin.applescript; sourceTree = "<group>"; };
 		20079E8D1B48086300521807 /* checking.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checking.png; sourceTree = "<group>"; };
 		20079E8E1B48086300521807 /* elephant.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = elephant.png; sourceTree = "<group>"; };
@@ -102,6 +104,10 @@
 		20BBC29714AD1E7600BA0859 /* README.pod */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.pod; sourceTree = SOURCE_ROOT; };
 		20BBC29914AD201A00BA0859 /* README.pod.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = README.pod.html; sourceTree = "<group>"; };
 		20BCE7341B775450000AA376 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
+		20D192BA1B8E109000F75981 /* PGFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGFile.h; sourceTree = "<group>"; };
+		20D192BB1B8E109000F75981 /* PGFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGFile.m; sourceTree = "<group>"; };
+		20D192BE1B8FA3DA00F75981 /* PGRights.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGRights.h; sourceTree = "<group>"; };
+		20D192BF1B8FA3DA00F75981 /* PGRights.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGRights.m; sourceTree = "<group>"; };
 		20E969801B51574600013B0E /* PGServerDataStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGServerDataStore.h; sourceTree = "<group>"; };
 		20E969811B51574600013B0E /* PGServerDataStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGServerDataStore.m; sourceTree = "<group>"; };
 		20E969881B51AEB900013B0E /* PGData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGData.h; sourceTree = "<group>"; };
@@ -154,10 +160,14 @@
 				201A6A7C1B5C2F3F005B691B /* Debug.h */,
 				20E969881B51AEB900013B0E /* PGData.h */,
 				20E969891B51AEB900013B0E /* PGData.m */,
+				20D192BA1B8E109000F75981 /* PGFile.h */,
+				20D192BB1B8E109000F75981 /* PGFile.m */,
 				209E77841B60C38300E8AF69 /* PGLaunchd.h */,
 				209E77851B60C38300E8AF69 /* PGLaunchd.m */,
 				20B628C51B4973BE003F8557 /* PGProcess.h */,
 				20B628C61B4973BE003F8557 /* PGProcess.m */,
+				20D192BE1B8FA3DA00F75981 /* PGRights.h */,
+				20D192BF1B8FA3DA00F75981 /* PGRights.m */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -165,7 +175,6 @@
 		20079E851B4807E200521807 /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
-				20079E871B4807E200521807 /* PGPrefsPostgreSQL.sh */,
 				20079E881B4807E200521807 /* PGPrefsRunAsAdmin.applescript */,
 			);
 			path = Scripts;
@@ -268,9 +277,11 @@
 				20B628C11B495154003F8557 /* PGServer.h in Headers */,
 				20727F881B4C7971002BBCCC /* PGServerController.h in Headers */,
 				20079E771B48061100521807 /* PGPrefsPane.h in Headers */,
+				20D192BC1B8E109000F75981 /* PGFile.h in Headers */,
 				20079E751B48061100521807 /* PGPrefsController.h in Headers */,
 				20079E791B48061100521807 /* Common.h in Headers */,
 				209E77861B60C38300E8AF69 /* PGLaunchd.h in Headers */,
+				20D192C01B8FA3DA00F75981 /* PGRights.h in Headers */,
 				20E969821B51574600013B0E /* PGServerDataStore.h in Headers */,
 				2086E18F1B57B55800F2B292 /* PGSearchController.h in Headers */,
 				20E9698A1B51AEB900013B0E /* PGData.h in Headers */,
@@ -329,7 +340,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				20079E8A1B4807E200521807 /* PGPrefsPostgreSQL.sh in Resources */,
 				20079E9C1B48086300521807 /* refresh.png in Resources */,
 				20079EA21B48086300521807 /* stopped.png in Resources */,
 				20A43B401B5FF7F5000E7D8A /* stopping.png in Resources */,
@@ -369,12 +379,14 @@
 			files = (
 				20727F891B4C7971002BBCCC /* PGServerController.m in Sources */,
 				209E77871B60C38300E8AF69 /* PGLaunchd.m in Sources */,
+				20D192BD1B8E109000F75981 /* PGFile.m in Sources */,
 				20B628C21B495154003F8557 /* PGServer.m in Sources */,
 				2086E1901B57B55800F2B292 /* PGSearchController.m in Sources */,
 				20079E8B1B4807E200521807 /* PGPrefsRunAsAdmin.applescript in Sources */,
 				20E969831B51574600013B0E /* PGServerDataStore.m in Sources */,
 				20E9698B1B51AEB900013B0E /* PGData.m in Sources */,
 				20B628C81B4973BE003F8557 /* PGProcess.m in Sources */,
+				20D192C11B8FA3DA00F75981 /* PGRights.m in Sources */,
 				20079E781B48061100521807 /* PGPrefsPane.m in Sources */,
 				20079E761B48061100521807 /* PGPrefsController.m in Sources */,
 			);

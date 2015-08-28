@@ -27,6 +27,7 @@ extern NSString *const PGServerStartingName;
 extern NSString *const PGServerStartedName;
 extern NSString *const PGServerStoppingName;
 extern NSString *const PGServerStoppedName;
+extern NSString *const PGServerDeletingName;
 extern NSString *const PGServerRetryingName;
 extern NSString *const PGServerUpdatingName;
 
@@ -46,14 +47,15 @@ typedef NS_ENUM(NSInteger, PGServerStatus) {
     PGServerStarted,
     PGServerStopping,
     PGServerStopped,
+    PGServerDeleting,
     PGServerRetrying,
     PGServerUpdating
 };
 
 typedef NS_ENUM(NSInteger, PGServerDaemonContext) {
-    PGServerDaemonContextBoth = 0,
-    PGServerDaemonContextRootOnly,
-    PGServerDaemonContextUserOnly
+    PGServerDaemonContextEither = 0,
+    PGServerDaemonContextRoot,
+    PGServerDaemonContextUser
 };
 
 CG_INLINE NSString *
@@ -65,6 +67,7 @@ ServerStatusDescription(PGServerStatus value)
         case PGServerStarted: return PGServerStartedName;
         case PGServerStopping: return PGServerStoppingName;
         case PGServerStopped:return PGServerStoppedName;
+        case PGServerDeleting: return PGServerDeletingName;
         case PGServerRetrying:return PGServerRetryingName;
         case PGServerUpdating:return PGServerUpdatingName;
     }
@@ -120,14 +123,17 @@ ServerStartupDescription(PGServerStartup value)
 /// If YES, the username is different to the current user
 - (BOOL)hasDifferentUser;
 
-// Validity
+/// All fields are valid
 - (BOOL)valid;
+/// Flag all fields as valid
 - (void)setValid;
-@property (nonatomic) BOOL invalidUsername;
-@property (nonatomic) BOOL invalidBinDirectory;
-@property (nonatomic) BOOL invalidDataDirectory;
-@property (nonatomic) BOOL invalidLogFile;
-@property (nonatomic) BOOL invalidPort;
+
+// Invalid descriptions
+@property (nonatomic) NSString *invalidUsername;
+@property (nonatomic) NSString *invalidBinDirectory;
+@property (nonatomic) NSString *invalidDataDirectory;
+@property (nonatomic) NSString *invalidLogFile;
+@property (nonatomic) NSString *invalidPort;
 
 /**
  * Overrides all values from other settings.
@@ -173,9 +179,6 @@ ServerStartupDescription(PGServerStartup value)
 /// If YES, this server's dirty settings are different to the active settings
 @property (nonatomic) BOOL dirty;
 
-/// If NO, the server cannot be started at login, only at boot. This is the case when the username is different to the current user.
-@property (nonatomic, readonly) BOOL canStartAtLogin;
-
 /// The current status of the server
 @property (nonatomic) PGServerStatus status;
 
@@ -191,17 +194,26 @@ ServerStartupDescription(PGServerStartup value)
 /// The fully-qualified name of the server
 @property (nonatomic, strong) NSString *daemonName;
 
-/// Only useful for external servers. Internal servers by default can use both contexts (root and user). But external servers are restricted to the context they were detected in.
+/// Only useful for external servers. Internal servers by default can use either contexts (root and user). But external servers are restricted to the context they were detected in.
 @property (nonatomic) PGServerDaemonContext daemonAllowedContext;
 
-/// If YES, then the server is loaded into the root launchd context, so "check status" commands must be run as root. A server needs authorization if: (1) it has a different username or (2) it is run on boot
-@property (nonatomic, readonly) BOOL daemonInRootContext;
+/// If YES, then the server is loaded into the launchd 'system' domain (running as root). This is the case if: (1) it has a different username or (2) it is run on boot
+@property (nonatomic, readonly) BOOL daemonForAllUsers;
 
 /// The daemon .plist file used to start the server using launchd
 @property (nonatomic, strong, readonly) NSString *daemonFile;
 
 /// If YES, the daemon file exists
 @property (nonatomic, readonly) BOOL daemonFileExists;
+
+/// The daemon .plist file for all users with auto-startup at boot
+@property (nonatomic, readonly) NSString *daemonFileForAllUsersAtBoot;
+
+/// The daemon .plist file for all users with auto-startup at login
+@property (nonatomic, readonly) NSString *daemonFileForAllUsersAtLogin;
+
+/// The daemon .plist file for the current user only
+@property (nonatomic, readonly) NSString *daemonFileForCurrentUserOnly;
 
 /// The daemon's log file for stdout & stderr
 @property (nonatomic, strong, readonly) NSString *daemonLog;

@@ -141,9 +141,9 @@ ObjectBefore(id object, NSArray *array)
     
     self.authorization = nil;
 }
-- (AuthorizationRights *)authorizationRights
+- (PGRights *)rights
 {
-    return self.serverController.authorizationRights;
+    return self.serverController.rights;
 }
 
 
@@ -202,11 +202,13 @@ ObjectBefore(id object, NSArray *array)
 }
 - (void)userDidRenameServer:(NSString *)name
 {
+    PGServer *server = self.server;
+    if (!server) return;
+    
     AuthorizationRef authorization = [self authorize];
     if (!authorization) return;
     
-    PGServer *server = self.server;
-    PGServerAction finalAction = self.server.status == PGServerStarted ? PGServerStart : PGServerCreate;
+    PGServerAction finalAction = server.status == PGServerStarted || server.status == PGServerRetrying ? PGServerStart : PGServerCreate;
     BackgroundThread(^{
         // First stop and delete the existing server
         [self.serverController runAction:PGServerDelete server:server authorization:authorization succeeded:^{
@@ -220,7 +222,7 @@ ObjectBefore(id object, NSArray *array)
                 BOOL succeeded = [self.serverController setName:newName forServer:server];
                 
                 // Save
-                if (succeeded) succeeded = [self.dataStore saveServer:self.server];
+                if (succeeded) succeeded = [self.dataStore saveServer:server];
                 
                 // Save failed - restore backup
                 if (!succeeded) {
@@ -327,9 +329,9 @@ ObjectBefore(id object, NSArray *array)
         PGServer *server = self.server;
         BackgroundThread(^{
             [self.serverController runAction:action server:server authorization:authorization succeeded:^{
-                
-                [self checkStatus:server];
-                
+                BackgroundThreadAfterDelay(0.2, ^{
+                    [self checkStatus:server];
+                });
             } failed:nil];
         });
         
@@ -377,11 +379,13 @@ ObjectBefore(id object, NSArray *array)
 }
 - (void)userDidApplySettings
 {
+    PGServer *server = self.server;
+    if (server.external) return;
+    
     AuthorizationRef authorization = [self authorize];
     if (!authorization) return;
     
-    PGServer *server = self.server;
-    PGServerAction finalAction = self.server.status == PGServerStarted || self.server.status == PGServerRetrying ? PGServerStart : PGServerCreate;
+    PGServerAction finalAction = server.status == PGServerStarted || server.status == PGServerRetrying ? PGServerStart : PGServerCreate;
     BackgroundThread(^{
         if (!server.dirtySettings) return;
         
@@ -422,14 +426,15 @@ ObjectBefore(id object, NSArray *array)
 }
 - (void)userDidChangeServerStartup:(NSString *)startup
 {
+    PGServer *server = self.server;
+    if (server.external) return;
+    
     // Revert startup in GUI if user cancelled authorization
     AuthorizationRef authorization = [self authorize];
     if (!authorization) {
-        [self.viewController prefsController:self didRevertServerStartup:self.server];
+        [self.viewController prefsController:self didRevertServerStartup:server];
         return;
     }
-    
-    PGServer *server = self.server;
     
     // Backup existing
     PGServerStartup oldStartup = server.settings.startup;
@@ -449,9 +454,8 @@ ObjectBefore(id object, NSArray *array)
     }
     
     // Run script
-    PGServerAction action = server.status == PGServerStarted || server.status == PGServerRetrying ? PGServerStart : PGServerCreate;
     BackgroundThread(^{
-        [self.serverController runAction:action server:server authorization:authorization succeeded:^{
+        [self.serverController runAction:PGServerCreate server:server authorization:authorization succeeded:^{
             
             [self checkStatus:server];
             
@@ -622,7 +626,7 @@ ObjectBefore(id object, NSArray *array)
     if (!PGPrefsMonitorServersEnabled) return;
     
     // Schedule re-run
-    BackgroundThreadAfterDelay(^{ [self pollServer:server key:key]; }, PGServersPollTime);
+    BackgroundThreadAfterDelay(PGServersPollTime, ^{ [self pollServer:server key:key]; });
 }
 - (void)startMonitoringLaunchd
 {
@@ -645,7 +649,7 @@ ObjectBefore(id object, NSArray *array)
         if (!PGPrefsMonitorServersEnabled) return;
         
         // Schedule re-run
-        BackgroundThreadAfterDelay(^{ [self pollLaunchd:key]; }, PGServersPollTime);
+        BackgroundThreadAfterDelay(PGServersPollTime, ^{ [self pollLaunchd:key]; });
     };
     
     // Find servers in launchd

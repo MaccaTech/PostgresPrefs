@@ -11,6 +11,7 @@
 #import "PGServer.h"
 #import "PGLaunchd.h"
 #import "PGProcess.h"
+#import "PGFile.h"
 
 #pragma mark - Constants
 
@@ -22,9 +23,17 @@ extern NSString *const PGServerDeleteName;
 
 typedef NS_ENUM(NSInteger, PGServerAction) {
     PGServerCheckStatus = 0,
+    
+    /// Restart the server. Internal servers: validate settings, recreate plist file, create log file
     PGServerStart,
+    
+    /// Stop the server
     PGServerStop,
+    
+    /// Stop the server then delete the plist file
     PGServerDelete,
+    
+    /// Recreate the plist file
     PGServerCreate
 };
 
@@ -72,8 +81,8 @@ ServerActionDescription(PGServerAction value)
 
 @property (nonatomic, weak) id<PGServerDelegate> delegate;
 
-/// The rights needed to run server actions
-@property (nonatomic, readonly) AuthorizationRights *authorizationRights;
+/// The rights required to perform controller actions
+@property (nonatomic, readonly) PGRights *rights;
 
 /**
  * Runs the action on the PostgreSQL server using launchctl
