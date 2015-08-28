@@ -38,7 +38,7 @@ Features include:
 
 B<Compatible> with all PostgreSQL installations - including
     
-=for html <a href="http://russbrooks.com/2010/11/25/install-postgresql-9-on-os-x">Homebrew</a> and <a href="http://www.postgresql.org/download/macosx/">One click installer</a>
+=for html <a href="http://www.russbrooks.com/2010/11/25/install-postgresql-9-on-os-x">Homebrew</a> and <a href="http://www.postgresql.org/download/macosx/">One click installer</a>
     
 =for text Homebrew and One click installer
 
