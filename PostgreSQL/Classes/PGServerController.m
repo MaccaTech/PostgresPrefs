@@ -39,7 +39,7 @@ EqualUsernames(NSString *user1, NSString *user2)
 }
 
 @interface NSDictionary (Helper)
-/// Returns a dictionary excluding all keys with values equal to [NSNull null]
+/// Returns a filtered copy of this dictionary, using the block to decide which keys to include
 - (NSDictionary *)filteredDictionaryUsingBlock:(BOOL(^)(id key, id value))block;
 @end
 
@@ -82,7 +82,7 @@ EqualUsernames(NSString *user1, NSString *user2)
 /**
  * Called after running the action
  */
-- (void)didRunAction:(PGServerAction)action server:(PGServer *)server previousStatus:(PGServerStatus)previousStatus result:(id)result;
+- (void)didRunAction:(PGServerAction)action server:(PGServer *)server previousStatus:(PGServerStatus)previousStatus;
 
 /**
  * Populates all derived properties of server after initial creation.
@@ -95,9 +95,9 @@ EqualUsernames(NSString *user1, NSString *user2)
 - (void)initSettings:(PGServer *)server;
 
 /**
- * Sets the server status and error, and makes any required changes to other properties.
+ * Parse the program args used to launch postgres (in an agent file, or process lookup).
  */
-- (void)setStatus:(PGServerStatus)status error:(NSString *)error forServer:(PGServer *)server;
+- (void)populateSettings:(PGServerSettings *)settings fromProgramArgs:(NSArray *)args;
 
 /**
  * Splits the full name into its component parts
@@ -132,14 +132,6 @@ EqualUsernames(NSString *user1, NSString *user2)
 
 #pragma mark Main Methods
 
-- (BOOL)shouldCheckStatusForServer:(PGServer *)server authorization:(AuthorizationRef)authorization
-{
-    if (!server) return NO;
-    if (server.processing) return NO;
-    
-    return YES;
-}
-
 - (void)runAction:(PGServerAction)action server:(PGServer *)server authorization:(AuthorizationRef)authorization
 {
     [self runAction:action server:server authorization:authorization succeeded:nil failed:nil];
@@ -147,10 +139,13 @@ EqualUsernames(NSString *user1, NSString *user2)
 
 - (void)runAction:(PGServerAction)action server:(PGServer *)server authorization:(AuthorizationRef)authorization succeeded:(void (^)(void))succeeded failed:(void (^)(NSString *error))failed
 {
+    // Abort quickly
+    if (!server) return;
+    if (server.processing && action == PGServerCheckStatus) return;
+    
     // One action at a time for a server
     @synchronized(server) {
     
-    id result = nil;
     NSString *error = nil;
     OSStatus authStatus = errAuthorizationSuccess;
         
@@ -179,15 +174,11 @@ EqualUsernames(NSString *user1, NSString *user2)
     switch (action) {
             
         case PGServerCheckStatus:
-            result = [self loadedServerWithName:server.daemonName forRootUser:server.daemonForAllUsers authorization:authorization authStatus:&authStatus error:&error];
-            
-            // Internal server - check both contexts
-            if (!result && !error && !server.external)
-                result = [self loadedServerWithName:server.daemonName forRootUser:!server.daemonForAllUsers authorization:authorization authStatus:&authStatus error:&error];
+            [self checkStatusForServer:server];
             break;
             
         case PGServerStop:
-            [self unloadDaemonForServer:server all:!server.external authorization:authorization authStatus:&authStatus error:&error];
+            [self stopServer:server all:!server.external authorization:authorization authStatus:&authStatus error:&error];
             break;
             
         case PGServerStart:
@@ -196,7 +187,7 @@ EqualUsernames(NSString *user1, NSString *user2)
                 // Validate
                 if (![self validateSettingsForServer:server authorization:authorization authStatus:&authStatus error:&error]) break;
                 // Unload
-                if (![self unloadDaemonForServer:server all:YES authorization:authorization authStatus:&authStatus error:&error]) break;
+                if (![self stopServer:server all:YES authorization:authorization authStatus:&authStatus error:&error]) break;
                 // Delete
                 if (![self deleteDaemonFileForServer:server all:YES authorization:authorization authStatus:&authStatus error:&error]) break;
                 // Create Daemon
@@ -209,14 +200,14 @@ EqualUsernames(NSString *user1, NSString *user2)
             // External server
             } else {
                 // Unload
-                if (![self unloadDaemonForServer:server all:NO authorization:authorization authStatus:&authStatus error:&error]) break;
+                if (![self stopServer:server all:NO authorization:authorization authStatus:&authStatus error:&error]) break;
                 // Load
                 [self loadDaemonForServer:server authorization:authorization authStatus:&authStatus error:&error];
             }
             break;
             
         case PGServerDelete:
-            if (![self unloadDaemonForServer:server all:!server.external authorization:authorization authStatus:&authStatus error:&error]) break;
+            if (![self stopServer:server all:!server.external authorization:authorization authStatus:&authStatus error:&error]) break;
             [self deleteDaemonFileForServer:server all:!server.external authorization:authorization authStatus:&authStatus error:&error];
             break;
             
@@ -244,7 +235,7 @@ EqualUsernames(NSString *user1, NSString *user2)
         
     // Check result
     } else {
-        [self didRunAction:action server:server previousStatus:previousStatus result:result];
+        [self didRunAction:action server:server previousStatus:previousStatus];
     }
         
     } // End synchronized
@@ -302,6 +293,19 @@ EqualUsernames(NSString *user1, NSString *user2)
     return YES;
 }
 
+- (BOOL)stopServer:(PGServer *)server all:(BOOL)all authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
+{
+    if (![self unloadDaemonForServer:server all:all authorization:authorization authStatus:authStatus error:error]) return NO;
+    
+    if (!server.pid) return YES;
+    
+    // Check stopped
+    PGProcess *process = [PGProcess runningProcessWithPid:server.pid];
+    if (!process) return YES;
+    
+    // Still running - kill
+    return [PGProcess kill:server.pid forRootUser:YES authorization:authorization authStatus:authStatus error:error];
+}
 - (BOOL)unloadDaemonForServer:(PGServer *)server all:(BOOL)all authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
 {
     if (![PGLaunchd stopDaemonWithName:server.daemonName forRootUser:server.daemonForAllUsers authorization:authorization authStatus:authStatus error:error]) return NO;
@@ -347,10 +351,54 @@ EqualUsernames(NSString *user1, NSString *user2)
     return YES;
 }
 
-- (PGServer *)loadedServerWithName:(NSString *)name forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
+- (PGServer *)runningServerWithPid:(NSInteger)pid
 {
-    NSDictionary *daemon = [PGLaunchd loadedDaemonWithName:name forRootUser:root authorization:authorization authStatus:authStatus error:error];
+    return [self serverFromProcess:[PGProcess runningProcessWithPid:pid]];
+}
+
+- (PGServer *)loadedServerWithName:(NSString *)name forRootUser:(BOOL)root
+{
+    NSDictionary *daemon = [PGLaunchd loadedDaemonWithName:name forRootUser:root];
     return [self serverFromDaemon:daemon forRootUser:root];
+}
+
+- (PGServer *)serverFromProcess:(PGProcess *)process
+{
+    if (!process) return nil;
+    
+    NSArray *args = [process.command componentsSeparatedByString:@" "];
+    // Need to fix the problem of spaces in paths
+    // E.g. ~/Library/Application Support/Postgres
+    // This is incorrectly interpreted as 2 args
+    NSMutableArray *programArgs = [NSMutableArray arrayWithCapacity:args.count];
+    NSMutableString *buffer = [NSMutableString string];
+    for (NSString *arg in args) {
+        
+        // New arg type, flush previous one
+        if ([arg hasPrefix:@"-"] && arg.length == 2) {
+            if (buffer.length > 0) {
+                [programArgs addObject:[NSString stringWithString:buffer]];
+                [buffer deleteCharactersInRange:NSMakeRange(0,buffer.length)];
+            }
+            [programArgs addObject:arg];
+            
+        // Append to previous string
+        } else {
+            [buffer appendString:@" "];
+            [buffer appendString:arg];
+        }
+    }
+    if (buffer.length > 0) [programArgs addObject:[NSString stringWithString:buffer]];
+    
+    PGServerSettings *settings = [[PGServerSettings alloc] init];
+    [self populateSettings:settings fromProgramArgs:programArgs];
+    if (!settings.binDirectory) return nil;
+    
+    NSString *name = [NSString stringWithFormat:@"localhost.[PID:%@]", @(process.pid)];
+    PGServer *result = [self serverFromSettings:settings name:name domain:@"localhost"];
+    result.pid = process.pid;
+    result.status = PGServerStarted;
+    return result;
 }
 
 - (PGServer *)serverFromDaemonFile:(NSString *)file
@@ -383,14 +431,14 @@ EqualUsernames(NSString *user1, NSString *user2)
     DLog(@"Daemon: %@", daemon);
     
     NSString *daemonName = TrimToNil(ToString(daemon[@"Label"]));
-    NSString *daemonUsername = TrimToNil(ToString(daemon[@"UserName"]));
     NSArray *daemonProgramArgs = ToArray(daemon[@"ProgramArguments"]);
     NSDictionary *daemonEnvironmentVars = ToDictionary(daemon[@"EnvironmentVariables"]);
     NSString *daemonStdout = TrimToNil(ToString(daemon[@"StandardOutPath"]));
     NSString *daemonStderr = TrimToNil(ToString(daemon[@"StandardErrorPath"]));
     NSString *daemonWorkingDir = TrimToNil(ToString(daemon[@"WorkingDirectory"]));
+    NSString *daemonUsername = TrimToNil(ToString(daemon[@"UserName"]));
     
-    NSUInteger index; // Used during parse
+    PGServerSettings *settings = [[PGServerSettings alloc] init];
     
     // Name & Domain
     if (!daemonName) return nil;
@@ -410,72 +458,46 @@ EqualUsernames(NSString *user1, NSString *user2)
         externalServer = YES;
     }
     
-    // Username
-    NSString *username = daemonUsername;
+    // Parse Program Args
+    [self populateSettings:settings fromProgramArgs:daemonProgramArgs];
     
-    // Bin Directory
-    if (daemonProgramArgs.count == 0) return nil;
-    NSString *filepath = ToString(daemonProgramArgs[0]);
-    NSString *executable = [[filepath lastPathComponent] lowercaseString];
-    
-    // Abort if not a Postgres agent, unless created by this tool
-    if (externalServer && !(
-       [executable isEqualToString:@"postgres"] ||
-       [executable isEqualToString:@"pg_ctl"] ||
-       [executable isEqualToString:@"postmaster"])
-    ) return nil;
-    NSString *binDirectory = [filepath stringByDeletingLastPathComponent];
+    // No postgres executable found - abort if external
+    if (!NonBlank(settings.binDirectory) && externalServer) return nil;
     
     // Data Directory
-    NSString *dataDirectory = nil;
-    index = [daemonProgramArgs indexOfObject:@"-D"];
-    if (index != NSNotFound && index+1 < daemonProgramArgs.count) {
-        dataDirectory = ToString(daemonProgramArgs[index+1]);
+    if (!NonBlank(settings.dataDirectory)) {
+        settings.dataDirectory = ToString(daemonEnvironmentVars[@"PGDATA"]);
     }
-    if (!NonBlank(dataDirectory)) {
-        for (NSString *daemonProgramArg in daemonProgramArgs) {
-            NSString *arg = TrimToNil(daemonProgramArg);
-            if ([arg hasPrefix:@"-D"]) dataDirectory = [arg substringFromIndex:2];
-        }
-    }
-    if (!NonBlank(dataDirectory)) {
-        dataDirectory = ToString(daemonEnvironmentVars[@"PGDATA"]);
-    }
-    if (!NonBlank(dataDirectory)) {
-        dataDirectory = daemonWorkingDir;
+    if (!NonBlank(settings.dataDirectory)) {
+        settings.dataDirectory = daemonWorkingDir;
     }
     
     // Log File
-    NSString *logFile = nil;
-    index = [daemonProgramArgs indexOfObject:@"-r"];
-    if (index != NSNotFound && index+1 < daemonProgramArgs.count) {
-        logFile = ToString(daemonProgramArgs[index+1]);
-    }
     // Only use STDOUT/STDERR if agent was not created by this tool
-    if (!NonBlank(logFile) && externalServer) {
-        logFile = ToString(daemonStderr);
-        if (!NonBlank(logFile)) logFile = ToString(daemonStdout);
+    if (!NonBlank(settings.logFile) && externalServer) {
+        settings.logFile = ToString(daemonStderr);
+        if (!NonBlank(settings.logFile)) settings.logFile = ToString(daemonStdout);
     }
     
     // Port
-    NSString *port = nil;
-    index = [daemonProgramArgs indexOfObject:@"-p"];
-    if (index != NSNotFound && index+1 < daemonProgramArgs.count) {
-        port = ToString(daemonProgramArgs[index+1]);
-    }
-    if (!NonBlank(port)) {
-        port = ToString(daemonEnvironmentVars[@"PGPORT"]);
+    if (!NonBlank(settings.port)) {
+        settings.port = ToString(daemonEnvironmentVars[@"PGPORT"]);
     }
     
-    // Startup
+    // Username
+    settings.username = daemonUsername;
     
     // Create server
-    PGServerSettings *settings = [[PGServerSettings alloc] initWithUsername:username binDirectory:binDirectory dataDirectory:dataDirectory logFile:logFile port:port startup:PGServerStartupManual];
     PGServer *server = [self serverFromSettings:settings name:name domain:domain];
     
     // Set status
     NSString *pid = ToString(daemon[@"PID"]);
-    server.status = NonBlank(pid) ? PGServerStarted : PGServerRetrying;
+    if (NonBlank(pid)) {
+        server.status = PGServerStarted;
+        server.pid = pid.integerValue;
+    } else {
+        server.status = PGServerRetrying;
+    }
     
     return server;
 }
@@ -629,22 +651,6 @@ EqualUsernames(NSString *user1, NSString *user2)
     server.dirty = NO;
 }
 
-- (void)setStatus:(PGServerStatus)status error:(NSString *)error forServer:(PGServer *)server
-{
-    PGServerStatus oldStatus = server.status;
-    NSString *oldError = server.error;
-    
-    if (error) server.error = TrimToNil(error);
-    server.status = status;
-    
-    if (oldStatus != server.status ||
-        oldError != server.error ||
-        ![oldError isEqualToString:server.error])
-    {
-        [self.delegate didChangeServerStatus:server];
-    }
-}
-
 - (void)initServer:(PGServer *)server
 {
     // Internal vs External based on domain
@@ -768,69 +774,119 @@ EqualUsernames(NSString *user1, NSString *user2)
             server.status = previousStatus;
             server.error = error;
             break;
-        case PGServerCheckStatus:
-            server.status = PGServerStatusUnknown;
-            server.error = error;
-            break;
+        case PGServerCheckStatus: break; // Do nothing
     }
 }
 
-- (void)didRunAction:(PGServerAction)action server:(PGServer *)server previousStatus:(PGServerStatus)previousStatus result:(id)result
+- (void)didRunAction:(PGServerAction)action server:(PGServer *)server previousStatus:(PGServerStatus)previousStatus
 {
-    // Start or Stop
-    if (action == PGServerStart || action == PGServerStop || action == PGServerCreate || action == PGServerDelete) {
-        
-        NSString *output = ToString(result);
-        
-        // If the command returned anything, it must be an error
-        if (output) {
-            [self didFailAction:action server:server previousStatus:previousStatus error:output];
-        
-        // Succeeded
-        } else {
-            switch (action) {
-                // Will always call check status afterwards to confirm if really did start
-                case PGServerStart: server.status = PGServerStarting; break;
-                case PGServerStop: server.status = PGServerStopped; break;
-                case PGServerDelete: server.status = PGServerStopped; break;
-                case PGServerCreate: if (server.status == PGServerUpdating) server.status = previousStatus; break;
-                default: server.status = PGServerStatusUnknown;
-            }
-        }
+    switch (action) {
+        // Will always call check status afterwards to confirm if really did start
+        case PGServerStart: server.status = PGServerStarting; break;
+        case PGServerStop: server.status = PGServerStopped; break;
+        case PGServerDelete: server.status = PGServerStopped; break;
+        case PGServerCreate: if (server.status == PGServerUpdating) server.status = previousStatus; break;
+        case PGServerCheckStatus: break; // Do nothing
+    }
+}
+
+- (void)checkStatusForServer:(PGServer *)server
+{
+    // Find loaded server in default context
+    PGServer *loaded = [self loadedServerWithName:server.daemonName forRootUser:server.daemonForAllUsers];
     
-    // Check status
-    } else if (action == PGServerCheckStatus) {
+    if (!loaded) {
         
-        // Daemon not loaded
-        if (!result || ![result isKindOfClass:[PGServer class]]) {
-            server.status = PGServerStopped;
-            
-        // Agent is loaded
-        } else {
-            // Check settings match what we expect
-            PGServer *loaded = (PGServer *)result;
-            [self setStatus:loaded.status error:nil forServer:server];
-            
-            // Validate Bin Directory
-            if (NonBlank(loaded.settings.binDirectory) && !EqualPaths(loaded.settings.binDirectory, server.settings.binDirectory)) {
-                server.error = @"Running with different bin directory!";
-            
-            // Validate Data Directory
-            } else if (NonBlank(loaded.settings.dataDirectory) && !EqualPaths(loaded.settings.dataDirectory, server.settings.dataDirectory)) {
-                server.error = @"Running with different data directory!";
-            
-            // Validate Port
-            } else if (NonBlank(loaded.settings.port) && loaded.settings.port != server.settings.port && ![loaded.settings.port isEqualToString:server.settings.port]) {
-                if (NonBlank(loaded.settings.port)) server.error = [NSString stringWithFormat:@"Running on port %@!", loaded.settings.port];
-                else
-                    server.error = @"Running on a different port!";
-            
-            // Validate Username
-            } else if (NonBlank(loaded.settings.username) && !EqualUsernames(loaded.settings.username, server.settings.username)) {
-                if (NonBlank(loaded.settings.username)) server.error = [NSString stringWithFormat:@"Running as user %@", loaded.settings.username];
-                else server.error = @"Running as a different user!";
-            }
+        // Internal server - check if loaded in other context
+        if (!server.external) {
+            loaded = [self loadedServerWithName:server.daemonName forRootUser:!server.daemonForAllUsers];
+    
+        // External server - may have been detected using pid
+        } else if (server.pid) {
+            loaded = [self runningServerWithPid:server.pid];
         }
+    }
+
+    PGServerStatus prevStatus = server.status;
+    
+    // Not loaded
+    if (!loaded) {
+        server.pid = 0;
+        server.status = PGServerStopped;
+        if (server.status != prevStatus) server.error = nil;
+        
+    // Check settings match what we expect
+    } else {
+        server.pid = loaded.pid;
+        server.status = loaded.status;
+        
+        // Validate Bin Directory
+        if (NonBlank(loaded.settings.binDirectory) && !EqualPaths(loaded.settings.binDirectory, server.settings.binDirectory)) {
+            server.error = @"Running with different bin directory!";
+        
+        // Validate Data Directory
+        } else if (NonBlank(loaded.settings.dataDirectory) && !EqualPaths(loaded.settings.dataDirectory, server.settings.dataDirectory)) {
+            server.error = @"Running with different data directory!";
+        
+        // Validate Port
+        } else if (NonBlank(loaded.settings.port) && ![loaded.settings.port isEqualToString:server.settings.port]) {
+            server.error = [NSString stringWithFormat:@"Running on port %@!", loaded.settings.port];
+        
+        // Validate Username
+        } else if (NonBlank(loaded.settings.username) && !EqualUsernames(loaded.settings.username, server.settings.username)) {
+            server.error = [NSString stringWithFormat:@"Running as user %@", loaded.settings.username];
+            
+        // No problems
+        } else {
+            if (server.status != prevStatus) server.error = nil;
+        }
+    }
+}
+
+- (void)populateSettings:(PGServerSettings *)settings fromProgramArgs:(NSArray *)args
+{
+    if (!settings || args.count == 0) return;
+    
+    // Executable
+    NSString *executablePath = ToString(args[0]);
+    NSString *executable = [executablePath lastPathComponent];
+    
+    // Not PostgreSQL
+    if (!([executable isEqualToString:@"postgres"] ||
+          [executable isEqualToString:@"pg_ctl"] ||
+          [executable isEqualToString:@"postmaster"])
+        ) return;
+    
+    // Bin directory
+    settings.binDirectory = [executablePath stringByDeletingLastPathComponent];
+    
+    // Remaining args
+    NSString *argType = nil;
+    for (NSInteger i = 1; i < args.count; i++) {
+        NSString *arg = TrimToNil(ToString(args[i]));
+        if (!arg) continue;
+        if ([arg hasPrefix:@"-"]) {
+            if (arg.length == 1) { // Arg is just '-'
+                argType = nil;
+                continue;
+            }
+            argType = [arg substringWithRange:NSMakeRange(0,2)];
+            arg = TrimToNil([arg substringFromIndex:2]);
+            if (!arg) continue;
+            
+        } else if (!argType) {
+            continue;
+        }
+        
+        if ([argType isEqualToString:@"-D"]) {
+            settings.dataDirectory = arg;
+        } else if ([argType isEqualToString:@"-r"]) {
+            settings.logFile = arg;
+        } else if ([argType isEqualToString:@"-p"]) {
+            settings.port = arg;
+        }
+        
+        argType = nil;
     }
 }
 

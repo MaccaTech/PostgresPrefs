@@ -11,8 +11,32 @@
 
 /**
  * Utility class for running executables or shell commands/scripts as subprocesses.
+ *
+ * Also looks up running processes.
  */
 @interface PGProcess : NSObject
+
+/// Process id of running process
+@property (nonatomic) NSInteger pid;
+/// Parent process id of running process
+@property (nonatomic) NSInteger ppid;
+/// Command of running process
+@property (nonatomic, strong) NSString *command;
+
+/**
+ * Gets running process for specified pid.
+ */
++ (PGProcess *)runningProcessWithPid:(NSInteger)pid;
+
+/**
+ * Gets all running processes matching the name pattern.
+ */
++ (NSArray *)runningProcessesWithNameLike:(NSString *)pattern;
+
+/**
+ * Kill a process
+ */
++ (BOOL)kill:(NSInteger)pid forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error;
 
 /**
  * The rights required to run an authorized command.

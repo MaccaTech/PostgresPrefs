@@ -39,13 +39,13 @@
 @property (nonatomic, weak) PGServerController *serverController;
 
 /**
- * Searches for installed servers in background. Results returned to delegate.
+ * Searches for installed servers. Runs in background as uses spotlight, and returns results to delegate.
  */
 - (void)findInstalledServers;
 
 /**
- * Searches for loaded servers in background. Results returned in callback.
+ * @return Finds all servers either loaded in launchd or running as independent processes.
  */
-- (void)findLoadedServers:(void(^)(NSArray *servers))found authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus;
+- (NSArray *)startedServers;
 
 @end

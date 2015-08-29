@@ -39,7 +39,7 @@ CG_INLINE void DebugLog(NSString *logFile, Class clazz, const char *func, NSStri
      func,
      msg];
     
-    // Redirect stderr to console
+    // Redirect stderr to file
     if (logFile) {
         // Create log dir
         if (! [[NSFileManager defaultManager] fileExistsAtPath:logFile]) {

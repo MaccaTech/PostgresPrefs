@@ -111,7 +111,6 @@
 - (void)userDidViewLog;
 
 // PGServerDelegate
-- (void)didChangeServerStatus:(PGServer *)server;
 - (void)postgreServer:(PGServer *)server willRunAction:(PGServerAction)action;
 - (void)postgreServer:(PGServer *)server didSucceedAction:(PGServerAction)action;
 - (void)postgreServer:(PGServer *)server didFailAction:(PGServerAction)action error:(NSString *)error;

@@ -483,12 +483,6 @@ ObjectBefore(id object, NSArray *array)
 
 #pragma mark PGServerDelegate
 
-- (void)didChangeServerStatus:(PGServer *)server
-{
-    MainThread(^{
-        [self.viewController prefsController:self didChangeServerStatus:server];
-    });
-}
 - (void)postgreServer:(PGServer *)server willRunAction:(PGServerAction)action
 {
     MainThread(^{
@@ -533,8 +527,6 @@ ObjectBefore(id object, NSArray *array)
 
 - (void)checkStatus:(PGServer *)server
 {
-    if (![self.serverController shouldCheckStatusForServer:server authorization:self.authorization]) return;
-        
     BackgroundThread(^{
         [self.serverController runAction:PGServerCheckStatus server:server authorization:self.authorization];
     });
@@ -630,37 +622,18 @@ ObjectBefore(id object, NSArray *array)
 }
 - (void)startMonitoringLaunchd
 {
-    BackgroundThread(^{ [self pollLaunchd:self.serversMonitorKey]; });
+    BackgroundThread(^{ [self detectExternalServers:self.serversMonitorKey]; });
 }
-- (void)pollLaunchd:(id)key
+- (void)detectExternalServers:(id)key
 {
     if (!key) return;
     
     // Ensure not stopped
     if (key != self.serversMonitorKey) return;
     
-    // For scheduling next cycle
-    void(^scheduleNextCycle)() = ^{
-        
-        // Ensure not stopped
-        if (key != self.serversMonitorKey) return;
-        
-        // Global disable auto-monitoring
-        if (!PGPrefsMonitorServersEnabled) return;
-        
-        // Schedule re-run
-        BackgroundThreadAfterDelay(PGServersPollTime, ^{ [self pollLaunchd:key]; });
-    };
-    
-    // Find servers in launchd
-    AuthorizationRef authorization = self.authorization;
-    [self.searchController findLoadedServers:^(NSArray *loadedServers) {
-        
-        // None found
-        if (loadedServers.count == 0) {
-            scheduleNextCycle();
-            return;
-        }
+    // Add any new external servers
+    NSArray *loadedServers = [self.searchController startedServers];
+    if (loadedServers.count > 0) {
         
         // Get existing servers by name
         NSArray *existingServers = self.dataStore.servers;
@@ -671,45 +644,47 @@ ObjectBefore(id object, NSArray *array)
         }
         
         // Calculcate servers to add
-        NSMutableArray *toAdd = loadedServers.count == 0 ? nil : [NSMutableArray arrayWithCapacity:loadedServers.count];
+        NSMutableArray *toAdd = [NSMutableArray arrayWithCapacity:loadedServers.count];
         for (PGServer *server in loadedServers) {
-            if (NonBlank(server.name) && !existingLookup[server.name]) [toAdd addObject:server];
-        }
-        if (toAdd.count == 0) {
-            DLog(@"No loaded servers to add!");
-            return;
-        }
-        
-        // If the server's daemon file exists, get more information from that
-        for (PGServer *serverFromLaunchd in toAdd) {
-            if (!serverFromLaunchd.daemonFileExists) continue;
+            if (!NonBlank(server.name)) continue;
+            if (existingLookup[server.name]) continue;
+            [toAdd addObject:server];
             
-            PGServer *serverFromFile = [self.serverController serverFromDaemonFile:serverFromLaunchd.daemonFile ];
-            if (![serverFromFile.daemonName isEqualToString:serverFromLaunchd.daemonName]) continue;
+            // If server's daemon file exists, get more information from that
+            if (!server.daemonFileExists) continue;
+            PGServer *serverFromFile = [self.serverController serverFromDaemonFile:server.daemonFile ];
+            if (![serverFromFile.daemonName isEqualToString:server.daemonName]) continue;
             
             // Replace settings with file settings (because they're always more complete!)
-            [self.serverController setSettings:serverFromFile.settings forServer:serverFromLaunchd];
+            [self.serverController setSettings:serverFromFile.settings forServer:server];
         }
         
         // Add servers
-        MainThread(^{
-            for (PGServer *server in toAdd) {
-                [self.dataStore saveServer:server];
-                [self startMonitoringServer:server];
-            }
-            
-            self.servers = self.dataStore.servers;
-            [self.viewController prefsController:self didChangeServers:self.servers];
-            if (!self.server) {
-                self.server = self.servers.firstObject;
-                [self.viewController prefsController:self didChangeSelectedServer:self.server];
-            }
-        });
-     
-        // Repeat
-        scheduleNextCycle();
-        
-    } authorization:authorization authStatus:nil];
+        if (toAdd.count > 0) {
+            MainThread(^{
+                for (PGServer *server in toAdd) {
+                    [self.dataStore saveServer:server];
+                    [self startMonitoringServer:server];
+                }
+                
+                self.servers = self.dataStore.servers;
+                [self.viewController prefsController:self didChangeServers:self.servers];
+                if (!self.server) {
+                    self.server = self.servers.firstObject;
+                    [self.viewController prefsController:self didChangeSelectedServer:self.server];
+                }
+            });
+        }
+    }
+    
+    // Ensure not stopped
+    if (key != self.serversMonitorKey) return;
+    
+    // Global disable auto-monitoring
+    if (!PGPrefsMonitorServersEnabled) return;
+    
+    // Schedule re-run
+    BackgroundThreadAfterDelay(PGServersPollTime, ^{ [self detectExternalServers:key]; });
 }
 
 @end

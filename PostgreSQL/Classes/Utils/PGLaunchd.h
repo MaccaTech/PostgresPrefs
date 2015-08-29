@@ -24,12 +24,12 @@
 /**
  * Gets list of daemon names loaded in root user's or current user's launchd
  */
-+ (NSArray *)loadedDaemonsWithNameLike:(NSString *)pattern forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error;
++ (NSArray *)loadedDaemonsWithNameLike:(NSString *)pattern forRootUser:(BOOL)root;
 
 /**
  * Gets properties of daemons loaded in root users's or current user's launchd
  */
-+ (NSDictionary *)loadedDaemonWithName:(NSString *)name forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error;
++ (NSDictionary *)loadedDaemonWithName:(NSString *)name forRootUser:(BOOL)root;
 
 /**
  * Loads the daemon in launchd from the specified daemon property file.

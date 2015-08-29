@@ -182,6 +182,9 @@ ServerStartupDescription(PGServerStartup value)
 /// The current status of the server
 @property (nonatomic) PGServerStatus status;
 
+/// The PID of the server's process, if running
+@property (nonatomic) NSInteger pid;
+
 /// If YES, this server is starting or stopping
 @property (nonatomic) BOOL processing;
 

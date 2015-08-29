@@ -141,26 +141,58 @@
     [self findServersFromEnterpriseDB];
 }
 
-- (void)findLoadedServers:(void(^)(NSArray *servers))found authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus
+- (NSArray *)startedServers
 {
-    BackgroundThread(^{
-        
-        NSMutableArray *servers = [NSMutableArray array];
-        [self addLoadedServersForRootUser:YES authorization:authorization authStatus:authStatus toServers:servers];
-        [self addLoadedServersForRootUser:NO authorization:authorization authStatus:authStatus toServers:servers];
-        
-        if (found) found(servers);
-    });
+    NSArray *loadedServers = [self loadedServers];
+    NSArray *runningServers = [self runningServers];
+    
+    if (loadedServers.count == 0) return runningServers;
+    if (runningServers.count == 0) return loadedServers;
+
+    // Combine servers lists
+    NSMutableArray *result = [NSMutableArray arrayWithCapacity:loadedServers.count + runningServers.count];
+    [result addObjectsFromArray:loadedServers];
+    
+    // Only add running servers that weren't started by launchd
+    NSMutableDictionary *pids = [NSMutableDictionary dictionaryWithCapacity:loadedServers.count];
+    for (PGServer *server in loadedServers) {
+        if (server.pid > 0) pids[@(server.pid)] = [NSNull null];
+    }
+    for (PGServer *server in runningServers) {
+        if (server.pid <= 0) continue;
+        if (pids[@(server.pid)]) continue;
+        [result addObject:server];
+    }
+    
+    return [NSArray arrayWithArray:result];
 }
 
 
 
 #pragma mark Servers
 
-- (void)addLoadedServersForRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus toServers:(NSMutableArray *)servers
+- (NSArray *)runningServers
 {
-    NSString *error = nil;
-    NSArray *daemons = [PGLaunchd loadedDaemonsWithNameLike:@"*postgre*" forRootUser:root authorization:authorization authStatus:authStatus error:&error];
+    NSArray *processes = [PGProcess runningProcessesWithNameLike:@".*postgre.*"];
+    if (processes.count == 0) return nil;
+    
+    NSMutableArray *result = [NSMutableArray arrayWithCapacity:processes.count];
+    for (PGProcess *process in processes) {
+        PGServer *server = [self.serverController serverFromProcess:process];
+        if (server) [result addObject:server];
+    }
+    return result.count == 0 ? nil : [NSArray arrayWithArray:result];
+}
+- (NSArray *)loadedServers
+{
+    NSMutableArray *result = [NSMutableArray array];
+    [self addLoadedServersForRootUser:YES toServers:result];
+    [self addLoadedServersForRootUser:NO toServers:result];
+    return result.count == 0 ? nil : [NSArray arrayWithArray:result];
+}
+- (void)addLoadedServersForRootUser:(BOOL)root toServers:(NSMutableArray *)servers
+{
+    NSArray *daemons = [PGLaunchd loadedDaemonsWithNameLike:@"*postgre*" forRootUser:root];
     if (daemons.count == 0) return;
     
     for (NSDictionary *daemon in daemons) {

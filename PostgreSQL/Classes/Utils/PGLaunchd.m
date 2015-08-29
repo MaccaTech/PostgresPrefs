@@ -38,7 +38,7 @@
     return rights;
 }
 
-+ (NSArray *)loadedDaemonsWithNameLike:(NSString *)pattern forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
++ (NSArray *)loadedDaemonsWithNameLike:(NSString *)pattern forRootUser:(BOOL)root
 {
     pattern = TrimToNil(pattern);
     
@@ -49,7 +49,7 @@
     return pattern ? [allJobs filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"Label LIKE[cd] %@", pattern]] : allJobs;
 }
 
-+ (NSDictionary *)loadedDaemonWithName:(NSString *)name forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
++ (NSDictionary *)loadedDaemonWithName:(NSString *)name forRootUser:(BOOL)root
 {
     name = TrimToNil(name);
     if (!name) return nil;
@@ -83,16 +83,7 @@
     if (!name) return NO;
     
     // Silently ignore if daemon not loaded
-    NSString *lookupError = nil;
-    if (![self loadedDaemonWithName:name forRootUser:root authorization:authorization authStatus:authStatus error:&lookupError])
-    {
-        // Cannot silently ignore - error during lookup
-        if (lookupError) {
-            if (error) *error = lookupError;
-            return NO;
-        }
-        return YES;
-    }
+    if (![self loadedDaemonWithName:name forRootUser:root]) return YES;
     
     // Execute
     NSString *command = [NSString stringWithFormat:@"launchctl remove \"%@\" && sleep 1", name];

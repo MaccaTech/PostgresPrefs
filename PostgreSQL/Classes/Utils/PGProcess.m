@@ -12,6 +12,8 @@
 
 @interface PGProcess ()
 
+- (id)initWithPid:(NSInteger)pid ppid:(NSInteger)ppid command:(NSString *)command;
+
 /**
  * @return the applescript file that makes it possible to run an executable with authorization
  */
@@ -44,9 +46,71 @@
 
 
 
-#pragma mark - PGShell
+#pragma mark - PGProcess
 
 @implementation PGProcess
+
+#pragma mark Running Processes
+
+- (id)initWithPid:(NSInteger)pid ppid:(NSInteger)ppid command:(NSString *)command
+{
+    self = [super init];
+    if (self) {
+        _pid = pid;
+        _ppid = ppid;
+        _command = command;
+    }
+    return self;
+}
+
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"%@ %@ %@", @(_pid), @(_ppid), _command];
+}
+
++ (PGProcess *)processFromPsCommandOutput:(NSString *)output
+{
+    if (!NonBlank(output)) return nil;
+    
+    static NSRegularExpression *regex = nil;
+    if (!regex) regex = [NSRegularExpression regularExpressionWithPattern:@"\\A\\s*([\\d]+)\\s*([\\d]+)\\s*(.*?)\\s*\\z" options:0 error:nil];
+    
+    NSTextCheckingResult *match = [regex firstMatchInString:output options:0 range:NSMakeRange(0,output.length)];
+    if (match.numberOfRanges != 4) return nil;
+    
+    NSString *pid = [output substringWithRange:[match rangeAtIndex:1]];
+    NSString *ppid = [output substringWithRange:[match rangeAtIndex:2]];
+    NSString *command = [output substringWithRange:[match rangeAtIndex:3]];
+    return [[PGProcess alloc] initWithPid:pid.integerValue ppid:ppid.integerValue command:command];
+}
++ (PGProcess *)runningProcessWithPid:(NSInteger)pid
+{
+    NSString *command = [NSString stringWithFormat:@"ps -o pid,ppid,command -p %@ | grep %@", @(pid), @(pid)];
+    return [self processFromPsCommandOutput:[self runShellCommand:command error:nil]];
+}
++ (NSArray *)runningProcessesWithNameLike:(NSString *)pattern
+{
+    NSString *command = [NSString stringWithFormat:@"ps -eao pid,ppid,command | grep -v grep | grep -i '%@'", pattern];
+    NSArray *lines = [[self runShellCommand:command error:nil] componentsSeparatedByString:@"\n"];
+    if (lines.count == 0) return nil;
+    
+    NSMutableArray *result = [NSMutableArray arrayWithCapacity:lines.count];
+    for (NSString *line in lines) {
+        PGProcess *process = [self processFromPsCommandOutput:line];
+        if (process) [result addObject:process];
+    }
+    return result.count == 0 ? nil : [NSArray arrayWithArray:result];
+}
+
++ (BOOL)kill:(NSInteger)pid forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
+{
+    if (pid <= 0) return NO;
+    
+    NSString *command = [NSString stringWithFormat:@"kill %@", @(pid)];
+    return [self runShellCommand:command forRootUser:root authorization:authorization authStatus:authStatus error:error];
+}
+
+
 
 #pragma mark Authorization
 
@@ -133,7 +197,7 @@
 
 
 
-#pragma mark Executabless
+#pragma mark Executables
 
 + (BOOL)startExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args error:(NSString *__autoreleasing *)error
 {

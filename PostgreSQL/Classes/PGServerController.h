@@ -59,7 +59,6 @@ ServerActionDescription(PGServerAction value)
  */
 @protocol PGServerDelegate <NSObject>
 @required
-- (void)didChangeServerStatus:(PGServer *)server;
 - (void)postgreServer:(PGServer *)server willRunAction:(PGServerAction)action;
 - (void)postgreServer:(PGServer *)server didRunAction:(PGServerAction)action;
 - (void)postgreServer:(PGServer *)server didSucceedAction:(PGServerAction)action;
@@ -100,9 +99,19 @@ ServerActionDescription(PGServerAction value)
 - (void)runAction:(PGServerAction)action server:(PGServer *)server authorization:(AuthorizationRef)authorization succeeded:(void(^)(void))succeeded failed:(void(^)(NSString *error))failed;
 
 /**
- * Gets the loaded server from launchd with the specified name, or nil if not loaded.
+ * Lookup up a server running on the system by pid.
  */
-- (PGServer *)loadedServerWithName:(NSString *)name forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error;
+- (PGServer *)runningServerWithPid:(NSInteger)pid;
+
+/**
+ * Lookup up a server loaded in launchd by name.
+ */
+- (PGServer *)loadedServerWithName:(NSString *)name forRootUser:(BOOL)root;
+
+/**
+ * Converts running process to a server.
+ */
+- (PGServer *)serverFromProcess:(PGProcess *)process;
 
 /**
  * Converts launchd daemon properties to a server, from a file.
@@ -168,10 +177,5 @@ ServerActionDescription(PGServerAction value)
  * Makes the dirty settings equal to the active settings, and sets dirty flag to NO
  */
 - (void)clean:(PGServer *)server;
-
-/**
- * @return YES if can check server status, because either have authorization or server doesn't need it
- */
-- (BOOL)shouldCheckStatusForServer:(PGServer *)server authorization:(AuthorizationRef)authorization;
 
 @end
