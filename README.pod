@@ -233,7 +233,7 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
 <tr>
     <td>v2.4</td>
     <td>30-Aug 2015</td>
-    <td>Bugfix release
+    <td>Bug-fix release
         <ul>
         <li>Automatically detect all PostgreSQL processes running on system, not just daemons</li>
         <li>Fixed leaving 'ghost' process running after stopping Postgresapp.com server</li>
