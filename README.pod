@@ -235,9 +235,10 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
     <td>30-Aug 2015</td>
     <td>Bugfix release
         <ul>
-        <li>Automatically detect all running PostgreSQL processes, not just daemons</li>
-        <li>Fixed stopping Postgresapp.com server would leave process still running</li>
-        <li>Fixed server auto-detection could stop running in some situations</li>
+        <li>Automatically detect all PostgreSQL processes running on system, not just daemons</li>
+        <li>Fixed leaving 'ghost' process running after stopping Postgresapp.com server</li>
+        <li>Fixed background thread for detecting running servers could stop unintentionally</li>
+        <li>Fixed View Log becoming disabled if change startup setting for running server</li>
         </ul>
     </td>
 </tr>
