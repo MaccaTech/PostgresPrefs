@@ -121,7 +121,7 @@ ServerActionDescription(PGServerAction value)
 /**
  * Converts launchd daemon properties to a server, from a daemon loaded in launchd.
  */
-- (PGServer *)serverFromDaemon:(NSDictionary *)daemon forRootUser:(BOOL)root;
+- (PGServer *)serverFromLoadedDaemon:(NSDictionary *)daemon forRootUser:(BOOL)root;
 
 /**
  * Converts a server to launchd daemon properties.

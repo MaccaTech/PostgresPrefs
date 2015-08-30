@@ -26,7 +26,7 @@ NSString *const PGServerStartingName           = @"Starting";
 NSString *const PGServerStartedName            = @"Started";
 NSString *const PGServerStoppingName           = @"Stopping";
 NSString *const PGServerStoppedName            = @"Stopped";
-NSString *const PGServerDeletingName           = @"Deleting";
+NSString *const PGServerDeletingName           = @"Removing";
 NSString *const PGServerRetryingName           = @"Retrying";
 NSString *const PGServerUpdatingName           = @"Updating";
 
@@ -264,6 +264,13 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
     if (properties[PGServerStartupKey]) self.settings.startup = ToServerStartup(properties[PGServerStartupKey]);
 }
 
+- (BOOL)running
+{
+    return _status == PGServerStarting ||
+        _status == PGServerStarted ||
+        _status == PGServerRetrying;
+}
+
 - (BOOL)daemonForAllUsers
 {
     // Internal server
@@ -274,7 +281,7 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
         
     // External server
     } else {
-        return self.daemonAllowedContext == PGServerDaemonContextRoot;
+        return self.daemonLoadedForAllUsers;
     }
 }
 
@@ -317,7 +324,10 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
 {
     // Internal
     if (!self.external) {
-        NSString *logDir = self.daemonForAllUsers ? PGLaunchdDaemonLogRootDir : PGLaunchdDaemonLogUserDir;
+        
+        // If started, use the context the server was loaded in. Otherwise, use the default.
+        BOOL root = self.running ? self.daemonLoadedForAllUsers : self.daemonForAllUsers;
+        NSString *logDir = root ? PGLaunchdDaemonLogRootDir : PGLaunchdDaemonLogUserDir;
         return [NSString stringWithFormat:@"%@/%@.log", logDir, self.daemonName];
         
     // External

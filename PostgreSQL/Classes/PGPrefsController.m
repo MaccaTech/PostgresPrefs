@@ -208,7 +208,7 @@ ObjectBefore(id object, NSArray *array)
     AuthorizationRef authorization = [self authorize];
     if (!authorization) return;
     
-    PGServerAction finalAction = server.status == PGServerStarted || server.status == PGServerRetrying ? PGServerStart : PGServerCreate;
+    PGServerAction finalAction = server.running ? PGServerStart : PGServerCreate;
     BackgroundThread(^{
         // First stop and delete the existing server
         [self.serverController runAction:PGServerDelete server:server authorization:authorization succeeded:^{
@@ -385,7 +385,7 @@ ObjectBefore(id object, NSArray *array)
     AuthorizationRef authorization = [self authorize];
     if (!authorization) return;
     
-    PGServerAction finalAction = server.status == PGServerStarted || server.status == PGServerRetrying ? PGServerStart : PGServerCreate;
+    PGServerAction finalAction = server.running ? PGServerStart : PGServerCreate;
     BackgroundThread(^{
         if (!server.dirtySettings) return;
         
@@ -652,7 +652,7 @@ ObjectBefore(id object, NSArray *array)
             
             // If server's daemon file exists, get more information from that
             if (!server.daemonFileExists) continue;
-            PGServer *serverFromFile = [self.serverController serverFromDaemonFile:server.daemonFile ];
+            PGServer *serverFromFile = [self.serverController serverFromDaemonFile:server.daemonFile];
             if (![serverFromFile.daemonName isEqualToString:server.daemonName]) continue;
             
             // Replace settings with file settings (because they're always more complete!)

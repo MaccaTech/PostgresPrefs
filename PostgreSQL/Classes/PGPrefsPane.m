@@ -842,7 +842,7 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 
 - (void)showDeleting
 {
-    [self showStatusWithName:@"Deleting..."
+    [self showStatusWithName:@"Removing..."
                       colour:PGServerDeletingColor
                        image:PGServerDeletingImage
                         info:nil

@@ -52,12 +52,6 @@ typedef NS_ENUM(NSInteger, PGServerStatus) {
     PGServerUpdating
 };
 
-typedef NS_ENUM(NSInteger, PGServerDaemonContext) {
-    PGServerDaemonContextEither = 0,
-    PGServerDaemonContextRoot,
-    PGServerDaemonContextUser
-};
-
 CG_INLINE NSString *
 ServerStatusDescription(PGServerStatus value)
 {
@@ -66,10 +60,10 @@ ServerStatusDescription(PGServerStatus value)
         case PGServerStarting: return PGServerStartingName;
         case PGServerStarted: return PGServerStartedName;
         case PGServerStopping: return PGServerStoppingName;
-        case PGServerStopped:return PGServerStoppedName;
+        case PGServerStopped: return PGServerStoppedName;
         case PGServerDeleting: return PGServerDeletingName;
-        case PGServerRetrying:return PGServerRetryingName;
-        case PGServerUpdating:return PGServerUpdatingName;
+        case PGServerRetrying: return PGServerRetryingName;
+        case PGServerUpdating: return PGServerUpdatingName;
     }
 }
 
@@ -188,6 +182,9 @@ ServerStartupDescription(PGServerStartup value)
 /// If YES, this server is starting or stopping
 @property (nonatomic) BOOL processing;
 
+/// If YES, this server is starting, started or retrying
+@property (nonatomic, readonly) BOOL running;
+
 /// Any error that has been thrown when carrying out a server action
 @property (nonatomic, strong) NSString *error;
 
@@ -197,11 +194,13 @@ ServerStartupDescription(PGServerStartup value)
 /// The fully-qualified name of the server
 @property (nonatomic, strong) NSString *daemonName;
 
-/// Only useful for external servers. Internal servers by default can use either contexts (root and user). But external servers are restricted to the context they were detected in.
-@property (nonatomic) PGServerDaemonContext daemonAllowedContext;
-
-/// If YES, then the server is loaded into the launchd 'system' domain (running as root). This is the case if: (1) it has a different username or (2) it is run on boot
+/// If YES, then the server should be loaded in the launchd root context.
+/// For Internal servers, YES if it has a different username or requires startup-at-boot
+/// For External servers, YES if it was previously loaded in the root context
 @property (nonatomic, readonly) BOOL daemonForAllUsers;
+
+/// If YES, the daemon was previously loaded in the launchd root context.
+@property (nonatomic) BOOL daemonLoadedForAllUsers;
 
 /// The daemon .plist file used to start the server using launchd
 @property (nonatomic, strong, readonly) NSString *daemonFile;

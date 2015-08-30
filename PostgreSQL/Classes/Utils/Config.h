@@ -101,8 +101,6 @@
 #define PGServerRetryingName ComMaccatechPostgreServerRetrying
 #define PGServerUpdatingName ComMaccatechPostgreServerUpdating
 
-#define PGServerDaemonContext ComMaccatechPostgreServerDaemonContext
-
 #define PGServerAction ComMaccatechPostgreServerAction
 #define PGServerCheckStatusName ComMaccatechPostgreServerCheckStatusName
 #define PGServerStartName ComMaccatechPostgreServerStartName

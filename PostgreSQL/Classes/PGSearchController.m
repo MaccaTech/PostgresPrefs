@@ -196,7 +196,7 @@
     if (daemons.count == 0) return;
     
     for (NSDictionary *daemon in daemons) {
-        PGServer *server = [self.serverController serverFromDaemon:daemon forRootUser:root];
+        PGServer *server = [self.serverController serverFromLoadedDaemon:daemon forRootUser:root];
         if (server) [servers addObject:server];
     }
 }

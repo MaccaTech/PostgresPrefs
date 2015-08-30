@@ -359,7 +359,7 @@ EqualUsernames(NSString *user1, NSString *user2)
 - (PGServer *)loadedServerWithName:(NSString *)name forRootUser:(BOOL)root
 {
     NSDictionary *daemon = [PGLaunchd loadedDaemonWithName:name forRootUser:root];
-    return [self serverFromDaemon:daemon forRootUser:root];
+    return [self serverFromLoadedDaemon:daemon forRootUser:root];
 }
 
 - (PGServer *)serverFromProcess:(PGProcess *)process
@@ -410,17 +410,16 @@ EqualUsernames(NSString *user1, NSString *user2)
     return result;
 }
 
-- (PGServer *)serverFromDaemon:(NSDictionary *)daemon forRootUser:(BOOL)root
+- (PGServer *)serverFromLoadedDaemon:(NSDictionary *)daemon forRootUser:(BOOL)root
 {
     PGServer *result = [self serverFromDaemon:daemon];
-    if (result.external) {
-        if (root) {
-            result.daemonAllowedContext = PGServerDaemonContextRoot;
-            result.name = [NSString stringWithFormat:@"root@%@", result.name];
-        } else {
-            result.daemonAllowedContext = PGServerDaemonContextUser;
-        }
-    }
+    result.daemonLoadedForAllUsers = root;
+    
+    // A server with the same Label could potentially be loaded in BOTH the root and user contexts.
+    // For Internal servers, these are treated as the same server.
+    // For External servers, these must be treated as different, so root@ is prepended to name.
+    if (result.external && root) result.name = [NSString stringWithFormat:@"root@%@", result.name];
+    
     return result;
 }
 
@@ -794,7 +793,6 @@ EqualUsernames(NSString *user1, NSString *user2)
 {
     // Find loaded server in default context
     PGServer *loaded = [self loadedServerWithName:server.daemonName forRootUser:server.daemonForAllUsers];
-    
     if (!loaded) {
         
         // Internal server - check if loaded in other context
@@ -819,6 +817,7 @@ EqualUsernames(NSString *user1, NSString *user2)
     } else {
         server.pid = loaded.pid;
         server.status = loaded.status;
+        server.daemonLoadedForAllUsers = loaded.daemonLoadedForAllUsers;
         
         // Validate Bin Directory
         if (NonBlank(loaded.settings.binDirectory) && !EqualPaths(loaded.settings.binDirectory, server.settings.binDirectory)) {
