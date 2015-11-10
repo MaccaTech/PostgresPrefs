@@ -266,7 +266,7 @@ EqualUsernames(NSString *user1, NSString *user2)
     }
 
     // Username
-    if (NonBlank(settings.username) && ![PGProcess runShellCommand:[NSString stringWithFormat:@"id -u %@", settings.username] forRootUser:YES authorization:authorization authStatus:authStatus error:error]) {
+    if (NonBlank(settings.username) && ![PGProcess runShellCommand:[NSString stringWithFormat:@"id -u %@ >/dev/null", settings.username] forRootUser:YES authorization:authorization authStatus:authStatus error:error]) {
         settings.invalidUsername = @"No such user";
     }
     
