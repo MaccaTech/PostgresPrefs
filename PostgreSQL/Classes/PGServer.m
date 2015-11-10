@@ -212,7 +212,6 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
         self.domain = domain;
         self.settings = settings;
         self.dirtySettings = [PGServerSettings settingsWithSettings:settings];
-        self.dirtySettings = nil;
         self.status = PGServerStatusUnknown;
         self.error = nil;
     }
@@ -264,10 +263,9 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
     if (properties[PGServerStartupKey]) self.settings.startup = ToServerStartup(properties[PGServerStartupKey]);
 }
 
-- (BOOL)running
+- (BOOL)started
 {
-    return _status == PGServerStarting ||
-        _status == PGServerStarted ||
+    return _status == PGServerStarted ||
         _status == PGServerRetrying;
 }
 
@@ -326,7 +324,7 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
     if (!self.external) {
         
         // If started, use the context the server was loaded in. Otherwise, use the default.
-        BOOL root = self.running ? self.daemonLoadedForAllUsers : self.daemonForAllUsers;
+        BOOL root = self.started ? self.daemonLoadedForAllUsers : self.daemonForAllUsers;
         NSString *logDir = root ? PGLaunchdDaemonLogRootDir : PGLaunchdDaemonLogUserDir;
         return [NSString stringWithFormat:@"%@/%@.log", logDir, self.daemonName];
         

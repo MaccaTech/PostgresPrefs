@@ -98,9 +98,14 @@
 
 - (PGServer *)addServerWithName:(NSString *)prefix
 {
+    return [self addServerWithName:prefix settings:nil];
+}
+
+- (PGServer *)addServerWithName:(NSString *)prefix settings:(PGServerSettings *)settings
+{
     if (!NonBlank(prefix)) prefix = PGServerDefaultName;
     NSString *name = [self unusedServerNameWithPrefix:prefix];
-    PGServer *server = [self.serverController serverFromSettings:nil name:name domain:PGPrefsAppID];
+    PGServer *server = [self.serverController serverFromSettings:settings name:name domain:PGPrefsAppID];
     if (!server) return nil;
     
     [self addToCache:server];

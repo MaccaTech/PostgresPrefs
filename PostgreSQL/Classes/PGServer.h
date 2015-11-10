@@ -182,8 +182,8 @@ ServerStartupDescription(PGServerStartup value)
 /// If YES, this server is starting or stopping
 @property (nonatomic) BOOL processing;
 
-/// If YES, this server is starting, started or retrying
-@property (nonatomic, readonly) BOOL running;
+/// If YES, this server is started or retrying
+@property (nonatomic, readonly) BOOL started;
 
 /// Any error that has been thrown when carrying out a server action
 @property (nonatomic, strong) NSString *error;

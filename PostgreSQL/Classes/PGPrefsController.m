@@ -208,7 +208,7 @@ ObjectBefore(id object, NSArray *array)
     AuthorizationRef authorization = [self authorize];
     if (!authorization) return;
     
-    PGServerAction finalAction = server.running ? PGServerStart : PGServerCreate;
+    PGServerAction finalAction = server.started ? PGServerStart : PGServerCreate;
     BackgroundThread(^{
         // First stop and delete the existing server
         [self.serverController runAction:PGServerDelete server:server authorization:authorization succeeded:^{
@@ -253,9 +253,8 @@ ObjectBefore(id object, NSArray *array)
     if (!self.server) return;
     
     // Create the server and copy over the settings
-    PGServer *server = [self.dataStore addServerWithName:self.server.shortName];
+    PGServer *server = [self.dataStore addServerWithName:self.server.shortName settings:self.server.settings];
     if (!server) return;
-    [self.serverController setSettings:self.server.settings forServer:server];
     
     // Get the new servers list after add
     self.servers = self.dataStore.servers;
@@ -385,7 +384,7 @@ ObjectBefore(id object, NSArray *array)
     AuthorizationRef authorization = [self authorize];
     if (!authorization) return;
     
-    PGServerAction finalAction = server.running ? PGServerStart : PGServerCreate;
+    PGServerAction finalAction = server.started ? PGServerStart : PGServerCreate;
     BackgroundThread(^{
         if (!server.dirtySettings) return;
         
