@@ -343,9 +343,18 @@
     [query stopQuery];
     
     // Get the file paths found
-    NSMutableArray *files = query.resultCount == 0 ? nil : [NSMutableArray arrayWithCapacity:query.resultCount];
-    for (NSMetadataItem *item in query.results)
-        [files addObject:[item valueForAttribute:(NSString *) kMDItemPath]];
+    NSMutableArray *files = nil;
+    if (query.resultCount > 0) {
+        files = [NSMutableArray arrayWithCapacity:query.resultCount];
+        for (NSMetadataItem *item in query.results) {
+            // Bugfix in version 2.4.1 - handle fact that this may return nil
+            NSString *path = [item valueForAttribute:(NSString *) kMDItemPath];
+            if (!path) continue;
+            
+            [files addObject:path];
+        }
+        if (files.count == 0) files = nil;
+    }
     
     // Process results
     NSArray *servers = nil;
