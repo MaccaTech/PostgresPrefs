@@ -191,6 +191,9 @@
     // Script always runs as root, so need to switch user
     if (!root) command = [NSString stringWithFormat:@"su \"%@\" -c '%@'", NSUserName(), command];
     
+    // Force bash shell
+    command = [NSString stringWithFormat:@"#!/bin/bash\n%@", command];
+    
     // Execute
     return [self runExecutable:@"/usr/bin/osascript" withArgs:@[authorizingScript, command] authorization:authorization authStatus:authStatus output:output error:error];
 }
