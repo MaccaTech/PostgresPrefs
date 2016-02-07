@@ -11,7 +11,7 @@
 
 #ifdef DEBUG
 #
-CG_INLINE void DebugLog(NSString *logFile, Class clazz, const char *func, NSString* fmt, ...)
+CG_INLINE void DebugLog(NSString *logFile, const char *func, NSString* fmt, ...)
 {
     // Get log message args
     va_list argList;
@@ -65,7 +65,7 @@ CG_INLINE void DebugLog(NSString *logFile, Class clazz, const char *func, NSStri
 #   ifndef LOG_FILE
 #       define LOG_FILE nil
 #   endif
-#   define DLog(fmt, ...) DebugLog(LOG_FILE, self.class, __PRETTY_FUNCTION__, fmt, ##__VA_ARGS__)
+#   define DLog(fmt, ...) DebugLog(LOG_FILE, __PRETTY_FUNCTION__, fmt, ##__VA_ARGS__)
 #   define IsLogging YES
 #
 #else /* ! DEBUG */
