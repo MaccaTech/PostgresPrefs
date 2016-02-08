@@ -64,7 +64,7 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
         result = uid;
         uid++;
     }
-    return [NSNumber numberWithUnsignedInteger:uid].description;
+    return [NSNumber numberWithUnsignedInteger:result].description;
 }
 @end
 
