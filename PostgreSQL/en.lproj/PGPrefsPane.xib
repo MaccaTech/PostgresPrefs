@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9532" systemVersion="15D21" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9531" systemVersion="14F1509" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9532"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9531"/>
         <capability name="box content view" minToolsVersion="7.0"/>
     </dependencies>
     <objects>
@@ -41,7 +41,7 @@
                 <outlet property="startupMatrix" destination="894" id="988"/>
                 <outlet property="statusField" destination="617" id="654"/>
                 <outlet property="statusImage" destination="623" id="664"/>
-                <outlet property="statusSpinner" destination="662" id="663"/>
+                <outlet property="statusSpinner" destination="PA4-RT-Ejt" id="9Dy-I6-RSL"/>
                 <outlet property="usernameField" destination="913" id="968"/>
                 <outlet property="viewLogButton" destination="983" id="987"/>
             </connections>
@@ -262,6 +262,10 @@ To get started, add a server configuration by clicking the '+' button on the lef
                                             <rect key="frame" x="8" y="204" width="405" height="64"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <subviews>
+                                                <progressIndicator horizontalHuggingPriority="750" verticalHuggingPriority="750" maxValue="100" displayedWhenStopped="NO" bezeled="NO" indeterminate="YES" controlSize="small" style="spinning" id="PA4-RT-Ejt" userLabel="Status Spinner">
+                                                    <rect key="frame" x="207" y="44" width="16" height="16"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                </progressIndicator>
                                                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" id="623" userLabel="Status Img">
                                                     <rect key="frame" x="0.0" y="-6" width="60" height="75"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -285,10 +289,6 @@ To get started, add a server configuration by clicking the '+' button on the lef
                                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                     </textFieldCell>
                                                 </textField>
-                                                <progressIndicator wantsLayer="YES" horizontalHuggingPriority="750" verticalHuggingPriority="750" maxValue="100" displayedWhenStopped="NO" bezeled="NO" indeterminate="YES" controlSize="small" style="spinning" id="662" userLabel="Status Spinner">
-                                                    <rect key="frame" x="207" y="44" width="16" height="16"/>
-                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                </progressIndicator>
                                                 <button verticalHuggingPriority="750" id="619" userLabel="Start/Stop Btn">
                                                     <rect key="frame" x="221" y="35" width="190" height="32"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -821,7 +821,7 @@ Gw
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" rowHeight="18" rowSizeStyle="automatic" headerView="875" viewBased="YES" id="873">
-                                    <rect key="frame" x="0.0" y="0.0" width="403" height="171"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="403" height="0.0"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
