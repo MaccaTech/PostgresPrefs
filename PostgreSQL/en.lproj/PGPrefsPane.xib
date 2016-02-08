@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9531" systemVersion="14F1509" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9532" systemVersion="15D21" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9531"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9532"/>
         <capability name="box content view" minToolsVersion="7.0"/>
     </dependencies>
     <objects>
@@ -47,7 +47,7 @@
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
-        <customObject id="-3" userLabel="Application"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window title="&lt;&lt; do not localize &gt;&gt;" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" deferred="NO" oneShot="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="12" userLabel="PrefPane">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <rect key="contentRect" x="0.0" y="0.0" width="668" height="364"/>
@@ -105,12 +105,12 @@
                     <scrollView autohidesScrollers="YES" horizontalLineScroll="38" horizontalPageScroll="10" verticalLineScroll="38" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="722">
                         <rect key="frame" x="19" y="72" width="180" height="272"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <clipView key="contentView" id="fGJ-ke-L7h">
+                        <clipView key="contentView" drawsBackground="NO" id="fGJ-ke-L7h">
                             <rect key="frame" x="1" y="1" width="178" height="270"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" selectionHighlightStyle="sourceList" columnReordering="NO" columnSelection="YES" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="36" rowSizeStyle="automatic" viewBased="YES" floatsGroupRows="NO" id="723">
-                                    <rect key="frame" x="0.0" y="0.0" width="178" height="270"/>
+                                <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" columnReordering="NO" columnSelection="YES" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="36" rowSizeStyle="automatic" viewBased="YES" floatsGroupRows="NO" id="723">
+                                    <rect key="frame" x="0.0" y="0.0" width="178" height="0.0"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -207,7 +207,7 @@
                                     </connections>
                                 </tableView>
                             </subviews>
-                            <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            <nil key="backgroundColor"/>
                         </clipView>
                         <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="724">
                             <rect key="frame" x="1" y="90" width="161" height="16"/>
@@ -259,16 +259,16 @@ To get started, add a server configuration by clicking the '+' button on the lef
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <customView id="673">
-                                            <rect key="frame" x="8" y="205" width="405" height="63"/>
+                                            <rect key="frame" x="8" y="204" width="405" height="64"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <subviews>
                                                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" id="623" userLabel="Status Img">
-                                                    <rect key="frame" x="0.0" y="15" width="48" height="48"/>
+                                                    <rect key="frame" x="0.0" y="-6" width="60" height="75"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="started" id="624"/>
                                                 </imageView>
                                                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" id="613" userLabel="Status Lbl">
-                                                    <rect key="frame" x="54" y="44" width="66" height="17"/>
+                                                    <rect key="frame" x="66" y="44" width="58" height="17"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <textFieldCell key="cell" controlSize="mini" sendsActionOnEndEditing="YES" title="Status:" id="616">
                                                         <font key="font" metaFont="system"/>
@@ -277,7 +277,7 @@ To get started, add a server configuration by clicking the '+' button on the lef
                                                     </textFieldCell>
                                                 </textField>
                                                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" id="617" userLabel="Status">
-                                                    <rect key="frame" x="117" y="44" width="86" height="17"/>
+                                                    <rect key="frame" x="121" y="44" width="82" height="17"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <textFieldCell key="cell" controlSize="mini" sendsActionOnEndEditing="YES" title="Running" id="618">
                                                         <font key="font" metaFont="systemBold"/>
@@ -285,7 +285,7 @@ To get started, add a server configuration by clicking the '+' button on the lef
                                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                     </textFieldCell>
                                                 </textField>
-                                                <progressIndicator horizontalHuggingPriority="750" verticalHuggingPriority="750" maxValue="100" displayedWhenStopped="NO" bezeled="NO" indeterminate="YES" controlSize="small" style="spinning" id="662" userLabel="Status Spinner">
+                                                <progressIndicator wantsLayer="YES" horizontalHuggingPriority="750" verticalHuggingPriority="750" maxValue="100" displayedWhenStopped="NO" bezeled="NO" indeterminate="YES" controlSize="small" style="spinning" id="662" userLabel="Status Spinner">
                                                     <rect key="frame" x="207" y="44" width="16" height="16"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 </progressIndicator>
@@ -301,7 +301,7 @@ To get started, add a server configuration by clicking the '+' button on the lef
                                                     </connections>
                                                 </button>
                                                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" id="627" userLabel="Info Field">
-                                                    <rect key="frame" x="56" y="9" width="349" height="28"/>
+                                                    <rect key="frame" x="66" y="9" width="339" height="28"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <textFieldCell key="cell" controlSize="small" sendsActionOnEndEditing="YES" id="628">
                                                         <font key="font" metaFont="smallSystem"/>
@@ -312,16 +312,11 @@ To stop the server, click the Stop PostgreSQL button.</string>
                                                     </textFieldCell>
                                                 </textField>
                                                 <customView id="655" userLabel="Error View">
-                                                    <rect key="frame" x="56" y="9" width="349" height="28"/>
+                                                    <rect key="frame" x="66" y="9" width="339" height="28"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <subviews>
-                                                        <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" id="656">
-                                                            <rect key="frame" x="0.0" y="3" width="24" height="24"/>
-                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="NSInfo" id="657"/>
-                                                        </imageView>
                                                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" id="658">
-                                                            <rect key="frame" x="30" y="0.0" width="319" height="28"/>
+                                                            <rect key="frame" x="32" y="0.0" width="309" height="28"/>
                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="There has been a problem. The details of the problem will be displayed here." id="659" customClass="ComMaccatechPostgrePrefsCenteredTextFieldCell">
                                                                 <font key="font" metaFont="smallSystem"/>
@@ -329,6 +324,11 @@ To stop the server, click the Stop PostgreSQL button.</string>
                                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                             </textFieldCell>
                                                         </textField>
+                                                        <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" id="656">
+                                                            <rect key="frame" x="2" y="2" width="24" height="24"/>
+                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="NSInfo" id="657"/>
+                                                        </imageView>
                                                     </subviews>
                                                 </customView>
                                             </subviews>
@@ -1065,6 +1065,6 @@ Gw
         <image name="NSStatusAvailable" width="16" height="16"/>
         <image name="elephant_big" width="540" height="557"/>
         <image name="logo" width="200" height="40"/>
-        <image name="started" width="47" height="49"/>
+        <image name="started" width="480" height="600"/>
     </resources>
 </document>

@@ -232,10 +232,11 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
 <tbody>
 <tr>
     <td>v2.4.2</td>
-    <td>7-Feb 2016</td>
+    <td>8-Feb 2016</td>
     <td>Bug-fix release
         <ul>
         <li>Fixed error if user's default shell is fish</li>
+        <li>Improved server status icons</li>
         </ul>
     </td>
 </tr>

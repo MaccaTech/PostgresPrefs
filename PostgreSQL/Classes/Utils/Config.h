@@ -46,14 +46,14 @@
 
 // Images
 #define PGServerStatusUnknownImage @"unknown"
-#define PGServerStartingImage @"starting"
+#define PGServerStartingImage @"changing"
 #define PGServerStartedImage @"started"
-#define PGServerStoppingImage @"stopping"
+#define PGServerStoppingImage @"changing"
 #define PGServerStoppedImage @"stopped"
-#define PGServerDeletingImage @"stopping"
-#define PGServerRetryingImage @"retrying"
-#define PGServerUpdatingImage @"stopping"
-#define PGServerCheckingImage @"stopping"
+#define PGServerDeletingImage @"changing"
+#define PGServerRetryingImage @"changing"
+#define PGServerUpdatingImage @"changing"
+#define PGServerCheckingImage @"changing"
 
 // Prevent naming conflicts, as described in Mac Developer Library documentation
 #define PGPrefsPane ComMaccatechPostgrePrefsPane
