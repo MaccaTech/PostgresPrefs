@@ -1,6 +1,6 @@
 =pod
 
-=head1 PostgreSQL Mac Preferences
+=head1 Postgres Prefs
 
 =begin html
 
