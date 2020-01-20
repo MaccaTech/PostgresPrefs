@@ -46,15 +46,12 @@ EqualUsernames(NSString *user1, NSString *user2)
 @implementation NSDictionary(Helper)
 - (NSDictionary *)filteredDictionaryUsingBlock:(BOOL (^)(id, id))block
 {
-    NSArray *keysToKeep = [self.allKeys filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(id key, NSDictionary *bindings)
-    {
-        return block(key, self[key]);
-    }]];
+    NSArray *keysToKeep = [self keysOfEntriesPassingTest:^BOOL(id key, id obj, BOOL *stop) {
+        return block(key, obj);
+    }].allObjects;
     
-    if (keysToKeep == 0) return @{};
-    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:keysToKeep.count];
-    for (id key in keysToKeep) result[key] = self[key];
-    return [NSDictionary dictionaryWithDictionary:result];
+    if (keysToKeep.count == 0) return @{};
+    return [NSDictionary dictionaryWithObjects:[self objectsForKeys:keysToKeep notFoundMarker:[NSNull null]] forKeys:keysToKeep];
 }
 @end
 
@@ -937,7 +934,7 @@ EqualUsernames(NSString *user1, NSString *user2)
     NSString *result;
     if (!name) result = domain;
     else if (!domain) result = name;
-    else [NSString stringWithFormat:@"%@.%@", domain, name];
+    else result = [NSString stringWithFormat:@"%@.%@", domain, name];
     return user && result ? [NSString stringWithFormat:@"%@@%@", user, result] : result;
 }
 
