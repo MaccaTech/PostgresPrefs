@@ -8,6 +8,7 @@
 
 #import "PGLaunchd.h"
 #import <ServiceManagement/ServiceManagement.h>
+#import <SystemConfiguration/SystemConfiguration.h>
 
 #pragma mark - PGLaunchd
 
@@ -72,9 +73,13 @@
         return NO;
     }
     
+    // Get User Id
+    uid_t uid = 0;
+    SCDynamicStoreCopyConsoleUser(NULL, &uid, NULL);
+
     // Execute
-    NSString *command = [NSString stringWithFormat:@"launchctl load -F \"%@\" && sleep 1", file];
-    return [PGProcess runShellCommand:command forRootUser:root authorization:authorization authStatus:authStatus error:error];
+    NSString *command = [NSString stringWithFormat:@"launchctl bootstrap gui/%@ \"%@\" && sleep 1", @(uid), file];
+    return [PGProcess runShellCommand:command forRootUser:YES authorization:authorization authStatus:authStatus error:error];
 }
 
 + (BOOL)stopDaemonWithName:(NSString *)name forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
@@ -85,9 +90,13 @@
     // Silently ignore if daemon not loaded
     if (![self loadedDaemonWithName:name forRootUser:root]) return YES;
     
+    // Get User Id
+    uid_t uid = 0;
+    SCDynamicStoreCopyConsoleUser(NULL, &uid, NULL);
+
     // Execute
-    NSString *command = [NSString stringWithFormat:@"launchctl remove \"%@\" && sleep 1", name];
-    return [PGProcess runShellCommand:command forRootUser:root authorization:authorization authStatus:authStatus error:error];
+    NSString *command = [NSString stringWithFormat:@"launchctl bootout \"gui/%@/%@\" && sleep 1", @(uid), name];
+    return [PGProcess runShellCommand:command forRootUser:YES authorization:authorization authStatus:authStatus error:error];
 
 //
 //    See comment above - I am abandoning using SMJobRemove, as it leads to the

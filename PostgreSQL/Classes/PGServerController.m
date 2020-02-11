@@ -290,9 +290,17 @@ EqualUsernames(NSString *user1, NSString *user2)
     return YES;
 }
 
-- (BOOL)stopServer:(PGServer *)server all:(BOOL)all authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
+- (BOOL)stopServer:(PGServer *)server all:(BOOL)all authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)outerr
 {
-    if (![self unloadDaemonForServer:server all:all authorization:authorization authStatus:authStatus error:error]) return NO;
+    // 'launchctl bootout' on Catalina returns an error message,
+    // even though it succeeds. So error is not always reliable.
+    // Only return error if process is definitely still running
+    // at end of this method.
+    if (outerr) { *outerr = nil; }
+    NSString *error = nil;
+
+    // Unload using launchctl
+    [self unloadDaemonForServer:server all:all authorization:authorization authStatus:authStatus error:&error];
     
     if (!server.pid) return YES;
     
@@ -301,7 +309,15 @@ EqualUsernames(NSString *user1, NSString *user2)
     if (!process) return YES;
     
     // Still running - kill
-    return [PGProcess kill:server.pid forRootUser:YES authorization:authorization authStatus:authStatus error:error];
+    [PGProcess kill:server.pid forRootUser:YES authorization:authorization authStatus:authStatus error:&error];
+
+    // Check stopped
+    process = [PGProcess runningProcessWithPid:server.pid];
+    if (!process) return YES;
+    
+    // Still running - error
+    if (outerr) { *outerr = error; }
+    return NO;
 }
 - (BOOL)unloadDaemonForServer:(PGServer *)server all:(BOOL)all authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
 {
@@ -313,9 +329,19 @@ EqualUsernames(NSString *user1, NSString *user2)
     
     return YES;
 }
-- (BOOL)loadDaemonForServer:(PGServer *)server authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
+- (BOOL)loadDaemonForServer:(PGServer *)server authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)outerr
 {
-    return [PGLaunchd startDaemonWithFile:server.daemonFile forRootUser:server.daemonForAllUsers authorization:authorization authStatus:authStatus error:error];
+    // Create temp plist file with "Disabled" property set to false
+    NSURL *enabledDaemonFile = [self createEnabledDaemonFileForServer:server error:outerr];
+    if (!enabledDaemonFile) { return NO; }
+    
+    // Load
+    BOOL result = [PGLaunchd startDaemonWithFile:enabledDaemonFile.path forRootUser:server.daemonForAllUsers authorization:authorization authStatus:authStatus error:outerr];
+    
+    // Remove temp plist file (silently ignore any error)
+    [NSFileManager.defaultManager removeItemAtURL:enabledDaemonFile error:nil];
+    
+    return result;
 }
 - (BOOL)deleteDaemonFileForServer:(PGServer *)server all:(BOOL)all authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
 {
@@ -336,6 +362,45 @@ EqualUsernames(NSString *user1, NSString *user2)
     if (daemon.count == 0) return NO;
     
     return [PGFile createPlistFile:server.daemonFile contents:daemon owner:server.daemonForAllUsers?@"root":nil authorization:authorization authStatus:authStatus error:error];
+}
+- (NSURL *)createEnabledDaemonFileForServer:(PGServer *)server error:(NSString **)outerr
+{
+    NSURL *result = nil;
+    NSError *error = nil;
+
+    // Read daemon file
+    NSURL *daemonUrl = [NSURL fileURLWithPath:server.daemonFile.stringByExpandingTildeInPath];
+    NSMutableDictionary *daemon = [[NSMutableDictionary alloc] initWithContentsOfURL:daemonUrl error:&error];
+    if (!daemon) {
+        if (outerr) { *outerr = [NSString stringWithFormat:@"Invalid server daemon file %@: %@", server.daemonFile, (error.localizedDescription?: error.description ?: @"Unknown error")]; }
+    } else {
+        // Override disabled
+        daemon[@"Disabled"] = @NO;
+        
+        // Create temp dir
+        NSURL *dir = [NSFileManager.defaultManager URLForDirectory:NSItemReplacementDirectory inDomain:NSUserDomainMask appropriateForURL:daemonUrl create:YES error:&error];
+        if (!dir) {
+            if (outerr) { *outerr = [NSString stringWithFormat:@"Failed to create temp dir: %@", (error.localizedDescription ?: error.description)]; }
+        } else {
+            
+            // Create temp daemon file
+            NSString *filename = [NSUUID.UUID.UUIDString stringByAppendingString:@".plist"];
+            NSURL *url = [NSURL fileURLWithPath:filename relativeToURL:dir];
+            DLog(@"Create Enabled Daemon: %@\n\n%@", url.path, daemon);
+            BOOL succeeded = [daemon writeToURL:url atomically:YES];
+            if (succeeded) {
+                result = url;
+            } else {
+                if (outerr) {
+                    *outerr = [NSString stringWithFormat:@"Failed to copy PostgreSQL daemon file\nFrom: %@\nTo: %@",
+                               server.daemonFile,
+                               url.path];
+                }
+            }
+        }
+    }
+    
+    return result;
 }
 - (BOOL)createLogFileForServer:(PGServer *)server authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
 {

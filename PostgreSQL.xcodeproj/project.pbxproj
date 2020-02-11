@@ -31,6 +31,7 @@
 		20727F891B4C7971002BBCCC /* PGServerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 20727F871B4C7971002BBCCC /* PGServerController.m */; };
 		2086E18F1B57B55800F2B292 /* PGSearchController.h in Headers */ = {isa = PBXBuildFile; fileRef = 2086E18D1B57B55800F2B292 /* PGSearchController.h */; };
 		2086E1901B57B55800F2B292 /* PGSearchController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2086E18E1B57B55800F2B292 /* PGSearchController.m */; };
+		2090989123F3240F0056EEA8 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2090989023F3240E0056EEA8 /* SystemConfiguration.framework */; };
 		209E77861B60C38300E8AF69 /* PGLaunchd.h in Headers */ = {isa = PBXBuildFile; fileRef = 209E77841B60C38300E8AF69 /* PGLaunchd.h */; };
 		209E77871B60C38300E8AF69 /* PGLaunchd.m in Sources */ = {isa = PBXBuildFile; fileRef = 209E77851B60C38300E8AF69 /* PGLaunchd.m */; };
 		20A43B3F1B5FF7F5000E7D8A /* changing.png in Resources */ = {isa = PBXBuildFile; fileRef = 20A43B3D1B5FF7F5000E7D8A /* changing.png */; };
@@ -79,13 +80,14 @@
 		2035B199149C8B83009A2972 /* PostgreSQL-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "PostgreSQL-Info.plist"; sourceTree = "<group>"; };
 		2035B19B149C8B83009A2972 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		2035B19D149C8B83009A2972 /* PostgreSQL-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PostgreSQL-Prefix.pch"; sourceTree = "<group>"; };
-		2035B1A4149C8B84009A2972 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/PGPrefsPane.xib; sourceTree = "<group>"; };
 		20381A8219F0F10A00559533 /* PostgreSQL.iconset */ = {isa = PBXFileReference; lastKnownFileType = folder.iconset; path = PostgreSQL.iconset; sourceTree = "<group>"; };
+		205A0EEC23F204CF0093AF3B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/PGPrefsPane.xib; sourceTree = "<group>"; };
 		20727F861B4C7971002BBCCC /* PGServerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGServerController.h; sourceTree = "<group>"; };
 		20727F871B4C7971002BBCCC /* PGServerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGServerController.m; sourceTree = "<group>"; };
 		2078AE291B50095C00488526 /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Config.h; sourceTree = "<group>"; };
 		2086E18D1B57B55800F2B292 /* PGSearchController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGSearchController.h; sourceTree = "<group>"; };
 		2086E18E1B57B55800F2B292 /* PGSearchController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGSearchController.m; sourceTree = "<group>"; };
+		2090989023F3240E0056EEA8 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		209E77841B60C38300E8AF69 /* PGLaunchd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGLaunchd.h; sourceTree = "<group>"; };
 		209E77851B60C38300E8AF69 /* PGLaunchd.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGLaunchd.m; sourceTree = "<group>"; };
 		20A43B3D1B5FF7F5000E7D8A /* changing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = changing.png; sourceTree = "<group>"; };
@@ -112,6 +114,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2090989123F3240F0056EEA8 /* SystemConfiguration.framework in Frameworks */,
 				20BCE7351B775450000AA376 /* ServiceManagement.framework in Frameworks */,
 				20164599149E031E009ACF7A /* Security.framework in Frameworks */,
 				20164597149DFFC3009ACF7A /* SecurityInterface.framework in Frameworks */,
@@ -207,6 +210,7 @@
 		2035B18E149C8B83009A2972 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2090989023F3240E0056EEA8 /* SystemConfiguration.framework */,
 				2035B18F149C8B83009A2972 /* Cocoa.framework */,
 				20BCE7341B775450000AA376 /* ServiceManagement.framework */,
 				20164598149E031E009ACF7A /* Security.framework */,
@@ -304,14 +308,15 @@
 		2035B181149C8B83009A2972 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1010;
+				LastUpgradeCheck = 1130;
 			};
 			buildConfigurationList = 2035B184149C8B83009A2972 /* Build configuration list for PBXProject "PostgreSQL" */;
 			compatibilityVersion = "Xcode 10.0";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = 2035B17F149C8B83009A2972;
 			productRefGroup = 2035B18D149C8B83009A2972 /* Products */;
@@ -390,7 +395,7 @@
 		2035B1A3149C8B83009A2972 /* PGPrefsPane.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				2035B1A4149C8B84009A2972 /* en */,
+				205A0EEC23F204CF0093AF3B /* Base */,
 			);
 			name = PGPrefsPane.xib;
 			sourceTree = "<group>";
@@ -402,6 +407,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
@@ -444,7 +450,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "PostgreSQL/PostgreSQL-Info.plist";
 				INFOPLIST_PREFIX_HEADER = "";
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
 				PRODUCT_NAME = PostgreSQL;
@@ -456,6 +462,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
@@ -491,7 +498,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "PostgreSQL/PostgreSQL-Info.plist";
 				INFOPLIST_PREFIX_HEADER = "";
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				OTHER_CFLAGS = "";
 				PRODUCT_NAME = PostgreSQL;
 				SDKROOT = macosx;
@@ -501,14 +508,15 @@
 		2035B1A9149C8B84009A2972 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 79VG65MJG4;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "PostgreSQL/PostgreSQL-Prefix.pch";
 				INFOPLIST_FILE = "PostgreSQL/PostgreSQL-Info.plist";
 				INSTALL_PATH = "$(HOME)/Library/PreferencePanes";
+				MARKETING_VERSION = 2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.maccatech.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = PostgreSQL;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -519,14 +527,15 @@
 		2035B1AA149C8B84009A2972 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 79VG65MJG4;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "PostgreSQL/PostgreSQL-Prefix.pch";
 				INFOPLIST_FILE = "PostgreSQL/PostgreSQL-Info.plist";
 				INSTALL_PATH = "$(HOME)/Library/PreferencePanes";
+				MARKETING_VERSION = 2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.maccatech.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = PostgreSQL;
 				PROVISIONING_PROFILE_SPECIFIER = "";

@@ -11,14 +11,22 @@
 #import "PGPrefsController.h"
 #import "PGServer.h"
 
-@class PGPrefsPane;
-
 #pragma mark - PGPrefsCenteredTextFieldCell
 
 /**
  * A textfield cell whose content is center-aligned vertically
  */
 @interface PGPrefsCenteredTextFieldCell : NSTextFieldCell
+@end
+
+
+
+#pragma mark - PGPrefsNonClickableTextField
+
+/**
+ * A textfield that passes clicks to underneath view.
+ */
+@interface PGPrefsNonClickableTextField : NSTextField
 @end
 
 
@@ -53,6 +61,17 @@
 @interface PGPrefsDeleteWindow : NSWindow
 @property (weak) IBOutlet NSTextField *daemonFile;
 @property (weak) IBOutlet NSTextField *daemonDir;
+@end
+
+
+
+#pragma mark - PGPrefsErrorWindow
+
+/**
+ * A popup window showing the full output of running a server command.
+ */
+@interface PGPrefsErrorWindow : NSWindow
+@property (unsafe_unretained) IBOutlet NSTextView *errorView;
 @end
 
 
@@ -151,6 +170,9 @@
 @property (weak) IBOutlet NSTextField *infoField;
 @property (weak) IBOutlet NSView *errorView;
 @property (weak) IBOutlet NSTextField *errorField;
+@property (strong) IBOutlet PGPrefsErrorWindow *errorWindow;
+- (IBAction)showErrorWindowClicked:(id)sender;
+- (IBAction)closeErrorWindowClicked:(id)sender;
 
 // Apply/Revert Settings
 @property (strong) IBOutlet PGPrefsServerSettingsWindow *serverSettingsWindow;

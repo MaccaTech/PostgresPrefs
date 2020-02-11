@@ -228,7 +228,7 @@
 - (void)findServersFromSpotlight
 {
     NSMetadataQuery *query = [[NSMetadataQuery alloc] init];
-    query.predicate = [NSPredicate predicateWithFormat:@"kMDItemFSName like[c] %@", @"*postgre*.plist"];
+    query.predicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[[NSPredicate predicateWithFormat:@"kMDItemFSName like[c] %@", @"*postgre*"], [NSPredicate predicateWithFormat:@"kMDItemFSName like[c] %@", @"*.plist"]]];
     query.searchScopes = @[NSMetadataQueryLocalComputerScope];
     
     self.spotlightQuery = query;

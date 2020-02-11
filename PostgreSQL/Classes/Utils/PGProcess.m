@@ -190,7 +190,7 @@
     
     // Script always runs as root, so need to switch user, and force bash shell.
     if (!root) {
-        command = [NSString stringWithFormat:@"su \"%@\" -c '/bin/bash -c '\\''%@'\\'''", NSUserName(), command];
+        command = [NSString stringWithFormat:@"sudo -u \"%@\" -s \"/bin/bash\" -c '%@'", NSUserName(), command];
         
     // Force bash shell
     } else {

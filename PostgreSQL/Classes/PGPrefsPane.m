@@ -78,6 +78,14 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 
 
 
+#pragma mark - PGPrefsNonClickableTextField
+
+@implementation PGPrefsNonClickableTextField
+- (NSView *)hitTest:(NSPoint)point { return nil; }
+@end
+
+
+
 #pragma mark - PGPrefsSegmentedControl
 
 @implementation PGPrefsSegmentedControl
@@ -101,6 +109,13 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 #pragma mark - PGPrefsDeleteWindow
 
 @implementation PGPrefsDeleteWindow
+@end
+
+
+
+#pragma mark - PGPrefsErrorWindow
+
+@implementation PGPrefsErrorWindow
 @end
 
 
@@ -465,6 +480,10 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
         } else {
             [self.controller userDidApplySettings];
         }
+        
+    // Error
+    } else if (sheet == self.errorWindow) {
+        [self.errorWindow orderOut:self];
     }
 }
 
@@ -887,18 +906,26 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 
 - (void)showError:(NSString *)errMsg
 {
+    // Color gets reset to black when changing text content...
+    NSColor *textColor = self.errorWindow.errorView.textColor;
+
     // No error
     if (!errMsg) {
         self.errorField.stringValue = @"";
+        self.errorWindow.errorView.string = @"";
         self.errorView.hidden = YES;
         self.infoField.hidden = NO;
         
     // Error
     } else {
         self.errorField.stringValue = errMsg;
+        self.errorWindow.errorView.string = errMsg;
         self.errorView.hidden = NO;
         self.infoField.hidden = YES;
     }
+
+    // Apply original text color to new content
+    self.errorWindow.errorView.textColor = textColor;
 }
 
 - (void)showDirtyInSettingsWindow:(PGServer *)server
@@ -1063,4 +1090,15 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     [self.deleteServerWindow orderFront:self];
 }
 
+- (IBAction)showErrorWindowClicked:(id)sender
+{
+    if (self.errorWindow.errorView.string.length == 0) { return; }
+    
+    [NSApp beginSheet:self.errorWindow modalForWindow:self.mainView.window modalDelegate:self didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    [self.errorWindow orderFront:self];
+}
+- (IBAction)closeErrorWindowClicked:(id)sender
+{
+    [NSApp endSheet:self.errorWindow returnCode:PGDeleteServerCancelButton];
+}
 @end
