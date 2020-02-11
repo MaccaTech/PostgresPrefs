@@ -1,0 +1,5 @@
+language: objective-c
+osx_image: xcode11.3
+
+script:
+  - xcodebuild -project PostgreSQL.xcodeproj -configuration "Release" build
