@@ -44,7 +44,10 @@
     pattern = TrimToNil(pattern);
     
     CFStringRef domain = root ? kSMDomainSystemLaunchd : kSMDomainUserLaunchd;
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     NSArray *allJobs = CFBridgingRelease(SMCopyAllJobDictionaries(domain));
+    #pragma clang diagnostic pop
     if (allJobs.count == 0) return nil;
     
     return pattern ? [allJobs filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"Label LIKE[cd] %@", pattern]] : allJobs;
@@ -56,7 +59,10 @@
     if (!name) return nil;
     
     CFStringRef domain = root ? kSMDomainSystemLaunchd : kSMDomainUserLaunchd;
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     return CFBridgingRelease(SMJobCopyDictionary(domain, (__bridge CFStringRef)(name)));
+    #pragma clang diagnostic pop
 }
 
 + (BOOL)startDaemonWithFile:(NSString *)file forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error

@@ -379,11 +379,11 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 }
 - (IBAction)applySettingsClicked:(id)sender
 {
-    [NSApp endSheet:self.serverSettingsWindow returnCode:NSOKButton];
+    [self.mainView.window endSheet:self.serverSettingsWindow returnCode:NSModalResponseOK];
 }
 - (IBAction)cancelSettingsClicked:(id)sender
 {
-    [NSApp endSheet:self.serverSettingsWindow returnCode:NSCancelButton];
+    [self.mainView.window endSheet:self.serverSettingsWindow returnCode:NSModalResponseCancel];
 }
 
 
@@ -416,14 +416,14 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 
 - (IBAction)cancelRenameServerClicked:(id)sender
 {
-    [NSApp endSheet:self.renameServerWindow returnCode:NSCancelButton];
+    [self.mainView.window endSheet:self.renameServerWindow returnCode:NSModalResponseCancel];
 }
 
 - (IBAction)okRenameServerClicked:(id)sender
 {
     if (![self.controller userCanRenameServer:self.renameServerWindow.nameField.stringValue]) return;
     
-    [NSApp endSheet:self.renameServerWindow returnCode:NSOKButton];
+    [self.mainView.window endSheet:self.renameServerWindow returnCode:NSModalResponseOK];
 }
 
 - (IBAction)duplicateServerClicked:(id)sender
@@ -436,57 +436,6 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     [self.controller userDidRefreshServers];
 }
      
-- (void)sheetDidEnd:(NSWindow *)sheet returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
-{
-    // Rename
-    if (sheet == self.renameServerWindow) {
-        [self.renameServerWindow orderOut:self];
-        
-        // Cancelled
-        if (returnCode == NSCancelButton) {
-            [self.controller userDidCancelRenameServer];
-            
-        // Apply
-        } else {
-            [self.controller userDidRenameServer:self.renameServerWindow.nameField.stringValue];
-        }
-
-    // Delete
-    } else if (sheet == self.deleteServerWindow) {
-        [self.deleteServerWindow orderOut:self];
-        
-        // Cancelled
-        if (returnCode == PGDeleteServerCancelButton) {
-            [self.controller userDidCancelDeleteServer];
-        
-        // Keep File
-        } else if (returnCode == PGDeleteServerKeepFileButton) {
-            [self.controller userDidDeleteServerKeepFile];
-            
-        // Delete File
-        } else {
-            [self.controller userDidDeleteServerDeleteFile];
-        }
-        
-    // Settings
-    } else if (sheet == self.serverSettingsWindow) {
-        [self.serverSettingsWindow orderOut:self];
-        
-        // Cancelled
-        if (returnCode == NSCancelButton) {
-            [self.controller userDidCancelSettings];
-            
-        // Apply
-        } else {
-            [self.controller userDidApplySettings];
-        }
-        
-    // Error
-    } else if (sheet == self.errorWindow) {
-        [self.errorWindow orderOut:self];
-    }
-}
-
 - (void)menuWillOpen:(NSMenu *)menu
 {
     [self.mainView.window makeFirstResponder:self.serversTableView];
@@ -538,17 +487,17 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 
 - (IBAction)cancelDeleteServerClicked:(id)sender
 {
-    [NSApp endSheet:self.deleteServerWindow returnCode:PGDeleteServerCancelButton];
+    [self.mainView.window endSheet:self.deleteServerWindow returnCode:PGDeleteServerCancelButton];
 }
 
 - (IBAction)deleteServerDeleteFileClicked:(id)sender
 {
-    [NSApp endSheet:self.deleteServerWindow returnCode:PGDeleteServerDeleteFileButton];
+    [self.mainView.window endSheet:self.deleteServerWindow returnCode:PGDeleteServerDeleteFileButton];
 }
 
 - (IBAction)deleteServerKeepFileClicked:(id)sender
 {
-    [NSApp endSheet:self.deleteServerWindow returnCode:PGDeleteServerKeepFileButton];
+    [self.mainView.window endSheet:self.deleteServerWindow returnCode:PGDeleteServerKeepFileButton];
 }
 
 - (IBAction)deleteServerShowInFinderClicked:(id)sender
@@ -1069,7 +1018,23 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     [self.serverSettingsWindow.serversTableView scrollRowToVisible:0];
     [self showSettingsInSettingsWindow:server];
     [self focusInvalidInSettingsWindow:server];
-    [NSApp beginSheet:self.serverSettingsWindow modalForWindow:self.mainView.window modalDelegate:self didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    
+    weakify(self);
+    [self.mainView.window beginSheet:self.serverSettingsWindow completionHandler:^(NSModalResponse returnCode) {
+        strongify(self);
+        
+        [self.serverSettingsWindow orderOut:self];
+        
+        // Cancelled
+        if (returnCode == NSModalResponseCancel) {
+            [self.controller userDidCancelSettings];
+            
+        // Apply
+        } else {
+            [self.controller userDidApplySettings];
+        }
+    }];
+
     [self.serverSettingsWindow orderFront:self];
 }
 
@@ -1077,7 +1042,22 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 {
     self.renameServerWindow.nameField.stringValue = server.name;
     
-    [NSApp beginSheet:self.renameServerWindow modalForWindow:self.mainView.window modalDelegate:self didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    weakify(self);
+    [self.mainView.window beginSheet:self.renameServerWindow completionHandler:^(NSModalResponse returnCode) {
+        strongify(self);
+        
+        [self.renameServerWindow orderOut:self];
+        
+        // Cancelled
+        if (returnCode == NSModalResponseCancel) {
+            [self.controller userDidCancelRenameServer];
+            
+        // Apply
+        } else {
+            [self.controller userDidRenameServer:self.renameServerWindow.nameField.stringValue];
+        }
+    }];
+
     [self.renameServerWindow orderFront:self];
 }
 
@@ -1086,7 +1066,26 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     self.deleteServerWindow.daemonFile.stringValue = [server.daemonFile lastPathComponent];
     self.deleteServerWindow.daemonDir.stringValue = [NSString stringWithFormat:@"In: %@", [server.daemonFile stringByDeletingLastPathComponent]];
     
-    [NSApp beginSheet:self.deleteServerWindow modalForWindow:self.mainView.window modalDelegate:self didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    weakify(self);
+    [self.mainView.window beginSheet:self.deleteServerWindow completionHandler:^(NSModalResponse returnCode) {
+        strongify(self);
+        
+        [self.deleteServerWindow orderOut:self];
+        
+        // Cancelled
+        if (returnCode == PGDeleteServerCancelButton) {
+            [self.controller userDidCancelDeleteServer];
+        
+        // Keep File
+        } else if (returnCode == PGDeleteServerKeepFileButton) {
+            [self.controller userDidDeleteServerKeepFile];
+            
+        // Delete File
+        } else {
+            [self.controller userDidDeleteServerDeleteFile];
+        }
+    }];
+
     [self.deleteServerWindow orderFront:self];
 }
 
@@ -1094,11 +1093,17 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 {
     if (self.errorWindow.errorView.string.length == 0) { return; }
     
-    [NSApp beginSheet:self.errorWindow modalForWindow:self.mainView.window modalDelegate:self didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    weakify(self);
+    [self.mainView.window beginSheet:self.errorWindow completionHandler:^(NSModalResponse returnCode) {
+        strongify(self);
+        
+        [self.errorWindow orderOut:self];
+    }];
+    
     [self.errorWindow orderFront:self];
 }
 - (IBAction)closeErrorWindowClicked:(id)sender
 {
-    [NSApp endSheet:self.errorWindow returnCode:PGDeleteServerCancelButton];
+    [self.mainView.window endSheet:self.errorWindow];
 }
 @end

@@ -9,6 +9,9 @@
 #ifndef PostgreSQL_Common_h
 #define PostgreSQL_Common_h
 
+#define weakify(var) __weak typeof(var) org_postgresql_##var = var
+#define strongify(var) __strong typeof(var) var = org_postgresql_##var
+
 /// Run block on main thread
 CG_INLINE void
 MainThread(void(^block)(void))
