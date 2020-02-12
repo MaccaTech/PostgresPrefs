@@ -1,5 +1,8 @@
 language: objective-c
 osx_image: xcode11.3
 
+before_script:
+- ./scripts/add-key.sh
+
 script:
-  - xcodebuild -project PostgreSQL.xcodeproj -configuration "Release" build
+- xcodebuild -project PostgreSQL.xcodeproj -scheme PostgreSQL -configuration Release -derivedDataPath ./build -archivePath ./build/Products/PostgreSQL.xcarchive
