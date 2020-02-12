@@ -1,8 +1,29 @@
-language: objective-c
 osx_image: xcode11.3
+language: objective-c
+
+branches:
+only:
+  - master
 
 before_script:
-- ./scripts/add-key.sh
+  - scripts/add-key.sh
 
 script:
-- xcodebuild -project PostgreSQL.xcodeproj -scheme PostgreSQL -configuration Release -derivedDataPath ./build -archivePath ./build/Products/PostgreSQL.xcarchive
+  - xcodebuild -project PostgreSQL.xcodeproj -scheme PostgreSQL -configuration Release -derivedDataPath ./build OTHER_CODE_SIGN_FLAGS='--timestamp' build
+
+before_deploy:
+  - export POSTGRES_PREFS_NAME="PostgresPrefs-${TRAVIS_TAG}"
+  - scripts/notarize.sh
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  email: info@macca.tech
+  file: build/${POSTGRES_PREFS_NAME}.dmg
+  skip_cleanup: true
+  overwrite: true
+  draft: true
+  on:
+    repo: MaccaTech/PostgresPrefs
+    branch: master
+    tags: true

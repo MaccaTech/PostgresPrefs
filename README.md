@@ -38,7 +38,7 @@ Features include:
 ## Install Instructions
 
 1. Download the latest release version [here](https://github.com/MaccaTech/PostgresPrefs/releases)
-2. Once downloaded, unzip it and then either double-click the `PostgreSQL.prefPane` file, or drag it to System Preferences to install it.
+2. Once downloaded, open the `.dmg` file by double-clicking it, and then either double-click the contained `PostgreSQL.prefPane` file, or drag it to System Preferences to install it.
 3. When installing, you will be asked if you want to install it for this user only, or for all users. Choose this user only (either option is fine however).
 
 ![alt text](https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/screenshot_install.png "Install Screen")
@@ -106,6 +106,18 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
 </tr>
 </thead>
 <tbody>
+<tr>
+    <td>v2.5</td>
+    <td>12-Feb 2020</td>
+    <td>Bugfix release
+        <ul>
+        <li>Fix start/stop errors on Catalina</li>
+        <li>Improve detection of existing PostgreSQL installations</li>
+        <li>Support dark mode</li>
+        <li>Automate releases using Github & Travis</li>
+        </ul>
+    </td>
+</tr>
 <tr>
     <td>v2.4.3</td>
     <td>20-Jan 2020</td>
@@ -196,11 +208,11 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
     <td>Major release
         <ul>
         <li>Control multiple servers from a single window</li>
-	<li>Start servers at computer bootup (previously only at login)</li>
+        <li>Start servers at computer bootup (previously only at login)</li>
         <li>Easily debug problems using default server logs</li>
-	<li>See running status of servers without entering a password</li>
-	<li>Starting/stopping still password-protected</li>
-	<li>More code is pure Objective-C, less reliance on shell scripts</li>
+        <li>See running status of servers without entering a password</li>
+        <li>Starting/stopping still password-protected</li>
+        <li>More code is pure Objective-C, less reliance on shell scripts</li>
         </ul>
     </td>
 </tr>
