@@ -39,8 +39,6 @@
 		20B628C21B495154003F8557 /* PGServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B628C01B495154003F8557 /* PGServer.m */; };
 		20B628C71B4973BE003F8557 /* PGProcess.h in Headers */ = {isa = PBXBuildFile; fileRef = 20B628C51B4973BE003F8557 /* PGProcess.h */; };
 		20B628C81B4973BE003F8557 /* PGProcess.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B628C61B4973BE003F8557 /* PGProcess.m */; };
-		20BBC29814AD1E7600BA0859 /* README.pod in Resources */ = {isa = PBXBuildFile; fileRef = 20BBC29714AD1E7600BA0859 /* README.pod */; };
-		20BBC29A14AD201A00BA0859 /* README.pod.html in Resources */ = {isa = PBXBuildFile; fileRef = 20BBC29914AD201A00BA0859 /* README.pod.html */; };
 		20BCE7351B775450000AA376 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20BCE7341B775450000AA376 /* ServiceManagement.framework */; };
 		20D192BC1B8E109000F75981 /* PGFile.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D192BA1B8E109000F75981 /* PGFile.h */; };
 		20D192BD1B8E109000F75981 /* PGFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 20D192BB1B8E109000F75981 /* PGFile.m */; };
@@ -95,8 +93,6 @@
 		20B628C01B495154003F8557 /* PGServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGServer.m; sourceTree = "<group>"; };
 		20B628C51B4973BE003F8557 /* PGProcess.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGProcess.h; sourceTree = "<group>"; };
 		20B628C61B4973BE003F8557 /* PGProcess.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGProcess.m; sourceTree = "<group>"; };
-		20BBC29714AD1E7600BA0859 /* README.pod */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.pod; sourceTree = SOURCE_ROOT; };
-		20BBC29914AD201A00BA0859 /* README.pod.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = README.pod.html; sourceTree = "<group>"; };
 		20BCE7341B775450000AA376 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 		20D192BA1B8E109000F75981 /* PGFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGFile.h; sourceTree = "<group>"; };
 		20D192BB1B8E109000F75981 /* PGFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGFile.m; sourceTree = "<group>"; };
@@ -236,8 +232,6 @@
 		2035B197149C8B83009A2972 /* PostgreSQL */ = {
 			isa = PBXGroup;
 			children = (
-				20BBC29714AD1E7600BA0859 /* README.pod */,
-				20BBC29914AD201A00BA0859 /* README.pod.html */,
 				2035B1A3149C8B83009A2972 /* PGPrefsPane.xib */,
 				20079E6A1B48061100521807 /* Classes */,
 				20079E851B4807E200521807 /* Scripts */,
@@ -344,8 +338,6 @@
 				2035B1A5149C8B84009A2972 /* PGPrefsPane.xib in Resources */,
 				20381A8319F0F10A00559533 /* PostgreSQL.iconset in Resources */,
 				20079E991B48086300521807 /* elephant.png in Resources */,
-				20BBC29814AD1E7600BA0859 /* README.pod in Resources */,
-				20BBC29A14AD201A00BA0859 /* README.pod.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
