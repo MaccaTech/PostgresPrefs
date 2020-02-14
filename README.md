@@ -1,9 +1,13 @@
 # Postgres Prefs
 
-<a href="https://www.postgresql.org"><img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/elephant.png" /></a><a href="https://www.postgresql.org"><img src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/logo.png" /></a>
-<a href="http://mac.softpedia.com/get/Internet-Utilities/PostgresPrefs.shtml#status"><img align="right" src="http://s1.softpedia-static.com/_img/sp100clean.png?1" /></a>
+<a href="https://www.postgresql.org"><img height="64px" src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/elephant.png" /></a>
+<a href="https://www.postgresql.org"><img height="40px" src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/logo.png" /></a>
+<a href="http://mac.softpedia.com/get/Internet-Utilities/PostgresPrefs.shtml#status"><img align="right" height="112px" src="http://s1.softpedia-static.com/_img/sp100clean.png?1" /></a>
 
 [![build](https://travis-ci.org/MaccaTech/PostgresPrefs.svg?branch=master)](https://travis-ci.org/MaccaTech/PostgresPrefs)
+
+## Contents
+
 * [Overview](#Overview)
 * [Install Instructions](#Install-Instructions)
 * [Uninstall Instructions](#Uninstall-Instructions)
@@ -46,10 +50,10 @@ Features include:
 ## Uninstall Instructions
 
 1. Stop any running PostgreSQL servers:
-    * Open System Preferences, click the `PostgreSQL` icon, select each running server in turn and click the `Stop PostgreSQL` button
+    * Open System Preferences, click <img height="24px" src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/elephant.png" />, select each running server in turn and click the `Stop PostgreSQL` button
 
 2. Remove PostgresPrefs from System Preferences:
-    * Right-click on the `PostgreSQL` icon in System Preferences, and click `Remove`
+    * Right-click <img height="24px" src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/elephant.png" /> in System Preferences, and click `Remove`
     
 3. Delete the PostgresPrefs configuration file if it exists:
 ```
