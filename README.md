@@ -55,21 +55,21 @@ Features include:
 2. Remove PostgresPrefs from System Preferences:
     * Right-click <img height="24px" src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/elephant.png" /> in System Preferences, and click `Remove`
     
-3. Delete the PostgresPrefs configuration file if it exists:
+3. Delete the PostgresPrefs configuration file, if it exists:
 ```
-rm ~/Library/Preferences/org.postgresql.preferences.servers.plist
-sudo rm /Library/Preferences/org.postgresql.preferences.servers.plist
+     rm ~/Library/Preferences/org.postgresql.preferences.servers.plist
+sudo rm  /Library/Preferences/org.postgresql.preferences.servers.plist
 ```
 4. Delete any configuration files for starting/stopping individual PostgreSQL servers, if they exist:
 ```
-rm ~/Library/LaunchAgents/org.postgresql.preferences.*.plist
-sudo rm /Library/LaunchAgents/org.postgresql.preferences.*.plist
-sudo rm /Library/LaunchDaemons/org.postgresql.preferences.*.plist
+     rm ~/Library/LaunchAgents/org.postgresql.preferences.*.plist
+sudo rm  /Library/LaunchAgents/org.postgresql.preferences.*.plist
+sudo rm  /Library/LaunchDaemons/org.postgresql.preferences.*.plist
 ```
 5. Delete the log directories containing log files for your PostgreSQL servers, if they exist:
 ```
-rm -rf ~/Library/Logs/PostgreSQL
-sudo rm -rf /Library/Logs/PostgreSQL
+     rm -rf ~/Library/Logs/PostgreSQL
+sudo rm -rf  /Library/Logs/PostgreSQL
 ```
 
 ## FAQ
