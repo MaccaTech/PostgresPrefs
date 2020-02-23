@@ -1,9 +1,27 @@
 //
-//  Postgres.h
-//  Postgres
+//  PGPrefsPane.h
+//  PostgresPrefs
 //
 //  Created by Francis McKenzie on 17/12/11.
-//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
+//  Copyright (c) 2011-2020 Macca Tech Ltd. (http://macca.tech)
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
 //
 
 #import <PreferencePanes/PreferencePanes.h>
@@ -17,6 +35,27 @@
  * A textfield cell whose content is center-aligned vertically
  */
 @interface PGPrefsCenteredTextFieldCell : NSTextFieldCell
+@end
+
+
+
+#pragma mark - PGPrefsStoryboardTextView
+
+/**
+ * A textview that can preserve its Storyboard text-styling when changing its text.
+ */
+@interface PGPrefsStoryboardTextView : NSTextView
+@property (nonatomic, strong) NSDictionary<NSAttributedStringKey,id> *storyboardStyle;
+- (void)setAttributedStringUsingStoryboardStyle:(NSAttributedString *)attributedString NS_SWIFT_NAME(setUsingStoryboardStyle(attributedString:));
+@end
+
+
+
+#pragma mark - PGPrefsCenteredTextView
+/**
+ * A textview whose content is center-aligned vertically
+ */
+@interface PGPrefsCenteredTextView : PGPrefsStoryboardTextView
 @end
 
 
@@ -61,17 +100,19 @@
 @interface PGPrefsDeleteWindow : NSWindow
 @property (weak) IBOutlet NSTextField *daemonFile;
 @property (weak) IBOutlet NSTextField *daemonDir;
+@property (weak) IBOutlet NSTextField *infoField;
 @end
 
 
 
-#pragma mark - PGPrefsErrorWindow
+#pragma mark - PGPrefsInfoWindow
 
 /**
- * A popup window showing the full output of running a server command.
+ * A popup window showing e.g. error details, authorization info.
  */
-@interface PGPrefsErrorWindow : NSWindow
-@property (unsafe_unretained) IBOutlet NSTextView *errorView;
+@interface PGPrefsInfoWindow : NSWindow
+@property (weak) IBOutlet NSTextField *titleField;
+@property (unsafe_unretained) IBOutlet PGPrefsStoryboardTextView *detailsView;
 @end
 
 
@@ -169,8 +210,10 @@
 @property (weak) IBOutlet NSProgressIndicator *statusSpinner;
 @property (weak) IBOutlet NSTextField *infoField;
 @property (weak) IBOutlet NSView *errorView;
+@property (weak) IBOutlet NSButton *errorButton;
 @property (weak) IBOutlet NSTextField *errorField;
-@property (strong) IBOutlet PGPrefsErrorWindow *errorWindow;
+@property (strong) IBOutlet PGPrefsInfoWindow *errorWindow;
+@property (strong) IBOutlet PGPrefsInfoWindow *authInfoWindow;
 - (IBAction)showErrorWindowClicked:(id)sender;
 - (IBAction)closeErrorWindowClicked:(id)sender;
 
@@ -209,7 +252,7 @@
 
 // Authorization
 @property (nonatomic, weak) IBOutlet SFAuthorizationView *authorizationView;
-- (AuthorizationRef)authorize;
+- (AuthorizationRef)authorize:(PGAuth *)auth;
 - (void)deauthorize;
 - (BOOL)authorized;
 - (AuthorizationRef)authorization;

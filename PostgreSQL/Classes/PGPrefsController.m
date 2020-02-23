@@ -1,45 +1,114 @@
 //
-//  PostgrePrefsDelegate.m
-//  PostgreSQL
+//  PGPrefsController.m
+//  PostgresPrefs
 //
 //  Created by Francis McKenzie on 18/12/11.
-//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
+//  Copyright (c) 2011-2020 Macca Tech Ltd. (http://macca.tech)
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
 //
 
 #import "PGPrefsController.h"
 
-#pragma mark - Inlines
+#pragma mark - Utils
 
-// Get the next object in the array
-CG_INLINE id
-ObjectAfter(id object, NSArray *array)
+@interface NSArray (BeforeAfter)
+/// Get the next object in the array
+- (id)objectAfter:(id)object;
+/// Get the preceeding object in the array
+- (id)objectBefore:(id)object;
+@end
+
+@implementation NSArray (BeforeAfter)
+- (id)objectAfter:(id)object
 {
-    if (array.count < 2) return nil;
-    if (object == array.lastObject) return nil;
+    if (self.count < 2) return nil;
+    if (object == self.lastObject) return nil;
     
-    NSUInteger index = [array indexOfObject:object];
+    NSUInteger index = [self indexOfObject:object];
     if (index == NSNotFound) return nil;
     
-    return index < array.count-1 ? array[index+1] : nil;
+    return index < self.count-1 ? self[index+1] : nil;
 }
-// Get the preceeding object in the array
-CG_INLINE id
-ObjectBefore(id object, NSArray *array)
+- (id)objectBefore:(id)object
 {
-    if (array.count < 2) return nil;
-    if (object == array.firstObject) return nil;
+    if (self.count < 2) return nil;
+    if (object == self.firstObject) return nil;
     
-    NSUInteger index = [array indexOfObject:object];
+    NSUInteger index = [self indexOfObject:object];
     if (index == NSNotFound) return nil;
     
-    return index == 0 ? nil : array[index-1];
+    return index == 0 ? nil : self[index-1];
 }
+@end
+
+
+#pragma mark - Thread Control
+
+@class PGThreadController;
+
+/// Allows cancelling running threads.
+@interface PGThreadManager : NSObject
+/// Use 'enabled' rather than 'cancelled' as the property name, since checking 'enabled'
+/// on a nil object will yield the correct result, but checking 'cancelled' will not.
+@property (nonatomic, readonly) BOOL enabled;
+- (void)cancel;
+- (PGThreadController *)makeController;
+@end
+
+/// Each running thread has its own controller. Benefit is that each controller holds a weak
+/// reference to the manager, allowing the manager to dealloc and cancel itself.
+@interface PGThreadController : NSObject
+@property (nonatomic, weak, readonly) PGThreadManager *manager;
+- (instancetype)initWithManager:(PGThreadManager *)manager;
+@end
+
+@implementation PGThreadManager
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        _enabled = YES;
+    }
+    return self;
+}
+- (void)dealloc { [self cancel]; }
+- (void)cancel { _enabled = NO; }
+- (PGThreadController *)makeController { return [[PGThreadController alloc] initWithManager:self]; }
+@end
+
+@implementation PGThreadController
+- (instancetype)initWithManager:(PGThreadManager *)manager
+{
+    self = [super init];
+    if (self) {
+        _manager = manager;
+    }
+    return self;
+}
+@end
 
 
 
 #pragma mark - Interfaces
 
-@interface PGPrefsController()
+@interface PGPrefsController () <PGAuthDelegate>
 
 @property (nonatomic, strong, readwrite) PGServerController *serverController;
 @property (nonatomic, strong, readwrite) PGSearchController *searchController;
@@ -47,15 +116,9 @@ ObjectBefore(id object, NSArray *array)
 @property (nonatomic, strong, readwrite) PGServer *server;
 @property (nonatomic, strong, readwrite) NSArray *servers;
 @property (nonatomic, readwrite) AuthorizationRef authorization;
-/// Used to start/stop all monitor threads. To stop all threads, set this key to nil. When a monitor thread runs, it compares its key to this one. If the keys are different, the monitor thread stops running.
-@property (nonatomic, strong) id serversMonitorKey;
-
-/**
- * If already authorized, returns the stored authorization. Otherwise, triggers user to authorize.
- *
- * @return nil if user cancelled
- */
-- (AuthorizationRef)authorize;
+/// Used to start/stop all monitor threads. The monitor threads take a reference to this manager
+/// when they start running, and periodically check if it is still enabled. If not, they exit.
+@property (nonatomic, strong) PGThreadManager *serversMonitorManager;
 
 @end
 
@@ -181,7 +244,7 @@ ObjectBefore(id object, NSArray *array)
     if (!self.server) return;
     
     // Internal
-    if (!self.server.external || [self.server.domain isEqualToString:PGPrefsAppIDVersion1]) {
+    if (!self.server.external) {
         [self deleteServerAndDeleteFile:YES];
     
     // External
@@ -204,45 +267,40 @@ ObjectBefore(id object, NSArray *array)
 {
     PGServer *server = self.server;
     if (!server) return;
-    
-    AuthorizationRef authorization = [self authorize];
-    if (!authorization) return;
-    
+
+    PGAuth *auth = [[PGAuth alloc] initWithDelegate:self];
     PGServerAction finalAction = server.started ? PGServerStart : PGServerCreate;
-    BackgroundThread(^{
-        // First stop and delete the existing server
-        [self.serverController runAction:PGServerDelete server:server authorization:authorization succeeded:^{
-            
-            MainThread(^{
-                // Backup existing
-                NSString *oldName = server.name;
-                NSString *newName = name;
+    
+    // 1. Stop and delete the existing server
+    [self.serverController runAction:PGServerDelete server:server auth:auth succeeded:^{
+        
+        // Backup existing
+        NSString *oldName = server.name;
+        NSString *newName = name;
 
-                // Apply the change
-                BOOL succeeded = [self.serverController setName:newName forServer:server];
-                
-                // Save
-                if (succeeded) succeeded = [self.dataStore saveServer:server];
-                
-                // Save failed - restore backup
-                if (!succeeded) {
-                    [self.serverController setName:oldName forServer:server];
-                    return;
-                }
+        // Apply the change
+        BOOL succeeded = [self.serverController setName:newName forServer:server];
+        
+        // Save
+        if (succeeded) succeeded = [self.dataStore saveServer:server];
+        
+        // Save failed - restore backup
+        if (!succeeded) {
+            [self.serverController setName:oldName forServer:server];
+            return;
+        }
+    
+        [self.viewController prefsController:self didChangeServers:self.servers];
+        
+        // 2. Create and start (if needed) the new server
+        [self.serverController runAction:finalAction server:server auth:auth succeeded:^{
             
-                [self.viewController prefsController:self didChangeServers:self.servers];
-            });
+            [self.viewController prefsController:self didApplyServerSettings:server];
             
-            // Create and start (if needed) the new server
-            [self.serverController runAction:finalAction server:server authorization:authorization succeeded:^{
-                
-                MainThread(^{ [self.viewController prefsController:self didApplyServerSettings:server]; });
-                
-                [self checkStatus:server];
+            [self checkStatus:server];
 
-            } failed:nil];
         } failed:nil];
-    });
+    } failed:nil];
 }
 - (void)userDidCancelRenameServer
 {
@@ -322,17 +380,13 @@ ObjectBefore(id object, NSArray *array)
     // Start/Stop
     if (action == PGServerStart || action == PGServerStop) {
         
-        AuthorizationRef authorization = [self authorize];
-        if (!authorization) return;
-        
+        PGAuth *auth = [[PGAuth alloc] initWithDelegate:self];
         PGServer *server = self.server;
-        BackgroundThread(^{
-            [self.serverController runAction:action server:server authorization:authorization succeeded:^{
-                BackgroundThreadAfterDelay(0.2, ^{
-                    [self checkStatus:server];
-                });
-            } failed:nil];
-        });
+        [self.serverController runAction:action server:server auth:auth succeeded:^{
+            MainThreadAfterDelay(0.2, ^{
+                [self checkStatus:server];
+            });
+        } failed:nil];
         
     // Check Status
     } else {
@@ -380,60 +434,56 @@ ObjectBefore(id object, NSArray *array)
 {
     PGServer *server = self.server;
     if (server.external) return;
-    
-    AuthorizationRef authorization = [self authorize];
-    if (!authorization) return;
-    
-    PGServerAction finalAction = server.started ? PGServerStart : PGServerCreate;
-    BackgroundThread(^{
-        if (!server.dirtySettings) return;
-        
-        // First stop and delete the existing server
-        [self.serverController runAction:PGServerDelete server:self.server authorization:authorization succeeded:^{
 
-            MainThread(^{
-                // Backup existing
-                PGServerSettings *oldSettings = server.settings;
-                PGServerSettings *newSettings = server.dirtySettings;
-                
-                // Apply the change
-                [self.serverController setSettings:newSettings forServer:server];
-                
-                // Save
-                BOOL succeeded = [self.dataStore saveServer:server];
-                
-                // Save failed - restore backup
-                if (!succeeded) {
-                    [self.serverController setSettings:oldSettings forServer:server];
-                    return;
-                }
-                
-                // Clear dirty settings
-                [self.serverController clean:server];
-            });
+    if (!server.dirty) return;
+
+    PGAuth *auth = [[PGAuth alloc] initWithDelegate:self];
+    PGServerAction finalAction = server.started ? PGServerStart : PGServerCreate;
+    
+    // Backup existing
+    PGServerSettings *oldSettings = server.settings;
+    PGServerSettings *newSettings = server.dirtySettings;
+    
+    // Show the change
+    [self.serverController setSettings:newSettings forServer:server];
+
+    // First stop and delete the existing server
+    [self.serverController runAction:PGServerDelete server:self.server auth:auth succeeded:^{
+
+        // Save
+        BOOL succeeded = [self.dataStore saveServer:server];
+        
+        // Save failed - restore backup
+        if (!succeeded) {
+            [self.serverController setSettings:oldSettings forServer:server];
+            return;
+        }
+        
+        // Clear dirty settings
+        [self.serverController clean:server];
+        
+        // Create and start (if needed) the new server
+        [self.serverController runAction:finalAction server:server auth:auth succeeded:^{
             
-            // Create and start (if needed) the new server
-            [self.serverController runAction:finalAction server:server authorization:authorization succeeded:^{
-                
-                MainThread(^{ [self.viewController prefsController:self didApplyServerSettings:server]; });
-                
-                [self checkStatus:server];
-                
-            } failed:nil];
+            [self.viewController prefsController:self didApplyServerSettings:server];
+            
+            [self checkStatus:server];
+            
         } failed:nil];
-    });
+    } failed:^(NSString *error) {
+        [self.serverController setSettings:oldSettings forServer:server];
+        [self server:server didFailAction:PGServerDelete error:error];
+    }];
 }
 - (void)userDidChangeServerStartup:(NSString *)startup
 {
     PGServer *server = self.server;
-    if (server.external) return;
-    
-    // Revert startup in GUI if user cancelled authorization
-    AuthorizationRef authorization = [self authorize];
-    if (!authorization) {
+    if (server.external) {
         [self.viewController prefsController:self didRevertServerStartup:server];
         return;
-    }
+    };
+    
+    PGAuth *auth = [[PGAuth alloc] initWithDelegate:self];
     
     // Backup existing
     PGServerStartup oldStartup = server.settings.startup;
@@ -453,13 +503,16 @@ ObjectBefore(id object, NSArray *array)
     }
     
     // Run script
-    BackgroundThread(^{
-        [self.serverController runAction:PGServerCreate server:server authorization:authorization succeeded:^{
-            
-            [self checkStatus:server];
-            
-        } failed:nil];
-    });
+    [self.serverController runAction:PGServerCreate server:server auth:auth succeeded:^{
+        [self checkStatus:server];
+        
+    } failed:^(NSString *error) {
+        // Revert startup in GUI
+        [self.serverController setStartup:oldStartup forServer:server];
+        [self.dataStore saveServer:server];
+        [self.viewController prefsController:self didRevertServerStartup:server];
+        [self server:server didFailAction:PGServerCreate error:error];
+    }];
 }
 
 
@@ -482,25 +535,19 @@ ObjectBefore(id object, NSArray *array)
 
 #pragma mark PGServerDelegate
 
-- (void)postgreServer:(PGServer *)server willRunAction:(PGServerAction)action
+- (void)server:(PGServer *)server willRunAction:(PGServerAction)action
 {
-    MainThread(^{
-        [self.viewController prefsController:self didChangeServerStatus:server];
-    });
+    [self.viewController prefsController:self didChangeServerStatus:server];
 }
-- (void)postgreServer:(PGServer *)server didSucceedAction:(PGServerAction)action
+- (void)server:(PGServer *)server didSucceedAction:(PGServerAction)action
 {
-    MainThread(^{
-        [self.viewController prefsController:self didChangeServerStatus:server];
-    });
+    [self.viewController prefsController:self didChangeServerStatus:server];
 }
-- (void)postgreServer:(PGServer *)server didFailAction:(PGServerAction)action error:(NSString *)error
+- (void)server:(PGServer *)server didFailAction:(PGServerAction)action error:(NSString *)error
 {
-    MainThread(^{
-        [self.viewController prefsController:self didChangeServerStatus:server];
-    });
+    [self.viewController prefsController:self didChangeServerStatus:server];
 }
-- (void)postgreServer:(PGServer *)server didRunAction:(PGServerAction)action
+- (void)server:(PGServer *)server didRunAction:(PGServerAction)action
 {
     // Do nothing
 }
@@ -518,34 +565,34 @@ ObjectBefore(id object, NSArray *array)
 
 #pragma mark Private
 
-- (AuthorizationRef)authorize
+- (AuthorizationRef)authorize:(PGAuth *)auth
 {
-    if (self.authorization) return self.authorization;
-    else return [self.viewController authorize];
+    if (self.authorization) {
+        return self.authorization;
+    } else {
+        __block AuthorizationRef authRef;
+        MainThread(^{
+            self.authorization = authRef = [self.viewController authorize:auth];
+        });
+        return authRef;
+    }
 }
 
 - (void)checkStatus:(PGServer *)server
 {
-    BackgroundThread(^{
-        [self.serverController runAction:PGServerCheckStatus server:server authorization:self.authorization];
-    });
+    [self.serverController runAction:PGServerCheckStatus server:server auth:nil];
 }
 
 - (void)deleteServerAndDeleteFile:(BOOL)delete
 {
-    AuthorizationRef authorization = [self authorize];
-    if (!authorization) return;
-    
+    PGAuth *auth = [[PGAuth alloc] initWithDelegate:self];
     PGServerAction action = delete ? PGServerDelete : PGServerStop;
     
     // Run script
     PGServer *server = self.server;
-    BackgroundThread(^{
-        [self.serverController runAction:action server:server authorization:authorization succeeded:^{
-            
-            MainThread(^{ [self removeServer:server]; });
-        } failed:nil];
-    });
+    [self.serverController runAction:action server:server auth:auth succeeded:^{
+        [self removeServer:server];
+    } failed:nil];
 }
 
 - (void)removeServer:(PGServer *)server
@@ -555,8 +602,8 @@ ObjectBefore(id object, NSArray *array)
     DLog(@"%@", server);
     
     // Calculate which server to select after delete
-    PGServer *nextServer = ObjectAfter(server, self.servers);
-    if (!nextServer) nextServer = ObjectBefore(server, self.servers);
+    PGServer *nextServer = [self.servers objectAfter:server];
+    if (!nextServer) nextServer = [self.servers objectBefore:server];
     
     // Delete the server
     [self.dataStore removeServer:server];
@@ -576,26 +623,33 @@ ObjectBefore(id object, NSArray *array)
 
 - (void)startMonitoringServers
 {
-    self.serversMonitorKey = [NSDate date];
+    mustBeMainThread();
+    
+    [self.serversMonitorManager cancel];
+    self.serversMonitorManager = [[PGThreadManager alloc] init];
+    
     for (PGServer *server in self.servers) [self startMonitoringServer:server];
     
     [self startMonitoringLaunchd];
 }
 - (void)stopMonitoringServers
 {
-    self.serversMonitorKey = nil;
+    mustBeMainThread();
     
+    [self.serversMonitorManager cancel];
+    self.serversMonitorManager = nil;
 }
 - (void)startMonitoringServer:(PGServer *)server
 {
-    BackgroundThread(^{ [self pollServer:server key:self.serversMonitorKey]; });
+    mustBeMainThread();
+    
+    PGThreadController *controller = [self.serversMonitorManager makeController];
+    BackgroundThread(^{ [self pollServer:server controller:controller]; });
 }
-- (void)pollServer:(PGServer *)server key:(id)key
+- (void)pollServer:(PGServer *)server controller:(PGThreadController *)controller
 {
-    if (!key) return;
-
     // Ensure not stopped
-    if (key != self.serversMonitorKey) return;
+    if (!controller.manager.enabled) { return; }
     
     // Ensure server not deleted
     __block BOOL serverExists = YES;
@@ -611,25 +665,26 @@ ObjectBefore(id object, NSArray *array)
     }
     
     // Ensure not stopped
-    if (key != self.serversMonitorKey) return;
-    
+    if (!controller.manager.enabled) { return; }
+
     // Global disable auto-monitoring
-    if (!PGPrefsMonitorServersEnabled) return;
+    if (!PGPrefsMonitorServersEnabled) { return; }
     
     // Schedule re-run
-    BackgroundThreadAfterDelay(PGServersPollTime, ^{ [self pollServer:server key:key]; });
+    BackgroundThreadAfterDelay(PGServersPollTime, ^{ [self pollServer:server controller:controller]; });
 }
 - (void)startMonitoringLaunchd
 {
-    BackgroundThread(^{ [self detectExternalServers:self.serversMonitorKey]; });
+    mustBeMainThread();
+    
+    PGThreadController *controller = [self.serversMonitorManager makeController];
+    BackgroundThread(^{ [self detectExternalServers:controller]; });
 }
-- (void)detectExternalServers:(id)key
+- (void)detectExternalServers:(PGThreadController *)controller
 {
-    if (!key) return;
-    
     // Ensure not stopped
-    if (key != self.serversMonitorKey) return;
-    
+    if (!controller.manager.enabled) { return; }
+
     // Add any new external servers
     NSArray *loadedServers = [self.searchController startedServers];
     if (loadedServers.count > 0) {
@@ -677,13 +732,13 @@ ObjectBefore(id object, NSArray *array)
     }
     
     // Ensure not stopped
-    if (key != self.serversMonitorKey) return;
-    
+    if (!controller.manager.enabled) { return; }
+
     // Global disable auto-monitoring
-    if (!PGPrefsMonitorServersEnabled) return;
+    if (!PGPrefsMonitorServersEnabled) { return; }
     
     // Schedule re-run
-    BackgroundThreadAfterDelay(PGServersPollTime, ^{ [self detectExternalServers:key]; });
+    BackgroundThreadAfterDelay(PGServersPollTime, ^{ [self detectExternalServers:controller]; });
 }
 
 @end

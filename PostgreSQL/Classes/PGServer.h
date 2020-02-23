@@ -1,12 +1,31 @@
 //
 //  PGServer.h
-//  PostgreSQL
+//  PostgresPrefs
 //
 //  Created by Francis McKenzie on 5/7/15.
-//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
+//  Copyright (c) 2011-2020 Macca Tech Ltd. (http://macca.tech)
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
 //
 
 #import <Foundation/Foundation.h>
+#import "PGFile.h"
 
 #pragma mark - Constants/Utilities
 
@@ -52,8 +71,8 @@ typedef NS_ENUM(NSInteger, PGServerStatus) {
     PGServerUpdating
 };
 
-CG_INLINE NSString *
-ServerStatusDescription(PGServerStatus value)
+static inline NSString *
+NSStringFromPGServerStatus(PGServerStatus value)
 {
     switch (value) {
         case PGServerStatusUnknown: return PGServerStatusUnknownName;
@@ -67,7 +86,7 @@ ServerStatusDescription(PGServerStatus value)
     }
 }
 
-CG_INLINE PGServerStartup
+static inline PGServerStartup
 ToServerStartup(id value)
 {
     // Nil
@@ -83,8 +102,8 @@ ToServerStartup(id value)
     else return PGServerStartupManual;
 }
 
-CG_INLINE NSString *
-ServerStartupDescription(PGServerStartup value)
+static inline NSString *
+NSStringFromPGServerStartup(PGServerStartup value)
 {
     switch (value) {
         case PGServerStartupAtBoot: return PGServerStartupAtBootName;
@@ -188,6 +207,9 @@ ServerStartupDescription(PGServerStartup value)
 /// Any error that has been thrown when carrying out a server action
 @property (nonatomic, strong) NSString *error;
 
+/// The domain associated with the error (i.e. the action type).
+@property (nonatomic) NSInteger errorDomain;
+
 /// For external servers, the name without the domain. For internal servers, same as name.
 @property (nonatomic, strong) NSString *shortName;
 
@@ -204,6 +226,9 @@ ServerStartupDescription(PGServerStartup value)
 
 /// The daemon .plist file used to start the server using launchd
 @property (nonatomic, strong, readonly) NSString *daemonFile;
+
+/// The owner of the daemon .plist file - either root or the current user.
+@property (nonatomic, strong, readonly) PGUser *daemonFileOwner;
 
 /// If YES, the daemon file exists
 @property (nonatomic, readonly) BOOL daemonFileExists;

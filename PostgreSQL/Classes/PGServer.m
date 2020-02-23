@@ -1,9 +1,27 @@
 //
 //  PGServer.m
-//  PostgreSQL
+//  PostgresPrefs
 //
 //  Created by Francis McKenzie on 5/7/15.
-//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
+//  Copyright (c) 2011-2020 Macca Tech Ltd. (http://macca.tech)
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
 //
 
 #import "PGServer.h"
@@ -45,10 +63,10 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
 + (NSString *)uid;
 @end
 
-@interface PGServerSettings()
+@interface PGServerSettings ()
 @end
 
-@interface PGServer()
+@interface PGServer ()
 @end
 
 
@@ -139,8 +157,7 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
 }
 - (BOOL)hasDifferentUser
 {
-    NSString *currentUser = NSUserName();
-    return NonBlank(self.username) && ![[currentUser lowercaseString] isEqualToString:[self.username lowercaseString]];
+    return [PGUser userWithUsername:self.username].isOtherUser;
 }
 - (BOOL)valid
 {
@@ -179,7 +196,7 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
              PGServerDataDirectoryKey:self.dataDirectory?:@"",
              PGServerLogFileKey:self.logFile?:@"",
              PGServerPortKey:self.port?:@"",
-             PGServerStartupKey:ServerStartupDescription(self.startup)
+             PGServerStartupKey:NSStringFromPGServerStartup(self.startup)
     } description];
 }
 
@@ -247,7 +264,7 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
              PGServerDataDirectoryKey:settings.dataDirectory?:@"",
              PGServerLogFileKey:settings.logFile?:@"",
              PGServerPortKey:settings.port?:@"",
-             PGServerStartupKey:ServerStartupDescription(settings.startup)
+             PGServerStartupKey:NSStringFromPGServerStartup(settings.startup)
      };
 }
 - (void)setProperties:(NSDictionary *)properties
@@ -307,15 +324,20 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
     
     // External
     } else {
-        return FileExists(self.daemonFileForAllUsersAtBoot) ?
+        return [PGFile fileExists:self.daemonFileForAllUsersAtBoot] ?
             self.daemonFileForAllUsersAtBoot :
             self.daemonFileForAllUsersAtLogin;
     }
 }
 
+- (PGUser *)daemonFileOwner
+{
+    return self.daemonForAllUsers ? PGUser.root : PGUser.current;
+}
+
 - (BOOL)daemonFileExists
 {
-    return FileExists(self.daemonFile);
+    return [PGFile fileExists:self.daemonFile];
 }
 
 - (NSString *)daemonLog
@@ -336,7 +358,7 @@ NSString *const PGServerStartupAtLoginName     = @"Login";
 
 - (BOOL)daemonLogExists
 {
-    return FileExists(self.daemonLog);
+    return [PGFile fileExists:self.daemonLog];
 }
 
 - (BOOL)editable

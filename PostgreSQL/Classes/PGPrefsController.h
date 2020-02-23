@@ -1,9 +1,27 @@
 //
-//  PostgrePrefsDelegate.h
-//  PostgreSQL
+//  PGPrefsController.h
+//  PostgresPrefs
 //
 //  Created by Francis McKenzie on 18/12/11.
-//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
+//  Copyright (c) 2011-2020 Macca Tech Ltd. (http://macca.tech)
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
 //
 
 #import <Foundation/Foundation.h>
@@ -22,7 +40,7 @@
  */
 @protocol PGPrefsViewController <NSObject>
 
-- (AuthorizationRef)authorize;
+- (AuthorizationRef)authorize:(PGAuth *)auth;
 - (void)deauthorize;
 
 - (void)prefsController:(PGPrefsController *)controller willEditServerSettings:(PGServer *)server;
@@ -111,10 +129,10 @@
 - (void)userDidViewLog;
 
 // PGServerDelegate
-- (void)postgreServer:(PGServer *)server willRunAction:(PGServerAction)action;
-- (void)postgreServer:(PGServer *)server didSucceedAction:(PGServerAction)action;
-- (void)postgreServer:(PGServer *)server didFailAction:(PGServerAction)action error:(NSString *)error;
-- (void)postgreServer:(PGServer *)server didRunAction:(PGServerAction)action;
+- (void)server:(PGServer *)server willRunAction:(PGServerAction)action;
+- (void)server:(PGServer *)server didSucceedAction:(PGServerAction)action;
+- (void)server:(PGServer *)server didFailAction:(PGServerAction)action error:(NSString *)error;
+- (void)server:(PGServer *)server didRunAction:(PGServerAction)action;
 
 // PGSearchDelegate
 - (void)didFindMoreServers:(PGSearchController *)search;

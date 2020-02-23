@@ -1,9 +1,27 @@
 //
 //  Config.h
-//  PostgreSQL
+//  PostgresPrefs
 //
 //  Created by Francis McKenzie on 10/7/15.
-//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
+//  Copyright (c) 2011-2020 Macca Tech Ltd. (http://macca.tech)
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
 //
 
 #ifndef PostgreSQL_Config_h
@@ -11,7 +29,6 @@
 
 // App
 #define PGPrefsAppID @"org.postgresql.preferences"
-#define PGPrefsAppIDVersion1 @"com.hkwebentrepreneurs"
 #define PGServersPollTime 5
 #define PGLaunchdDaemonForAllUsersAtBootDir @"/Library/LaunchDaemons"
 #define PGLaunchdDaemonForAllUsersAtLoginDir @"/Library/LaunchAgents"
@@ -43,6 +60,7 @@
 #define PGServerRetryingColor [NSColor orangeColor]
 #define PGServerUpdatingColor [NSColor orangeColor]
 #define PGServerCheckingColor [NSColor orangeColor]
+#define PGServerInfoColor [NSColor colorWithCalibratedRed:0 green:0.501960814f blue:1 alpha:1]
 
 // Images
 #define PGServerStatusUnknownImage @"unknown"
@@ -56,64 +74,99 @@
 #define PGServerCheckingImage @"changing"
 
 // Prevent naming conflicts, as described in Mac Developer Library documentation
-#define PGPrefsPane ComMaccatechPostgrePrefsPane
-#define PGPrefsViewController ComMaccatechPostgrePrefsViewController
-#define PGPrefsController ComMaccatechPostgrePrefsController
-#define PGPrefsSegmentedControl ComMaccatechPostgrePrefsSegmentedControl
-#define PGPrefsRenameWindow ComMaccatechPostgrePrefsRenameWindow
-#define PGPrefsDeleteWindow ComMaccatechPostgrePrefsDeleteWindow
-#define PGPrefsErrorWindow ComMaccatechPostgrePrefsErrorWindow
-#define PGPrefsServerSettingsWindow ComMaccatechPostgrePrefsServerSettingsWindow
-#define PGPrefsServersHeaderCell ComMaccatechPostgrePrefsServersHeaderCell
-#define PGPrefsServersCell ComMaccatechPostgrePrefsServersCell
-#define PGPrefsCenteredTextFieldCell ComMaccatechPostgrePrefsCenteredTextFieldCell
-#define PGPrefsNonClickableTextField ComMaccatechPostgrePrefsNonClickableTextField
+#define PG(name)                     TechMaccaPG##name
 
-#define PGServer ComMaccatechPostgreServer
-#define PGServerSettings ComMaccatechPostgreServerSettings
-#define PGServerController ComMaccatechPostgreServerController
-#define PGServerDelegate ComMaccatechPostgreServerDelegate
-#define PGServerDataStore ComMaccatechPostgreServerDataStore
+#define PGPrefsPane                  PG(PrefsPane)
+#define PGPrefsViewController        PG(PrefsViewController)
+#define PGPrefsController            PG(PrefsController)
+#define PGPrefsSegmentedControl      PG(PrefsSegmentedControl)
+#define PGPrefsRenameWindow          PG(PrefsRenameWindow)
+#define PGPrefsDeleteWindow          PG(PrefsDeleteWindow)
+#define PGPrefsInfoWindow            PG(PrefsInfoWindow)
+#define PGPrefsServerSettingsWindow  PG(PrefsServerSettingsWindow)
+#define PGPrefsServersHeaderCell     PG(PrefsServersHeaderCell)
+#define PGPrefsServersCell           PG(PrefsServersCell)
+#define PGPrefsCenteredTextFieldCell PG(PrefsCenteredTextFieldCell)
+#define PGPrefsStoryboardTextView    PG(PrefsStoryboardTextView)
+#define PGPrefsCenteredTextView      PG(PrefsCenteredTextView)
+#define PGPrefsNonClickableTextField PG(PrefsNonClickableTextField)
 
-#define PGSearchController ComMaccatechPostgreSearchController
-#define PGSearchDelegate ComMaccatechPostgreSearchDelegate
+#define PGServer                     PG(Server)
+#define PGServerSettings             PG(ServerSettings)
+#define PGServerController           PG(ServerController)
+#define PGServerDelegate             PG(ServerDelegate)
+#define PGServerDataStore            PG(ServerDataStore)
 
-#define PGServerDefaultName ComMaccatechPostgreServerDefaultName
-#define PGServerNameKey ComMaccatechPostgreServerNameKey
-#define PGServerDomainKey ComMaccatechPostgreServerDomainKey
-#define PGServerUsernameKey ComMaccatechPostgreServerUsernameKey
-#define PGServerBinDirectoryKey ComMaccatechPostgreServerBinDirectoryKey
-#define PGServerDataDirectoryKey ComMaccatechPostgreServerDataDirectoryKey
-#define PGServerLogFileKey ComMaccatechPostgreServerLogFileKey
-#define PGServerPortKey ComMaccatechPostgreServerPortKey
-#define PGServerStartupKey ComMaccatechPostgreServerStartupKey
+#define PGSearchController           PG(SearchController)
+#define PGSearchDelegate             PG(SearchDelegate)
 
-#define PGServerStartup ComMaccatechPostgreServerStartup
-#define PGServerStartupManualName ComMaccatechPostgreServerStartupManualName
-#define PGServerStartupAtBootName ComMaccatechPostgreServerStartupAtBootName
-#define PGServerStartupAtLoginName ComMaccatechPostgreServerStartupAtLoginName
+#define PGServerDefaultName          PG(ServerDefaultName)
+#define PGServerNameKey              PG(ServerNameKey)
+#define PGServerDomainKey            PG(ServerDomainKey)
+#define PGServerUsernameKey          PG(ServerUsernameKey)
+#define PGServerBinDirectoryKey      PG(ServerBinDirectoryKey)
+#define PGServerDataDirectoryKey     PG(ServerDataDirectoryKey)
+#define PGServerLogFileKey           PG(ServerLogFileKey)
+#define PGServerPortKey              PG(ServerPortKey)
+#define PGServerStartupKey           PG(ServerStartupKey)
 
-#define PGServerStatus ComMaccatechPostgreServerStatus
-#define PGServerStatusUnknownName ComMaccatechPostgreServerStatusUnknown
-#define PGServerStartingName ComMaccatechPostgreServerStarting
-#define PGServerStartedName ComMaccatechPostgreServerStarted
-#define PGServerStoppingName ComMaccatechPostgreServerStopping
-#define PGServerDeletingName ComMaccatechPostgreServerDeleting
-#define PGServerStoppedName ComMaccatechPostgreServerStopped
-#define PGServerRetryingName ComMaccatechPostgreServerRetrying
-#define PGServerUpdatingName ComMaccatechPostgreServerUpdating
+#define PGServerStartup              PG(ServerStartup)
+#define PGServerStartupManual        PG(ServerStartupManual)
+#define PGServerStartupAtBoot        PG(ServerStartupAtBoot)
+#define PGServerStartupAtLogin       PG(ServerStartupAtLogin)
+#define PGServerStartupManualName    PG(ServerStartupManualName)
+#define PGServerStartupAtBootName    PG(ServerStartupAtBootName)
+#define PGServerStartupAtLoginName   PG(ServerStartupAtLoginName)
 
-#define PGServerAction ComMaccatechPostgreServerAction
-#define PGServerCheckStatusName ComMaccatechPostgreServerCheckStatusName
-#define PGServerStartName ComMaccatechPostgreServerStartName
-#define PGServerStopName ComMaccatechPostgreServerStopName
-#define PGServerCreateName ComMaccatechPostgreServerCreateName
-#define PGServerDeleteName ComMaccatechPostgreServerDeleteName
+#define PGServerStatus               PG(ServerStatus)
+#define PGServerStatusUnknown        PG(ServerStatusUnknown)
+#define PGServerStarting             PG(ServerStarting)
+#define PGServerStarted              PG(ServerStarted)
+#define PGServerStopping             PG(ServerStopping)
+#define PGServerStopped              PG(ServerStopped)
+#define PGServerDeleting             PG(ServerDeleting)
+#define PGServerRetrying             PG(ServerRetrying)
+#define PGServerUpdating             PG(ServerUpdating)
+#define PGServerStatusUnknownName    PG(ServerStatusUnknownName)
+#define PGServerStartingName         PG(ServerStartingName)
+#define PGServerStartedName          PG(ServerStartedName)
+#define PGServerStoppingName         PG(ServerStoppingName)
+#define PGServerDeletingName         PG(ServerDeletingName)
+#define PGServerStoppedName          PG(ServerStoppedName)
+#define PGServerRetryingName         PG(ServerRetryingName)
+#define PGServerUpdatingName         PG(ServerUpdatingName)
 
-#define PGData ComMaccatechPostgreData
-#define PGFile ComMaccatechPostgreFile
-#define PGLaunchd ComMaccatechPostgreLaunchd
-#define PGProcess ComMaccatechPostgreProcess
-#define PGRights ComMaccatechPostgreRights
+#define PGServerAction               PG(ServerAction)
+#define PGServerCheckStatus          PG(ServerCheckStatus)
+#define PGServerStart                PG(ServerStart)
+#define PGServerStop                 PG(ServerStop)
+#define PGServerDelete               PG(ServerDelete)
+#define PGServerCreate               PG(ServerCreate)
+#define PGServerCheckStatusName      PG(ServerCheckStatusName)
+#define PGServerStartName            PG(ServerStartName)
+#define PGServerStopName             PG(ServerStopName)
+#define PGServerCreateName           PG(ServerCreateName)
+#define PGServerDeleteName           PG(ServerDeleteName)
+#define PGServerCheckStatusVerb      PG(ServerCheckStatusVerb)
+#define PGServerStartVerb            PG(ServerStartVerb)
+#define PGServerStopVerb             PG(ServerStopVerb)
+#define PGServerCreateVerb           PG(ServerCreateVerb)
+#define PGServerDeleteVerb           PG(ServerDeleteVerb)
+
+#define PGAuth                       PG(Auth)
+#define PGAuthDelegate               PG(AuthDelegate)
+#define PGAuthReasonKey              PG(AuthReasonKey)
+#define PGAuthReasonAction           PG(AuthReasonAction)
+#define PGAuthReasonTarget           PG(AuthReasonTarget)
+#define PGData                       PG(Data)
+#define PGFile                       PG(File)
+#define PGLaunchd                    PG(Launchd)
+#define PGProcess                    PG(Process)
+#define PGRights                     PG(Rights)
+#define PGUser                       PG(User)
+#define PGFileType                   PG(FileType)
+#define PGFileNone                   PG(FileNone)
+#define PGFileFile                   PG(FileFile)
+#define PGFileDir                    PG(FileDir)
 
 #endif /* PostgreSQL_Config_h */
