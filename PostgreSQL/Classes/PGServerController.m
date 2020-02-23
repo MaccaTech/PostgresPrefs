@@ -1,9 +1,27 @@
 //
 //  PGServerController.m
-//  PostgreSQL
+//  PostgresPrefs
 //
 //  Created by Francis McKenzie on 7/7/15.
-//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
+//  Copyright (c) 2011-2020 Macca Tech Ltd. (http://macca.tech)
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
 //
 
 #import "PGServerController.h"
@@ -16,7 +34,13 @@ NSString *const PGServerStopName        = @"Stop";
 NSString *const PGServerCreateName      = @"Create";
 NSString *const PGServerDeleteName      = @"Delete";
 
-CG_INLINE BOOL
+NSString *const PGServerCheckStatusVerb = @"check PostgreSQL status";
+NSString *const PGServerStartVerb       = @"start PostgreSQL";
+NSString *const PGServerStopVerb        = @"stop PostgreSQL";
+NSString *const PGServerCreateVerb      = @"add PostgreSQL start script";
+NSString *const PGServerDeleteVerb      = @"delete PostgresQL start script";
+
+static inline BOOL
 EqualPaths(NSString *path1, NSString *path2)
 {
     path1 = TrimToNil(path1);
@@ -26,7 +50,7 @@ EqualPaths(NSString *path1, NSString *path2)
     return [[path1 stringByStandardizingPath] isEqualToString:[path2 stringByStandardizingPath]];
 }
 
-CG_INLINE BOOL
+static inline BOOL
 EqualUsernames(NSString *user1, NSString *user2)
 {
     user1 = TrimToNil(user1);
@@ -38,13 +62,13 @@ EqualUsernames(NSString *user1, NSString *user2)
     return [user1 isEqualToString:user2];
 }
 
-@interface NSDictionary (Helper)
+@interface NSDictionary (Filter)
 /// Returns a filtered copy of this dictionary, using the block to decide which keys to include
-- (NSDictionary *)filteredDictionaryUsingBlock:(BOOL(^)(id key, id value))block;
+- (NSDictionary *)dictionaryByFilteringUsingBlock:(BOOL(^)(id key, id value))block;
 @end
 
-@implementation NSDictionary(Helper)
-- (NSDictionary *)filteredDictionaryUsingBlock:(BOOL (^)(id, id))block
+@implementation NSDictionary (Filter)
+- (NSDictionary *)dictionaryByFilteringUsingBlock:(BOOL (^)(id, id))block
 {
     NSArray *keysToKeep = [self keysOfEntriesPassingTest:^BOOL(id key, id obj, BOOL *stop) {
         return block(key, obj);
@@ -59,27 +83,36 @@ EqualUsernames(NSString *user1, NSString *user2)
 
 #pragma mark - Interfaces
 
-@interface PGServerController()
+@interface PGServerResult : NSObject
+@property (nonatomic, readonly) PGServerStatus status;
+@property (nonatomic, strong, readonly) NSString *error;
+@property (nonatomic, readonly) PGServerAction errorAction;
+- (instancetype)initWithServer:(PGServer *)server;
+- (instancetype)initWithStatus:(PGServerStatus)status error:(NSString *)error errorAction:(PGServerAction)errorAction;
++ (instancetype)result:(PGServer *)server;
+@end
+
+@interface PGServerController ()
 
 /**
  * Called before running the action. Opportunity to abort action, e.g. if validation fails.
  */
-- (BOOL)shouldRunAction:(PGServerAction)action server:(PGServer *)server previousStatus:(PGServerStatus)previousStatus error:(NSString **)error;
+- (BOOL)shouldRunAction:(PGServerAction)action server:(PGServer *)server previousResult:(PGServerResult *)previousResult error:(NSString **)error;
 
 /**
  * Called after running the action if authorization failed
  */
-- (void)didFailAuthForAction:(PGServerAction)action server:(PGServer *)server previousStatus:(PGServerStatus)previousStatus authStatus:(OSStatus)authStatus;
+- (void)didFailAuthForAction:(PGServerAction)action server:(PGServer *)server previousResult:(PGServerResult *)previousResult auth:(PGAuth *)auth error:(NSString *)error;
 
 /**
  * Called after running the action if an error occurred
  */
-- (void)didFailAction:(PGServerAction)action server:(PGServer *)server previousStatus:(PGServerStatus)previousStatus error:(NSString *)error;
+- (void)didFailAction:(PGServerAction)action server:(PGServer *)server previousResult:(PGServerResult *)previousResult error:(NSString *)error;
 
 /**
  * Called after running the action
  */
-- (void)didRunAction:(PGServerAction)action server:(PGServer *)server previousStatus:(PGServerStatus)previousStatus;
+- (void)didRunAction:(PGServerAction)action server:(PGServer *)server previousResult:(PGServerResult *)previousResult;
 
 /**
  * Populates all derived properties of server after initial creation.
@@ -109,6 +142,36 @@ EqualUsernames(NSString *user1, NSString *user2)
 
 
 
+#pragma mark - PGServerResult
+
+@implementation PGServerResult
+- (instancetype)initWithServer:(PGServer *)server
+{
+    return [self initWithStatus:server.status error:server.error errorAction:server.errorDomain];
+}
+- (instancetype)initWithStatus:(PGServerStatus)status error:(NSString *)error errorAction:(PGServerAction)errorAction
+{
+    self = [super init];
+    if (self) {
+        _status = status;
+        _error = error;
+        _errorAction = errorAction;
+    }
+    return self;
+}
+- (NSString *)description
+{
+    if (!_error) {
+        return NSStringFromPGServerStatus(_status);
+    } else {
+        return [NSString stringWithFormat:@"%@ %@: %@", NSStringFromPGServerStatus(_status), NSStringFromPGServerAction(_errorAction), _error];
+    }
+}
++ (instancetype)result:(PGServer *)server { return [[PGServerResult alloc] initWithServer:server]; }
+@end
+
+
+
 #pragma mark - PGServerController
 
 @implementation PGServerController
@@ -129,131 +192,147 @@ EqualUsernames(NSString *user1, NSString *user2)
 
 #pragma mark Main Methods
 
-- (void)runAction:(PGServerAction)action server:(PGServer *)server authorization:(AuthorizationRef)authorization
+- (void)runAction:(PGServerAction)action server:(PGServer *)server auth:(PGAuth *)auth
 {
-    [self runAction:action server:server authorization:authorization succeeded:nil failed:nil];
+    [self runAction:action server:server auth:auth succeeded:nil failed:nil];
 }
 
-- (void)runAction:(PGServerAction)action server:(PGServer *)server authorization:(AuthorizationRef)authorization succeeded:(void (^)(void))succeeded failed:(void (^)(NSString *error))failed
+- (void)runAction:(PGServerAction)action server:(PGServer *)server auth:(PGAuth *)auth succeeded:(void (^)(void))succeeded failed:(void (^)(NSString *error))failed
+{
+    BackgroundThread(^{
+        [self runActionAndWait:action server:server auth:auth succeeded:succeeded failed:failed];
+    });
+}
+
+- (void)runActionAndWait:(PGServerAction)action server:(PGServer *)server auth:(PGAuth *)auth succeeded:(void (^)(void))succeeded failed:(void (^)(NSString *error))failed
 {
     // Abort quickly
     if (!server) return;
     if (server.processing && action == PGServerCheckStatus) return;
     
-    // One action at a time for a server
+    // One action at a time for a server.
+    // Note: thread blocks holding synchronized lock until done
     @synchronized(server) {
     
-    NSString *error = nil;
-    OSStatus authStatus = errAuthorizationSuccess;
+        NSString *error = nil;
         
-    // Cache the existing status, because may need to revert to it if errors
-    PGServerStatus previousStatus = server.status;
+        // Cache the existing status, because may need to revert to it if errors
+        PGServerResult *previousResult = [PGServerResult result:server];
+            
+        // Validate server settings
+        if ([self shouldRunAction:action server:server previousResult:previousResult error:&error]) {
         
-    // Validate server settings
-    if (![self shouldRunAction:action server:server previousStatus:previousStatus error:&error]) {
-        server.error = error;
-        if (failed) failed(server.error);
-        else [self.delegate postgreServer:server didFailAction:action error:server.error];
-        return;
-    }
-    
-    // For some actions, don't show a spinning wheel,
-    // and don't remove the existing error until finished
-    if (! (action == PGServerCheckStatus || action == PGServerCreate) ) {
-        server.error = nil;
-        server.processing = YES;
-    }
+            // For some actions, don't show a spinning wheel,
+            // and don't remove the existing error until finished
+            if (action != PGServerCheckStatus) {
+                server.error = nil;
+                server.errorDomain = action;
+            }
+            if (! (action == PGServerCheckStatus ||
+                   action == PGServerCreate) ) {
+                server.processing = YES;
+            }
 
-    // Notify delegate
-    [self.delegate postgreServer:server willRunAction:action];
-    
-    // Execute
-    switch (action) {
+            // Notify delegate
+            MainThread(^{
+                [self.delegate server:server willRunAction:action];
+            });
             
-        case PGServerCheckStatus:
-            [self checkStatusForServer:server];
-            break;
-            
-        case PGServerStop:
-            [self stopServer:server all:!server.external authorization:authorization authStatus:&authStatus error:&error];
-            break;
-            
-        case PGServerStart:
-            // Internal server
-            if (!server.external) {
-                // Validate
-                if (![self validateSettingsForServer:server authorization:authorization authStatus:&authStatus error:&error]) break;
-                // Unload
-                if (![self stopServer:server all:YES authorization:authorization authStatus:&authStatus error:&error]) break;
-                // Delete
-                if (![self deleteDaemonFileForServer:server all:YES authorization:authorization authStatus:&authStatus error:&error]) break;
-                // Create Daemon
-                if (![self createDaemonFileForServer:server authorization:authorization authStatus:&authStatus error:&error]) break;
-                // Create Log File
-                if (![self createLogFileForServer:server authorization:authorization authStatus:&authStatus error:&error]) break;
-                // Load
-                [self loadDaemonForServer:server authorization:authorization authStatus:&authStatus error:&error];
-                
-            // External server
-            } else {
-                // Unload
-                if (![self stopServer:server all:NO authorization:authorization authStatus:&authStatus error:&error]) break;
-                // Load
-                [self loadDaemonForServer:server authorization:authorization authStatus:&authStatus error:&error];
+            // Execute
+            switch (action) {
+                    
+                case PGServerCheckStatus:
+                    [self checkStatusForServer:server];
+                    break;
+                    
+                case PGServerStop:
+                    [self stopServer:server all:!server.external auth:auth error:&error];
+                    break;
+                    
+                case PGServerStart:
+                    // Internal server
+                    if (!server.external) {
+                        // Validate
+                        if (![self validateSettingsForServer:server auth:auth error:&error]) break;
+                        // Unload
+                        if (![self stopServer:server all:YES auth:auth error:&error]) break;
+                        // Delete
+                        if (![self deleteDaemonFileForServer:server all:YES auth:auth error:&error]) break;
+                        // Create Daemon
+                        if (![self createDaemonFileForServer:server auth:auth error:&error]) break;
+                        // Create Log File
+                        if (![self createLogFileForServer:server auth:auth error:&error]) break;
+                        // Load
+                        [self loadDaemonForServer:server auth:auth error:&error];
+                        
+                    // External server
+                    } else {
+                        // Unload
+                        if (![self stopServer:server all:NO auth:auth error:&error]) break;
+                        // Load
+                        [self loadDaemonForServer:server auth:auth error:&error];
+                    }
+                    break;
+                    
+                case PGServerDelete:
+                    if (![self stopServer:server all:!server.external auth:auth error:&error]) break;
+                    [self deleteDaemonFileForServer:server all:!server.external auth:auth error:&error];
+                    break;
+                    
+                case PGServerCreate:
+                    if (server.external) {
+                        error = @"Program error - cannot create external server";
+                        break;
+                    }
+                    if (![self deleteDaemonFileForServer:server all:YES auth:auth error:&error]) break;
+                    [self createDaemonFileForServer:server auth:auth error:&error];
+                    break;
             }
-            break;
             
-        case PGServerDelete:
-            if (![self stopServer:server all:!server.external authorization:authorization authStatus:&authStatus error:&error]) break;
-            [self deleteDaemonFileForServer:server all:!server.external authorization:authorization authStatus:&authStatus error:&error];
-            break;
-            
-        case PGServerCreate:
-            if (server.external) {
-                error = @"Program error - cannot create external server";
-                break;
+            // Don't change spinning wheel for some actions
+            if (! (action == PGServerCheckStatus ||
+                   action == PGServerCreate)) {
+                server.processing = NO;
             }
-            if (![self deleteDaemonFileForServer:server all:YES authorization:authorization authStatus:&authStatus error:&error]) break;
-            [self createDaemonFileForServer:server authorization:authorization authStatus:&authStatus error:&error];
-            break;
-    }
-    
-    // Don't change spinning wheel for some actions
-    if (! (action == PGServerCheckStatus || action == PGServerCreate))
-        server.processing = NO;
-    
-    // Auth error
-    if (authStatus != errAuthorizationSuccess) {
-        [self didFailAuthForAction:action server:server previousStatus:previousStatus authStatus:authStatus];
-     
-    // Error
-    } else if (error) {
-        [self didFailAction:action server:server previousStatus:previousStatus error:error];
+        }
         
-    // Check result
-    } else {
-        [self didRunAction:action server:server previousStatus:previousStatus];
-    }
+        // Auth error
+        if (auth.requested &&
+            auth.status != errAuthorizationSuccess) {
+            if (!error) { error = [NSString stringWithFormat:@"Authorization required to %@", NSStringFromPGServerAction(action).lowercaseString]; }
+            [self didFailAuthForAction:action server:server previousResult:previousResult auth:auth error:error];
+         
+        // Error
+        } else if (error) {
+            [self didFailAction:action server:server previousResult:previousResult error:error];
+            
+        // Check result
+        } else {
+            [self didRunAction:action server:server previousResult:previousResult];
+        }
+        
+        // Log
+        if (IsLogging) {
+            DLog(@"[%@] %@ : %@%@", server.name, NSStringFromPGServerAction(action), NSStringFromPGServerStatus(server.status), (server.error?[NSString stringWithFormat:@"\n\n[error] %@", server.error]:@""));
+        }
+
+        // Notify delegate - keep notifications ordered correctly
+        // by scheduling on main while still holding synchronized lock.
+        MainThreadAfterDelay(0, ^{
+            if (NonBlank(error)) {
+                if (failed) failed(error);
+                else [self.delegate server:server didFailAction:action error:error];
+            } else {
+                if (succeeded) succeeded();
+                else [self.delegate server:server didSucceedAction:action];
+            }
+            [self.delegate server:server didRunAction:action];
+        });
         
     } // End synchronized
-    
-    // Log
-    if (IsLogging) {
-        DLog(@"[%@] %@ : %@%@", server.name, ServerActionDescription(action), ServerStatusDescription(server.status), (server.error?[NSString stringWithFormat:@"\n\n[error] %@", server.error]:@""));
-    }
-    
-    // Notify delegate
-    if (NonBlank(server.error)) {
-        if (failed) failed(server.error);
-        else [self.delegate postgreServer:server didFailAction:action error:server.error];
-    } else {
-        if (succeeded) succeeded();
-        else [self.delegate postgreServer:server didSucceedAction:action];
-    }
-    [self.delegate postgreServer:server didRunAction:action];
 }
 
-- (BOOL)validateSettingsForServer:(PGServer *)server authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
+- (BOOL)validateSettingsForServer:(PGServer *)server auth:(PGAuth *)auth error:(NSString **)error
 {
     PGServerSettings *settings = server.settings;
     [self validateServerSettings:settings];
@@ -261,25 +340,27 @@ EqualUsernames(NSString *user1, NSString *user2)
         if (error) *error = @"Server settings are invalid";
         return NO;
     }
-
+    
+    PGUser *user = [PGUser userWithUsername:settings.username];
+    
     // Username
-    if (NonBlank(settings.username) && ![PGProcess runShellCommand:[NSString stringWithFormat:@"id -u %@ >/dev/null", settings.username] forRootUser:YES authorization:authorization authStatus:authStatus error:error]) {
+    if (NonBlank(settings.username) && !user) {
         settings.invalidUsername = @"No such user";
     }
     
     // Bin directory
-    if (![PGFile dirExists:settings.binDirectory authorization:authorization authStatus:authStatus error:error]) {
+    if (![PGFile dirExists:settings.binDirectory user:user auth:auth error:error]) {
         settings.invalidBinDirectory = @"No such directory";
     }
 
     
     // Data directory
-    if (![PGFile dirExists:settings.dataDirectory authorization:authorization authStatus:authStatus error:error]) {
+    if (![PGFile dirExists:settings.dataDirectory user:user auth:auth error:error]) {
         settings.invalidDataDirectory = @"No such directory";
     }
     
     // Log directory
-    if (NonBlank(settings.logFile) && ![PGFile dirExists:[settings.logFile stringByDeletingLastPathComponent] authorization:authorization authStatus:authStatus error:error]) {
+    if (NonBlank(settings.logFile) && ![PGFile dirExists:[settings.logFile stringByDeletingLastPathComponent] user:user auth:auth error:error]) {
         settings.invalidLogFile = @"No such directory";
     }
     
@@ -290,7 +371,7 @@ EqualUsernames(NSString *user1, NSString *user2)
     return YES;
 }
 
-- (BOOL)stopServer:(PGServer *)server all:(BOOL)all authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)outerr
+- (BOOL)stopServer:(PGServer *)server all:(BOOL)all auth:(PGAuth *)auth error:(NSString **)outerr
 {
     // 'launchctl bootout' on Catalina returns an error message,
     // even though it succeeds. So error is not always reliable.
@@ -298,9 +379,10 @@ EqualUsernames(NSString *user1, NSString *user2)
     // at end of this method.
     if (outerr) { *outerr = nil; }
     NSString *error = nil;
-
+    
     // Unload using launchctl
-    [self unloadDaemonForServer:server all:all authorization:authorization authStatus:authStatus error:&error];
+    [self unloadDaemonForServer:server all:all auth:auth error:&error];
+    [NSThread sleepForTimeInterval:1.0];
     
     if (!server.pid) return YES;
     
@@ -309,7 +391,7 @@ EqualUsernames(NSString *user1, NSString *user2)
     if (!process) return YES;
     
     // Still running - kill
-    [PGProcess kill:server.pid forRootUser:YES authorization:authorization authStatus:authStatus error:&error];
+    [PGProcess kill:server.pid forRootUser:process.user.isOtherUser auth:auth error:&error];
 
     // Check stopped
     process = [PGProcess runningProcessWithPid:server.pid];
@@ -319,96 +401,120 @@ EqualUsernames(NSString *user1, NSString *user2)
     if (outerr) { *outerr = error; }
     return NO;
 }
-- (BOOL)unloadDaemonForServer:(PGServer *)server all:(BOOL)all authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
+- (BOOL)unloadDaemonForServer:(PGServer *)server all:(BOOL)all auth:(PGAuth *)auth error:(NSString **)error
 {
-    if (![PGLaunchd stopDaemonWithName:server.daemonName forRootUser:server.daemonForAllUsers authorization:authorization authStatus:authStatus error:error]) return NO;
+    // For authInfo popup
+    auth.reason = @{
+        PGAuthReasonAction: @"Stop PostgreSQL using",
+        PGAuthReasonTarget: @"system launchd"
+    };
+
+    if (![PGLaunchd stopDaemonWithName:server.daemonName forRootUser:server.daemonFileOwner.isRootUser auth:auth error:error]) return NO;
     
     if (!all) return YES;
     
-    if (![PGLaunchd stopDaemonWithName:server.daemonName forRootUser:!server.daemonForAllUsers authorization:authorization authStatus:authStatus error:error]) return NO;
+    if ([PGLaunchd loadedDaemonWithName:server.daemonName forRootUser:!server.daemonFileOwner.isRootUser]) {
+        if (![PGLaunchd stopDaemonWithName:server.daemonName forRootUser:!server.daemonFileOwner.isRootUser auth:auth error:error]) return NO;
+    }
     
     return YES;
 }
-- (BOOL)loadDaemonForServer:(PGServer *)server authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)outerr
+- (BOOL)loadDaemonForServer:(PGServer *)server auth:(PGAuth *)auth error:(NSString **)outerr
 {
-    // Create temp plist file with "Disabled" property set to false
-    NSURL *enabledDaemonFile = [self createEnabledDaemonFileForServer:server error:outerr];
-    if (!enabledDaemonFile) { return NO; }
-    
-    // Load
-    BOOL result = [PGLaunchd startDaemonWithFile:enabledDaemonFile.path forRootUser:server.daemonForAllUsers authorization:authorization authStatus:authStatus error:outerr];
-    
-    // Remove temp plist file (silently ignore any error)
-    [NSFileManager.defaultManager removeItemAtURL:enabledDaemonFile error:nil];
-    
+    __block BOOL result = NO;
+    __block NSString *error = nil;
+    [PGFile temporaryFileWithExtension:@".plist" usingBlock:^(NSString *tempPath) {
+        
+        // Create temp plist file with "Disabled" property set to false
+        result = [self createEnabledDaemonFileForServer:server path:tempPath auth:auth error:&error];
+        if (!result) { return; }
+
+        // For authInfo popup
+        auth.reason = @{
+            PGAuthReasonAction: @"Start PostgreSQL using",
+            PGAuthReasonTarget: @"system launchd"
+        };
+
+        // Load
+        result = [PGLaunchd startDaemonWithFile:tempPath forRootUser:server.daemonFileOwner.isRootUser auth:auth error:&error];
+    }];
+    if (outerr) { *outerr = error; }
+    if (result) { [NSThread sleepForTimeInterval:1.0]; }
     return result;
 }
-- (BOOL)deleteDaemonFileForServer:(PGServer *)server all:(BOOL)all authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
+- (BOOL)deleteDaemonFileForServer:(PGServer *)server all:(BOOL)all auth:(PGAuth *)auth error:(NSString **)error
 {
+    // For authInfo popup
+    NSMutableDictionary *reason = [NSMutableDictionary dictionaryWithDictionary:@{
+        PGAuthReasonAction: @"Remove PostgreSQL plist file from",
+        PGAuthReasonTarget: [server.daemonFile stringByDeletingLastPathComponent]
+    }];
+    auth.reason = reason;
+    
     // Note that delete returns YES if the file is already deleted
-    if (![PGFile deleteFile:server.daemonFile authorization:authorization authStatus:authStatus error:error]) return NO;
+    if (![PGFile remove:server.daemonFile auth:auth error:error]) return NO;
     
     if (!all) return YES;
     
-    if (![PGFile deleteFile:server.daemonFileForAllUsersAtBoot authorization:authorization authStatus:authStatus error:error]) return NO;
-    if (![PGFile deleteFile:server.daemonFileForAllUsersAtLogin authorization:authorization authStatus:authStatus error:error]) return NO;
-    if (![PGFile deleteFile:server.daemonFileForCurrentUserOnly authorization:authorization authStatus:authStatus error:error]) return NO;
+    reason[PGAuthReasonTarget] = [server.daemonFileForAllUsersAtBoot stringByDeletingLastPathComponent];
+    if ([PGFile fileExists:server.daemonFileForAllUsersAtBoot]) {
+        if (![PGFile remove:server.daemonFileForAllUsersAtBoot auth:auth error:error]) return NO;
+    }
+    reason[PGAuthReasonTarget] = [server.daemonFileForAllUsersAtLogin stringByDeletingLastPathComponent];
+    if ([PGFile fileExists:server.daemonFileForAllUsersAtLogin]) {
+        if (![PGFile remove:server.daemonFileForAllUsersAtLogin auth:auth error:error]) return NO;
+    }
+    reason[PGAuthReasonTarget] = [server.daemonFileForCurrentUserOnly stringByDeletingLastPathComponent];
+    if ([PGFile fileExists:server.daemonFileForCurrentUserOnly]) {
+        if (![PGFile remove:server.daemonFileForCurrentUserOnly auth:auth error:error]) return NO;
+    }
 
     return YES;
 }
-- (BOOL)createDaemonFileForServer:(PGServer *)server authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
+- (BOOL)createDaemonFileForServer:(PGServer *)server auth:(PGAuth *)auth error:(NSString **)error
 {
+    // For authInfo popup
+    auth.reason = @{
+        PGAuthReasonAction: @"Create PostgreSQL plist file in",
+        PGAuthReasonTarget: server.daemonFile.stringByDeletingLastPathComponent
+    };
+
     NSDictionary *daemon = [self daemonFromServer:server];
     if (daemon.count == 0) return NO;
     
-    return [PGFile createPlistFile:server.daemonFile contents:daemon owner:server.daemonForAllUsers?@"root":nil authorization:authorization authStatus:authStatus error:error];
+    return [PGFile createPlistFile:server.daemonFile contents:daemon user:server.daemonFileOwner auth:auth error:error];
 }
-- (NSURL *)createEnabledDaemonFileForServer:(PGServer *)server error:(NSString **)outerr
+- (BOOL)createEnabledDaemonFileForServer:(PGServer *)server path:(NSString *)path auth:(PGAuth *)auth error:(NSString **)error
 {
-    NSURL *result = nil;
-    NSError *error = nil;
+    // For authInfo popup
+    auth.reason = @{
+        PGAuthReasonAction: @"Create PostgreSQL agent in",
+        PGAuthReasonTarget: @"temporary directory"
+    };
 
-    // Read daemon file
-    NSURL *daemonUrl = [NSURL fileURLWithPath:server.daemonFile.stringByExpandingTildeInPath];
-    NSMutableDictionary *daemon = [[NSMutableDictionary alloc] initWithContentsOfURL:daemonUrl error:&error];
-    if (!daemon) {
-        if (outerr) { *outerr = [NSString stringWithFormat:@"Invalid server daemon file %@: %@", server.daemonFile, (error.localizedDescription?: error.description ?: @"Unknown error")]; }
-    } else {
-        // Override disabled
-        daemon[@"Disabled"] = @NO;
-        
-        // Create temp dir
-        NSURL *dir = [NSFileManager.defaultManager URLForDirectory:NSItemReplacementDirectory inDomain:NSUserDomainMask appropriateForURL:daemonUrl create:YES error:&error];
-        if (!dir) {
-            if (outerr) { *outerr = [NSString stringWithFormat:@"Failed to create temp dir: %@", (error.localizedDescription ?: error.description)]; }
-        } else {
-            
-            // Create temp daemon file
-            NSString *filename = [NSUUID.UUID.UUIDString stringByAppendingString:@".plist"];
-            NSURL *url = [NSURL fileURLWithPath:filename relativeToURL:dir];
-            DLog(@"Create Enabled Daemon: %@\n\n%@", url.path, daemon);
-            BOOL succeeded = [daemon writeToURL:url atomically:YES];
-            if (succeeded) {
-                result = url;
-            } else {
-                if (outerr) {
-                    *outerr = [NSString stringWithFormat:@"Failed to copy PostgreSQL daemon file\nFrom: %@\nTo: %@",
-                               server.daemonFile,
-                               url.path];
-                }
-            }
-        }
-    }
+    NSDictionary *daemon = [self daemonFromServer:server];
+    if (daemon.count == 0) return NO;
     
-    return result;
+    // Remove disabled setting
+    daemon = [daemon dictionaryByFilteringUsingBlock:^BOOL(id key, id value) {
+        return ![key isEqualToString:@"Disabled"];
+    }];
+    
+    return [PGFile createPlistFile:path contents:daemon user:server.daemonFileOwner auth:auth error:error];
 }
-- (BOOL)createLogFileForServer:(PGServer *)server authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
+- (BOOL)createLogFileForServer:(PGServer *)server auth:(PGAuth *)auth error:(NSString **)error
 {
+    // For authInfo popup
+    auth.reason = @{
+        PGAuthReasonAction: @"Create PostgreSQL log file in",
+        PGAuthReasonTarget: server.daemonLog.stringByDeletingLastPathComponent
+    };
+
     // Create Log Dir
-    if (![PGFile createDir:[server.daemonLog stringByDeletingLastPathComponent] owner:(server.daemonForAllUsers?@"root":nil) authorization:authorization authStatus:authStatus error:error]) return NO;
+    if (![PGFile createDir:[server.daemonLog stringByDeletingLastPathComponent] user:(server.daemonForAllUsers ? PGUser.root : nil) auth:auth error:error]) return NO;
     
     // Create Log File
-    if (![PGFile createFile:server.daemonLog contents:nil owner:server.settings.username authorization:authorization authStatus:authStatus error:error]) return NO;
+    if (![PGFile createFile:server.daemonLog contents:nil user:[PGUser userWithUsername:server.settings.username] auth:auth error:error]) return NO;
     
     return YES;
 }
@@ -465,15 +571,19 @@ EqualUsernames(NSString *user1, NSString *user2)
 
 - (PGServer *)serverFromDaemonFile:(NSString *)file
 {
-    if (!FileExists(file)) return nil;
+    if (![PGFile fileExists:file]) return nil;
     
     NSDictionary *daemon = [[NSDictionary alloc] initWithContentsOfFile:[file stringByExpandingTildeInPath]];
+    if (IsLogging) { if (daemon.count > 0) { DLog(@"%@\n%@", file, daemon); } }
+    
     PGServer *result = [self serverFromDaemon:daemon];
     return result;
 }
 
 - (PGServer *)serverFromLoadedDaemon:(NSDictionary *)daemon forRootUser:(BOOL)root
 {
+    if (IsLogging) { if (daemon.count > 0) { DLog(@"%@ launchd\n%@", (root ? @"Syatem" : @"User"), daemon); } }
+
     PGServer *result = [self serverFromDaemon:daemon];
     result.daemonLoadedForAllUsers = root;
     
@@ -488,8 +598,6 @@ EqualUsernames(NSString *user1, NSString *user2)
 - (PGServer *)serverFromDaemon:(NSDictionary *)daemon
 {
     if (daemon.count == 0) return nil;
-    
-    DLog(@"Daemon: %@", daemon);
     
     NSString *daemonName = TrimToNil(ToString(daemon[@"Label"]));
     NSArray *daemonProgramArgs = ToArray(daemon[@"ProgramArguments"]);
@@ -591,16 +699,16 @@ EqualUsernames(NSString *user1, NSString *user2)
     }
     
     return [@{
-             @"Label":server.daemonName?:[NSNull null],
-             @"UserName":server.daemonForAllUsers ? (server.settings.username?:NSUserName()) : [NSNull null],
-             @"ProgramArguments":programArgs?:[NSNull null],
-             @"WorkingDirectory":dataDir?:[NSNull null],
-             @"StandardOutPath":daemonLog?:[NSNull null],
-             @"StandardErrorPath":daemonLog?:[NSNull null],
-             @"Disabled":[NSNumber numberWithBool:server.settings.startup==PGServerStartupManual],
-             @"RunAtLoad":[NSNumber numberWithBool:server.settings.startup!=PGServerStartupManual],
-             @"KeepAlive":@YES
-    } filteredDictionaryUsingBlock:^BOOL(id key, id value) {
+             @"Label": (server.daemonName ?: [NSNull null]),
+             @"UserName": (server.daemonForAllUsers ? (server.settings.username ?: NSUserName()) : [NSNull null]),
+             @"ProgramArguments": (programArgs ?: [NSNull null]),
+             @"WorkingDirectory": (dataDir ?: [NSNull null]),
+             @"StandardOutPath": (daemonLog ?: [NSNull null]),
+             @"StandardErrorPath": (daemonLog ?: [NSNull null]),
+             @"RunAtLoad": @YES,
+             @"KeepAlive": @{ @"SuccessfulExit": @NO },
+             @"Disabled": (server.settings.startup == PGServerStartupManual ? @YES : @NO)
+    } dictionaryByFilteringUsingBlock:^BOOL (id key, id value) {
         return value != [NSNull null];
     }];
 }
@@ -759,9 +867,14 @@ EqualUsernames(NSString *user1, NSString *user2)
         invalidPortCharacterSet = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
     });
     
-    if (NonBlank(settings.username) && [settings.username rangeOfCharacterFromSet:invalidUsernameCharacterSet].location != NSNotFound) {
-        settings.invalidUsername = @"Invalid characters";
+    if (NonBlank(settings.username)) {
+        if ([settings.username rangeOfCharacterFromSet:invalidUsernameCharacterSet].location != NSNotFound) {
+            settings.invalidUsername = @"Invalid characters";
+        } else if (![PGUser userWithUsername:settings.username]) {
+            settings.invalidUsername = @"User not found";
+        }
     }
+                   
     if (!NonBlank(settings.binDirectory)) {
         settings.invalidBinDirectory = @"Value is required";
     } else if (![NSURL fileURLWithPath:[settings.binDirectory stringByExpandingTildeInPath] isDirectory:YES]) {
@@ -787,7 +900,7 @@ EqualUsernames(NSString *user1, NSString *user2)
 
 #pragma mark Private
 
-- (BOOL)shouldRunAction:(PGServerAction)action server:(PGServer *)server previousStatus:(PGServerStatus)previousStatus error:(NSString *__autoreleasing *)error
+- (BOOL)shouldRunAction:(PGServerAction)action server:(PGServer *)server previousResult:(PGServerResult *)previousResult error:(NSString *__autoreleasing *)error
 {
     // Validate settings before starting server
     if (action == PGServerStart) {
@@ -809,44 +922,50 @@ EqualUsernames(NSString *user1, NSString *user2)
     return YES;
 }
 
-- (void)didFailAuthForAction:(PGServerAction)action server:(PGServer *)server previousStatus:(PGServerStatus)previousStatus authStatus:(OSStatus)authStatus
+- (void)didFailAuthForAction:(PGServerAction)action server:(PGServer *)server previousResult:(PGServerResult *)previousResult auth:(PGAuth *)auth error:(NSString *)error
 {
     switch (action) {
-        case PGServerStart:  // Fall thorugh
-        case PGServerStop:   // Fall thorugh
-        case PGServerCreate: // Fall thorugh
-        case PGServerDelete: // Fall thorugh
-            server.status = previousStatus;
-            server.error = @"Authorization required!";
+        case PGServerStart:  // Fall through
+        case PGServerStop:   // Fall through
+        case PGServerCreate: // Fall through
+        case PGServerDelete: // Fall through
+            server.status = previousResult.status;
+            if (auth.status != errAuthorizationCanceled) {
+                server.error = error;
+                server.errorDomain = action;
+            }
             break;
         case PGServerCheckStatus:
-            DLog(@"Authorization error: %d", authStatus);
+            DLog(@"Failed to check status for %@\n%@", server.name, error);
             break;
     }
 }
 
-- (void)didFailAction:(PGServerAction)action server:(PGServer *)server previousStatus:(PGServerStatus)previousStatus error:(NSString *)error
+- (void)didFailAction:(PGServerAction)action server:(PGServer *)server previousResult:(PGServerResult *)previousResult error:(NSString *)error
 {
     switch (action) {
-        case PGServerStart:  // Fall thorugh
-        case PGServerStop:   // Fall thorugh
-        case PGServerCreate: // Fall thorugh
-        case PGServerDelete: // Fall thorugh
-            server.status = previousStatus;
+        case PGServerStart:  // Fall through
+        case PGServerStop:   // Fall through
+        case PGServerCreate: // Fall through
+        case PGServerDelete: // Fall through
+            server.status = previousResult.status;
             server.error = error;
+            server.errorDomain = action;
             break;
-        case PGServerCheckStatus: break; // Do nothing
+        case PGServerCheckStatus:
+            DLog(@"Failed to check status for %@\n%@", server.name, error);
+            break;
     }
 }
 
-- (void)didRunAction:(PGServerAction)action server:(PGServer *)server previousStatus:(PGServerStatus)previousStatus
+- (void)didRunAction:(PGServerAction)action server:(PGServer *)server previousResult:(PGServerResult *)previousResult
 {
     switch (action) {
         // Will always call check status afterwards to confirm if really did start
         case PGServerStart: server.status = PGServerStarting; break;
         case PGServerStop: server.status = PGServerStopped; break;
         case PGServerDelete: server.status = PGServerStopped; break;
-        case PGServerCreate: if (server.status == PGServerUpdating) server.status = previousStatus; break;
+        case PGServerCreate: if (server.status == PGServerUpdating) server.status = previousResult.status; break;
         case PGServerCheckStatus: break; // Do nothing
     }
 }

@@ -1,9 +1,10 @@
 #
 #  PGPrefsRunAsAdmin.applescript
-#  PostgreSQL
+#  PostgresPrefs
 #
 #  Created by Francis McKenzie on 24/12/11.
-#  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
+#  Copyright (c) 2011-2020 Macca Tech Ltd. (http://macca.tech)
+#  (See LICENCE.txt)
 #
 # ==============================================================
 #

@@ -32,6 +32,7 @@
 		2086E18F1B57B55800F2B292 /* PGSearchController.h in Headers */ = {isa = PBXBuildFile; fileRef = 2086E18D1B57B55800F2B292 /* PGSearchController.h */; };
 		2086E1901B57B55800F2B292 /* PGSearchController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2086E18E1B57B55800F2B292 /* PGSearchController.m */; };
 		2090989123F3240F0056EEA8 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2090989023F3240E0056EEA8 /* SystemConfiguration.framework */; };
+		209A721F2404B1CE00FCE8FC /* PostgreSQL.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 209A721E2404B1CE00FCE8FC /* PostgreSQL.xcassets */; };
 		209E77861B60C38300E8AF69 /* PGLaunchd.h in Headers */ = {isa = PBXBuildFile; fileRef = 209E77841B60C38300E8AF69 /* PGLaunchd.h */; };
 		209E77871B60C38300E8AF69 /* PGLaunchd.m in Sources */ = {isa = PBXBuildFile; fileRef = 209E77851B60C38300E8AF69 /* PGLaunchd.m */; };
 		20A43B3F1B5FF7F5000E7D8A /* changing.png in Resources */ = {isa = PBXBuildFile; fileRef = 20A43B3D1B5FF7F5000E7D8A /* changing.png */; };
@@ -86,6 +87,7 @@
 		2086E18D1B57B55800F2B292 /* PGSearchController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGSearchController.h; sourceTree = "<group>"; };
 		2086E18E1B57B55800F2B292 /* PGSearchController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGSearchController.m; sourceTree = "<group>"; };
 		2090989023F3240E0056EEA8 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		209A721E2404B1CE00FCE8FC /* PostgreSQL.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = PostgreSQL.xcassets; sourceTree = "<group>"; };
 		209E77841B60C38300E8AF69 /* PGLaunchd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGLaunchd.h; sourceTree = "<group>"; };
 		209E77851B60C38300E8AF69 /* PGLaunchd.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGLaunchd.m; sourceTree = "<group>"; };
 		20A43B3D1B5FF7F5000E7D8A /* changing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = changing.png; sourceTree = "<group>"; };
@@ -245,6 +247,7 @@
 			isa = PBXGroup;
 			children = (
 				20381A8219F0F10A00559533 /* PostgreSQL.iconset */,
+				209A721E2404B1CE00FCE8FC /* PostgreSQL.xcassets */,
 				2035B19A149C8B83009A2972 /* InfoPlist.strings */,
 				2035B199149C8B83009A2972 /* PostgreSQL-Info.plist */,
 				2035B19D149C8B83009A2972 /* PostgreSQL-Prefix.pch */,
@@ -334,6 +337,7 @@
 				20079E9A1B48086300521807 /* elephant_big.png in Resources */,
 				20079E9B1B48086300521807 /* logo.png in Resources */,
 				20E9698D1B52DA2000013B0E /* unknown.png in Resources */,
+				209A721F2404B1CE00FCE8FC /* PostgreSQL.xcassets in Resources */,
 				2035B19C149C8B83009A2972 /* InfoPlist.strings in Resources */,
 				2035B1A5149C8B84009A2972 /* PGPrefsPane.xib in Resources */,
 				20381A8319F0F10A00559533 /* PostgreSQL.iconset in Resources */,
@@ -419,6 +423,8 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEPLOYMENT_LOCATION = YES;
+				DSTROOT = /;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -442,6 +448,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "PostgreSQL/PostgreSQL-Info.plist";
 				INFOPLIST_PREFIX_HEADER = "";
+				INSTALL_PATH = "$(USER_LIBRARY_DIR)/PreferencePanes";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
@@ -508,8 +515,8 @@
 				GCC_PREFIX_HEADER = "PostgreSQL/PostgreSQL-Prefix.pch";
 				INFOPLIST_FILE = "PostgreSQL/PostgreSQL-Info.plist";
 				INSTALL_PATH = "$(HOME)/Library/PreferencePanes";
-				MARKETING_VERSION = 2.5;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.maccatech.${PRODUCT_NAME:rfc1034identifier}";
+				MARKETING_VERSION = 2.6;
+				PRODUCT_BUNDLE_IDENTIFIER = tech.macca.PostgresPrefs;
 				PRODUCT_NAME = PostgreSQL;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				WRAPPER_EXTENSION = prefPane;
@@ -527,8 +534,8 @@
 				GCC_PREFIX_HEADER = "PostgreSQL/PostgreSQL-Prefix.pch";
 				INFOPLIST_FILE = "PostgreSQL/PostgreSQL-Info.plist";
 				INSTALL_PATH = "$(HOME)/Library/PreferencePanes";
-				MARKETING_VERSION = 2.5;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.maccatech.${PRODUCT_NAME:rfc1034identifier}";
+				MARKETING_VERSION = 2.6;
+				PRODUCT_BUNDLE_IDENTIFIER = tech.macca.PostgresPrefs;
 				PRODUCT_NAME = PostgreSQL;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				WRAPPER_EXTENSION = prefPane;

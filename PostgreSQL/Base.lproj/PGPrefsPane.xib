@@ -3,19 +3,22 @@
     <dependencies>
         <deployment identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
+        <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="ComMaccatechPostgrePrefsPane">
+        <customObject id="-2" userLabel="File's Owner" customClass="TechMaccaPGPrefsPane">
             <connections>
                 <outlet property="_firstKeyView" destination="723" id="783"/>
                 <outlet property="_initialKeyView" destination="723" id="784"/>
                 <outlet property="_window" destination="12" id="26"/>
+                <outlet property="authInfoWindow" destination="by4-Al-oxW" id="j3h-Fv-UuI"/>
                 <outlet property="authorizationView" destination="786" id="787"/>
                 <outlet property="binDirectoryField" destination="910" id="927"/>
                 <outlet property="changeSettingsButton" destination="629" id="936"/>
                 <outlet property="dataDirectoryField" destination="908" id="928"/>
                 <outlet property="deleteServerWindow" destination="1042" id="1068"/>
+                <outlet property="errorButton" destination="f0c-s3-7fq" id="C2h-7g-gzU"/>
                 <outlet property="errorField" destination="658" id="7q7-sD-S0c"/>
                 <outlet property="errorView" destination="655" id="v1w-lx-Shc"/>
                 <outlet property="errorWindow" destination="FUa-dk-gMY" id="DHm-bu-03q"/>
@@ -36,8 +39,8 @@
                 <outlet property="serversMenu" destination="751" id="757"/>
                 <outlet property="serversTableView" destination="723" id="745"/>
                 <outlet property="startStopButton" destination="619" id="652"/>
-                <outlet property="startupAtBootCell" destination="897" id="992"/>
-                <outlet property="startupAtLoginCell" destination="898" id="993"/>
+                <outlet property="startupAtBootCell" destination="898" id="QNR-cD-zbc"/>
+                <outlet property="startupAtLoginCell" destination="897" id="Rsj-4W-Tna"/>
                 <outlet property="startupManualCell" destination="899" id="989"/>
                 <outlet property="startupMatrix" destination="894" id="988"/>
                 <outlet property="statusField" destination="617" id="654"/>
@@ -79,7 +82,7 @@
                     <segmentedControl verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="637" userLabel="Servers Btns">
                         <rect key="frame" x="19" y="51" width="180" height="23"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <segmentedCell key="cell" borderStyle="border" alignment="left" style="smallSquare" trackingMode="momentary" id="638" customClass="ComMaccatechPostgrePrefsSegmentedControl">
+                        <segmentedCell key="cell" borderStyle="border" alignment="left" style="smallSquare" trackingMode="momentary" id="638" customClass="TechMaccaPGPrefsSegmentedControl">
                             <font key="font" metaFont="system"/>
                             <segments>
                                 <segment image="NSAddTemplate" width="28">
@@ -119,7 +122,7 @@
                                     <tableColumns>
                                         <tableColumn editable="NO" width="175" minWidth="40" maxWidth="1000" id="727">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left">
-                                                <font key="font" metaFont="message" size="11"/>
+                                                <font key="font" metaFont="controlContent" size="11"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
                                             </tableHeaderCell>
@@ -129,7 +132,7 @@
                                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                             <prototypeCellViews>
-                                                <tableCellView identifier="HeaderCell" id="459" userLabel="Header" customClass="ComMaccatechPostgrePrefsServersHeaderCell">
+                                                <tableCellView identifier="HeaderCell" id="459" userLabel="Header" customClass="TechMaccaPGPrefsServersHeaderCell">
                                                     <rect key="frame" x="1" y="1" width="175" height="17"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
@@ -159,7 +162,7 @@
                                                         <outlet property="textField" destination="460" id="467"/>
                                                     </connections>
                                                 </tableCellView>
-                                                <tableCellView identifier="DataCell" id="462" userLabel="Server" customClass="ComMaccatechPostgrePrefsServersCell">
+                                                <tableCellView identifier="DataCell" id="462" userLabel="Server" customClass="TechMaccaPGPrefsServersCell">
                                                     <rect key="frame" x="1" y="20" width="175" height="36"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
@@ -181,7 +184,7 @@
                                                             <rect key="frame" x="25" y="3" width="142" height="14"/>
                                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                             <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Running on port 1234" id="640">
-                                                                <font key="font" metaFont="message" size="11"/>
+                                                                <font key="font" metaFont="controlContent" size="11"/>
                                                                 <color key="textColor" name="disabledControlTextColor" catalog="System" colorSpace="catalog"/>
                                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                             </textFieldCell>
@@ -305,7 +308,7 @@ To get started, add a server configuration by clicking the '+' button on the lef
                                                     <rect key="frame" x="66" y="9" width="339" height="28"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <textFieldCell key="cell" controlSize="small" sendsActionOnEndEditing="YES" id="628">
-                                                        <font key="font" metaFont="message" size="11"/>
+                                                        <font key="font" metaFont="controlContent" size="11"/>
                                                         <string key="title">The PostgreSQL is started and listening for client connections.
 To stop the server, click the Stop PostgreSQL button.</string>
                                                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -313,30 +316,44 @@ To stop the server, click the Stop PostgreSQL button.</string>
                                                     </textFieldCell>
                                                 </textField>
                                                 <customView autoresizesSubviews="NO" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="655" userLabel="Error View">
-                                                    <rect key="frame" x="66" y="9" width="339" height="28"/>
-                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                    <rect key="frame" x="66" y="5" width="339" height="32"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                                                     <subviews>
-                                                        <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="f0c-s3-7fq" userLabel="Error Btn">
-                                                            <rect key="frame" x="2" y="-2" width="337" height="32"/>
+                                                        <box fixedFrame="YES" borderType="line" title="Box" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="aBy-hi-5Xc">
+                                                            <rect key="frame" x="-3" y="-4" width="345" height="38"/>
                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSInfo" imagePosition="left" alignment="left" imageScaling="proportionallyUpOrDown" inset="2" id="vsW-QR-9Bs">
-                                                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                                <font key="font" metaFont="system"/>
-                                                            </buttonCell>
-                                                            <color key="contentTintColor" red="0.0" green="0.50196081400000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                                                            <connections>
-                                                                <action selector="showErrorWindowClicked:" target="-2" id="oop-hz-WVo"/>
-                                                            </connections>
-                                                        </button>
-                                                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="658" customClass="ComMaccatechPostgrePrefsNonClickableTextField">
-                                                            <rect key="frame" x="37" y="0.0" width="304" height="28"/>
-                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                            <textFieldCell key="cell" truncatesLastVisibleLine="YES" refusesFirstResponder="YES" allowsUndo="NO" sendsActionOnEndEditing="YES" title="There has been a problem. The details of the problem will be displayed here." id="659" customClass="ComMaccatechPostgrePrefsCenteredTextFieldCell">
-                                                                <font key="font" metaFont="message" size="11"/>
-                                                                <color key="textColor" red="0.0" green="0.50196081400000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                            </textFieldCell>
-                                                        </textField>
+                                                            <view key="contentView" ambiguous="YES" id="tUp-68-Uay">
+                                                                <rect key="frame" x="3" y="3" width="339" height="32"/>
+                                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                                <subviews>
+                                                                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="f0c-s3-7fq" userLabel="ErrBtn">
+                                                                        <rect key="frame" x="256" y="2" width="80" height="27"/>
+                                                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                        <buttonCell key="cell" type="push" title="Details" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" inset="2" id="vsW-QR-9Bs">
+                                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                                        </buttonCell>
+                                                                        <connections>
+                                                                            <action selector="showErrorWindowClicked:" target="-2" id="oop-hz-WVo"/>
+                                                                        </connections>
+                                                                    </button>
+                                                                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="658" userLabel="ErrLabel">
+                                                                        <rect key="frame" x="34" y="9" width="228" height="16"/>
+                                                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                        <textFieldCell key="cell" lineBreakMode="truncatingTail" truncatesLastVisibleLine="YES" refusesFirstResponder="YES" allowsUndo="NO" sendsActionOnEndEditing="YES" title="There has been a problem." usesSingleLineMode="YES" id="659">
+                                                                            <font key="font" metaFont="system"/>
+                                                                            <color key="textColor" name="infoColor"/>
+                                                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                                        </textFieldCell>
+                                                                    </textField>
+                                                                    <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="diW-Za-CtW" userLabel="ErrIcon">
+                                                                        <rect key="frame" x="4" y="5" width="24" height="24"/>
+                                                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                        <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="NSInfo" id="X8I-Q3-IOj"/>
+                                                                    </imageView>
+                                                                </subviews>
+                                                            </view>
+                                                        </box>
                                                     </subviews>
                                                 </customView>
                                             </subviews>
@@ -528,7 +545,7 @@ To stop the server, click the Stop PostgreSQL button.</string>
                                         </buttonCell>
                                     </column>
                                     <column>
-                                        <buttonCell type="radio" title="At Boot" imagePosition="left" alignment="left" lineBreakMode="truncatingMiddle" inset="2" id="897">
+                                        <buttonCell type="radio" title="At Login" imagePosition="left" alignment="left" lineBreakMode="truncatingMiddle" inset="2" id="897">
                                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                             <font key="font" metaFont="system"/>
                                             <connections>
@@ -537,7 +554,7 @@ To stop the server, click the Stop PostgreSQL button.</string>
                                         </buttonCell>
                                     </column>
                                     <column>
-                                        <buttonCell type="radio" title="At Login" imagePosition="left" alignment="left" lineBreakMode="truncatingMiddle" inset="2" id="898">
+                                        <buttonCell type="radio" title="At Boot" imagePosition="left" alignment="left" lineBreakMode="truncatingMiddle" inset="2" id="898">
                                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                             <font key="font" metaFont="system"/>
                                             <connections>
@@ -583,7 +600,7 @@ To stop the server, click the Stop PostgreSQL button.</string>
             </items>
             <point key="canvasLocation" x="140.5" y="414.5"/>
         </menu>
-        <window title="Rename Server" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="759" customClass="ComMaccatechPostgrePrefsRenameWindow">
+        <window title="Rename Server" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="759" customClass="TechMaccaPGPrefsRenameWindow">
             <windowStyleMask key="styleMask" titled="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="120" y="65" width="402" height="133"/>
@@ -654,7 +671,7 @@ DQ
             </connections>
             <point key="canvasLocation" x="140" y="582.5"/>
         </window>
-        <window title="Server Settings" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="833" customClass="ComMaccatechPostgrePrefsServerSettingsWindow">
+        <window title="Server Settings" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="833" customClass="TechMaccaPGPrefsServerSettingsWindow">
             <windowStyleMask key="styleMask" titled="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="109" y="132" width="445" height="440"/>
@@ -825,7 +842,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <clipView key="contentView" ambiguous="YES" id="tsT-i7-LZp">
                             <rect key="frame" x="1" y="0.0" width="403" height="188"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" ambiguous="YES" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" rowHeight="18" rowSizeStyle="automatic" headerView="875" viewBased="YES" id="873">
                                     <rect key="frame" x="0.0" y="0.0" width="403" height="171"/>
@@ -942,7 +959,7 @@ Gw
             </connections>
             <point key="canvasLocation" x="140.5" y="966"/>
         </window>
-        <window title="Delete Server" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="1042" customClass="ComMaccatechPostgrePrefsDeleteWindow">
+        <window title="Delete Server" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="1042" customClass="TechMaccaPGPrefsDeleteWindow">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="109" y="132" width="402" height="282"/>
@@ -1006,7 +1023,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" controlSize="small" sendsActionOnEndEditing="YES" title="This type of configuration file is typically installed when you install PostgreSQL." id="1065">
                             <font key="font" metaFont="message" size="11"/>
-                            <color key="textColor" red="0.0" green="0.50196081400000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                            <color key="textColor" name="infoColor"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
@@ -1054,18 +1071,76 @@ Gw
             <connections>
                 <outlet property="daemonDir" destination="1089" id="1092"/>
                 <outlet property="daemonFile" destination="1087" id="1091"/>
+                <outlet property="infoField" destination="1064" id="Yie-iT-2BF"/>
             </connections>
             <point key="canvasLocation" x="140" y="1419"/>
         </window>
-        <window title="Error Info" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="FUa-dk-gMY" customClass="ComMaccatechPostgrePrefsErrorWindow">
+        <window title="Error Info" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="FUa-dk-gMY" customClass="TechMaccaPGPrefsInfoWindow">
             <windowStyleMask key="styleMask" titled="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="109" y="131" width="402" height="170"/>
+            <rect key="contentRect" x="109" y="131" width="402" height="189"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1280" height="777"/>
             <view key="contentView" id="KQ8-6d-ues">
-                <rect key="frame" x="0.0" y="0.0" width="402" height="170"/>
+                <rect key="frame" x="0.0" y="0.0" width="402" height="189"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
+                    <imageView focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="T79-DF-2EO">
+                        <rect key="frame" x="20" y="140" width="26" height="26"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <imageCell key="cell" refusesFirstResponder="YES" focusRingType="none" alignment="left" imageScaling="proportionallyDown" image="NSInfo" id="YFD-Br-SZF"/>
+                    </imageView>
+                    <box autoresizesSubviews="NO" borderType="line" title="Box" titlePosition="noTitle" id="Qh8-Fk-LKI">
+                        <rect key="frame" x="17" y="57" width="368" height="76"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <view key="contentView" id="SkL-HR-eIM">
+                            <rect key="frame" x="3" y="3" width="362" height="70"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <subviews>
+                                <scrollView fixedFrame="YES" borderType="none" autohidesScrollers="YES" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" horizontalScrollElasticity="none" translatesAutoresizingMaskIntoConstraints="NO" id="aZx-jY-zzI">
+                                    <rect key="frame" x="6" y="7" width="350" height="57"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <clipView key="contentView" ambiguous="YES" drawsBackground="NO" copiesOnScroll="NO" id="S2m-4N-a7T">
+                                        <rect key="frame" x="0.0" y="0.0" width="335" height="57"/>
+                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        <subviews>
+                                            <textView ambiguous="YES" editable="NO" drawsBackground="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="zC7-CL-REf" customClass="TechMaccaPGPrefsCenteredTextView">
+                                                <rect key="frame" x="0.0" y="0.0" width="335" height="84"/>
+                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                <size key="minSize" width="335" height="57"/>
+                                                <size key="maxSize" width="350" height="10000000"/>
+                                                <attributedString key="textStorage">
+                                                    <fragment>
+                                                        <string key="content">Error Message Line 1
+Error Message Line 2
+Error Message Line 3
+Error Message Line 4
+Error Message Line 5
+Error Message Line 6</string>
+                                                        <attributes>
+                                                            <color key="NSColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                            <font key="NSFont" size="12" name="Menlo-Regular"/>
+                                                            <paragraphStyle key="NSParagraphStyle" alignment="center" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                                        </attributes>
+                                                    </fragment>
+                                                </attributedString>
+                                                <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                            </textView>
+                                        </subviews>
+                                    </clipView>
+                                    <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="DGl-ad-Y53">
+                                        <rect key="frame" x="-100" y="-100" width="225" height="15"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                    </scroller>
+                                    <scroller key="verticalScroller" verticalHuggingPriority="750" horizontal="NO" id="yle-q3-A2L">
+                                        <rect key="frame" x="335" y="0.0" width="15" height="57"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                    </scroller>
+                                </scrollView>
+                            </subviews>
+                        </view>
+                    </box>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KcT-YJ-NGl">
                         <rect key="frame" x="164" y="13" width="75" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -1077,59 +1152,99 @@ Gw
                             <action selector="closeErrorWindowClicked:" target="-2" id="UkS-Vz-WSp"/>
                         </connections>
                     </button>
-                    <imageView focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="T79-DF-2EO">
-                        <rect key="frame" x="20" y="126" width="24" height="24"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <imageCell key="cell" refusesFirstResponder="YES" focusRingType="none" alignment="left" imageScaling="proportionallyDown" image="NSInfo" id="YFD-Br-SZF"/>
-                    </imageView>
-                    <scrollView fixedFrame="YES" borderType="none" autohidesScrollers="YES" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" horizontalScrollElasticity="none" translatesAutoresizingMaskIntoConstraints="NO" id="aZx-jY-zzI">
-                        <rect key="frame" x="52" y="50" width="330" height="100"/>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LFI-CA-Q9u">
+                        <rect key="frame" x="52" y="145" width="332" height="16"/>
                         <autoresizingMask key="autoresizingMask"/>
-                        <clipView key="contentView" ambiguous="YES" drawsBackground="NO" copiesOnScroll="NO" id="S2m-4N-a7T">
-                            <rect key="frame" x="0.0" y="0.0" width="330" height="100"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                            <subviews>
-                                <textView ambiguous="YES" editable="NO" drawsBackground="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="zC7-CL-REf">
-                                    <rect key="frame" x="0.0" y="0.0" width="330" height="100"/>
-                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                    <color key="textColor" red="0.0" green="0.50196081400000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                    <size key="minSize" width="330" height="100"/>
-                                    <size key="maxSize" width="330" height="10000000"/>
-                                    <attributedString key="textStorage">
-                                        <fragment>
-                                            <string key="content">Error Message Line 1
-Error Message Line 2
-Error Message Line 3
-Error Message Line 4
-Error Message Line 5
-Error Message Line 6</string>
-                                            <attributes>
-                                                <color key="NSColor" red="0.0" green="0.50196081400000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                                                <font key="NSFont" metaFont="user"/>
-                                                <paragraphStyle key="NSParagraphStyle" alignment="natural" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
-                                            </attributes>
-                                        </fragment>
-                                    </attributedString>
-                                    <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                                </textView>
-                            </subviews>
-                        </clipView>
-                        <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="DGl-ad-Y53">
-                            <rect key="frame" x="-100" y="-100" width="225" height="15"/>
-                            <autoresizingMask key="autoresizingMask"/>
-                        </scroller>
-                        <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="yle-q3-A2L">
-                            <rect key="frame" x="315" y="0.0" width="15" height="96"/>
-                            <autoresizingMask key="autoresizingMask"/>
-                        </scroller>
-                    </scrollView>
+                        <textFieldCell key="cell" lineBreakMode="clipping" title="Unable to add PostgreSQL start script" usesSingleLineMode="YES" id="gSP-Uv-VMU">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="infoColor"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
                 </subviews>
             </view>
             <connections>
-                <outlet property="errorView" destination="zC7-CL-REf" id="sMp-fE-IkB"/>
+                <outlet property="detailsView" destination="zC7-CL-REf" id="Tnc-al-guj"/>
+                <outlet property="titleField" destination="LFI-CA-Q9u" id="AwU-Il-r9Y"/>
             </connections>
-            <point key="canvasLocation" x="140" y="1728"/>
+            <point key="canvasLocation" x="140" y="1737.5"/>
+        </window>
+        <window title="Authorization Info" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="by4-Al-oxW" customClass="TechMaccaPGPrefsInfoWindow">
+            <windowStyleMask key="styleMask" titled="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="109" y="131" width="402" height="148"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="777"/>
+            <view key="contentView" id="T8F-Nl-d7B">
+                <rect key="frame" x="0.0" y="0.0" width="402" height="148"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <imageView focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SdF-m2-JrR">
+                        <rect key="frame" x="20" y="99" width="26" height="26"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <imageCell key="cell" refusesFirstResponder="YES" focusRingType="none" alignment="left" imageScaling="proportionallyDown" image="NSInfo" id="ePb-mv-UNk"/>
+                    </imageView>
+                    <box autoresizesSubviews="NO" borderType="line" title="Box" titlePosition="noTitle" id="pqE-NB-4M0">
+                        <rect key="frame" x="17" y="16" width="368" height="76"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <view key="contentView" id="gGj-om-lnW">
+                            <rect key="frame" x="3" y="3" width="362" height="70"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <subviews>
+                                <scrollView fixedFrame="YES" borderType="none" autohidesScrollers="YES" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" horizontalScrollElasticity="none" translatesAutoresizingMaskIntoConstraints="NO" id="imJ-Xb-irH">
+                                    <rect key="frame" x="6" y="7" width="350" height="57"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <clipView key="contentView" ambiguous="YES" drawsBackground="NO" copiesOnScroll="NO" id="RMH-WX-bQP">
+                                        <rect key="frame" x="0.0" y="0.0" width="350" height="57"/>
+                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        <subviews>
+                                            <textView ambiguous="YES" editable="NO" drawsBackground="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="7i5-ue-ayT" customClass="TechMaccaPGPrefsCenteredTextView">
+                                                <rect key="frame" x="0.0" y="0.0" width="350" height="57"/>
+                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                <size key="minSize" width="350" height="57"/>
+                                                <size key="maxSize" width="350" height="10000000"/>
+                                                <attributedString key="textStorage">
+                                                    <fragment content="Create plist file in /Library">
+                                                        <attributes>
+                                                            <color key="NSColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                            <font key="NSFont" metaFont="system"/>
+                                                            <paragraphStyle key="NSParagraphStyle" alignment="center" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                                        </attributes>
+                                                    </fragment>
+                                                </attributedString>
+                                                <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                            </textView>
+                                        </subviews>
+                                    </clipView>
+                                    <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="sJ3-tD-CYL">
+                                        <rect key="frame" x="-100" y="-100" width="225" height="15"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                    </scroller>
+                                    <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="NO" id="qrV-hg-aqR">
+                                        <rect key="frame" x="335" y="0.0" width="15" height="57"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                    </scroller>
+                                </scrollView>
+                            </subviews>
+                        </view>
+                    </box>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Z2h-09-XrG">
+                        <rect key="frame" x="52" y="104" width="332" height="16"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <textFieldCell key="cell" lineBreakMode="clipping" title="Authorization is required to:" usesSingleLineMode="YES" id="OgP-f2-6pw">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="infoColor"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                </subviews>
+            </view>
+            <connections>
+                <outlet property="detailsView" destination="7i5-ue-ayT" id="otY-hI-v9R"/>
+                <outlet property="titleField" destination="Z2h-09-XrG" id="Sev-kQ-tRy"/>
+            </connections>
+            <point key="canvasLocation" x="140" y="1996"/>
         </window>
     </objects>
     <resources>
@@ -1144,5 +1259,8 @@ Error Message Line 6</string>
         <image name="elephant_big" width="540" height="557"/>
         <image name="logo" width="200" height="40"/>
         <image name="started" width="480" height="600"/>
+        <namedColor name="infoColor">
+            <color red="0.0" green="0.47843137254901963" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </namedColor>
     </resources>
 </document>

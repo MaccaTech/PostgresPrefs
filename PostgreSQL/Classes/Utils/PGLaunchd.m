@@ -1,14 +1,31 @@
 //
 //  PGLaunchd.m
-//  PostgreSQL
+//  PostgresPrefs
 //
 //  Created by Francis McKenzie on 23/7/15.
-//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
+//  Copyright (c) 2011-2020 Macca Tech Ltd. (http://macca.tech)
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
 //
 
 #import "PGLaunchd.h"
 #import <ServiceManagement/ServiceManagement.h>
-#import <SystemConfiguration/SystemConfiguration.h>
 
 #pragma mark - PGLaunchd
 
@@ -65,7 +82,7 @@
     #pragma clang diagnostic pop
 }
 
-+ (BOOL)startDaemonWithFile:(NSString *)file forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
++ (BOOL)startDaemonWithFile:(NSString *)file forRootUser:(BOOL)root auth:(PGAuth *)auth error:(NSString **)error
 {
     file = TrimToNil(file);
     if (!file) return NO;
@@ -73,22 +90,20 @@
     file = [file stringByExpandingTildeInPath];
     
     // Invalid file
-    BOOL isDirectory;
-    if (![[NSFileManager defaultManager] fileExistsAtPath:file isDirectory:&isDirectory] || isDirectory) {
+    if (![PGFile fileExists:file]) {
         if (error) *error = [NSString stringWithFormat:@"Not a valid daemon property file: %@", file];
         return NO;
     }
     
-    // Get User Id
-    uid_t uid = 0;
-    SCDynamicStoreCopyConsoleUser(NULL, &uid, NULL);
+    // Get Domain
+    NSString *domain = root ? @"system" : [NSString stringWithFormat:@"gui/%@", @(PGUser.current.uid)];
 
     // Execute
-    NSString *command = [NSString stringWithFormat:@"launchctl bootstrap gui/%@ \"%@\" && sleep 1", @(uid), file];
-    return [PGProcess runShellCommand:command forRootUser:YES authorization:authorization authStatus:authStatus error:error];
+    NSString *command = [NSString stringWithFormat:@"launchctl bootstrap %@ \"%@\"", domain, file];
+    return [PGProcess runShellCommand:command forRootUser:root auth:auth error:error];
 }
 
-+ (BOOL)stopDaemonWithName:(NSString *)name forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString **)error
++ (BOOL)stopDaemonWithName:(NSString *)name forRootUser:(BOOL)root auth:(PGAuth *)auth error:(NSString **)error
 {
     name = TrimToNil(name);
     if (!name) return NO;
@@ -96,13 +111,12 @@
     // Silently ignore if daemon not loaded
     if (![self loadedDaemonWithName:name forRootUser:root]) return YES;
     
-    // Get User Id
-    uid_t uid = 0;
-    SCDynamicStoreCopyConsoleUser(NULL, &uid, NULL);
+    // Get Domain
+    NSString *domain = root ? @"system" : [NSString stringWithFormat:@"gui/%@", @(PGUser.current.uid)];
 
     // Execute
-    NSString *command = [NSString stringWithFormat:@"launchctl bootout \"gui/%@/%@\" && sleep 1", @(uid), name];
-    return [PGProcess runShellCommand:command forRootUser:YES authorization:authorization authStatus:authStatus error:error];
+    NSString *command = [NSString stringWithFormat:@"launchctl bootout \"%@/%@\"", domain, name];
+    return [PGProcess runShellCommand:command forRootUser:root auth:auth error:error];
 
 //
 //    See comment above - I am abandoning using SMJobRemove, as it leads to the

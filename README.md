@@ -1,7 +1,7 @@
 # Postgres Prefs
 
-<a href="https://www.postgresql.org"><img height="64px" src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/elephant.png" /></a>
-<a href="https://www.postgresql.org"><img height="40px" src="https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/logo.png" /></a>
+<a href="https://www.postgresql.org"><img height="64px" src="https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/elephant.png" /></a>
+<a href="https://www.postgresql.org"><img height="40px" src="https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/logo.png" /></a>
 <a href="http://mac.softpedia.com/get/Internet-Utilities/PostgresPrefs.shtml#status"><img align="right" height="112px" src="http://s1.softpedia-static.com/_img/sp100clean.png?1" /></a>
 
 [![build](https://travis-ci.org/MaccaTech/PostgresPrefs.svg?branch=master)](https://travis-ci.org/MaccaTech/PostgresPrefs)
@@ -14,6 +14,8 @@
 * [FAQ](#FAQ)
 * [Version History](#Version-History)
 * [Contact](#Contact)
+* [Licence](#Licence)
+* [Links](#Links)
 
 ## Overview
 
@@ -29,15 +31,15 @@ Features include:
 
 ### Main Screen
 
-![alt text](https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/screenshot_v2_main.png "Main Screen")
+![alt text](https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/screenshot_v2_main.png "Main Screen")
 
 ### Change Settings
 
-![alt text](https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/screenshot_v2_settings.png "Settings Screen")
+![alt text](https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/screenshot_v2_settings.png "Settings Screen")
 
 ### Log
 
-![alt text](https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/screenshot_v2_log.png "Log Screen")
+![alt text](https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/screenshot_v2_log.png "Log Screen")
 
 ## Install Instructions
 
@@ -45,7 +47,7 @@ Features include:
 2. Once downloaded, open the `.dmg` file by double-clicking it, and then either double-click the contained `PostgreSQL.prefPane` file, or drag it to System Preferences to install it.
 3. When installing, you will be asked if you want to install it for this user only, or for all users. Choose this user only (either option is fine however).
 
-![alt text](https://raw.github.com/mckenfra/postgresql-mac-preferences/master/PostgreSQL/Images/screenshot_install.png "Install Screen")
+![alt text](https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/screenshot_install.png "Install Screen")
 
 ## Uninstall Instructions
 
@@ -110,6 +112,15 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
 </tr>
 </thead>
 <tbody>
+<tr>
+    <td>v2.5</td>
+    <td>28-Feb 2020</td>
+    <td>Bugfix release
+        <ul>
+        <li>Start/stop PostgreSQL without a password</li>
+        </ul>
+    </td>
+</tr>
 <tr>
     <td>v2.5</td>
     <td>12-Feb 2020</td>
@@ -292,6 +303,10 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
 ## Contact
 
 Please email any feedback to [info@macca.tech](mailto:info@macca.tech)
+
+## Licence
+
+This project is covered by the [MIT Licence](https://github.com/MaccaTech/PostgresPrefs/blob/master/LICENCE.txt)
 
 ## Links
 

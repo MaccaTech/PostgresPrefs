@@ -1,9 +1,27 @@
 //
 //  PGServerController.h
-//  PostgreSQL
+//  PostgresPrefs
 //
 //  Created by Francis McKenzie on 7/7/15.
-//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
+//  Copyright (c) 2011-2020 Macca Tech Ltd. (http://macca.tech)
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
 //
 
 #import <Foundation/Foundation.h>
@@ -20,6 +38,11 @@ extern NSString *const PGServerStartName;
 extern NSString *const PGServerStopName;
 extern NSString *const PGServerCreateName;
 extern NSString *const PGServerDeleteName;
+extern NSString *const PGServerCheckStatusVerb;
+extern NSString *const PGServerStartVerb;
+extern NSString *const PGServerStopVerb;
+extern NSString *const PGServerCreateVerb;
+extern NSString *const PGServerDeleteVerb;
 
 typedef NS_ENUM(NSInteger, PGServerAction) {
     PGServerCheckStatus = 0,
@@ -37,8 +60,8 @@ typedef NS_ENUM(NSInteger, PGServerAction) {
     PGServerCreate
 };
 
-CG_INLINE NSString *
-ServerActionDescription(PGServerAction value)
+static inline NSString *
+NSStringFromPGServerAction(PGServerAction value)
 {
     switch (value) {
         case PGServerCheckStatus: return PGServerCheckStatusName;
@@ -46,6 +69,18 @@ ServerActionDescription(PGServerAction value)
         case PGServerStop: return PGServerStopName;
         case PGServerCreate: return PGServerCreateName;
         case PGServerDelete: return PGServerDeleteName;
+    }
+}
+
+static inline NSString *
+NSStringFromPGServerActionVerb(PGServerAction value)
+{
+    switch (value) {
+        case PGServerCheckStatus: return PGServerCheckStatusVerb;
+        case PGServerStart: return PGServerStartVerb;
+        case PGServerStop: return PGServerStopVerb;
+        case PGServerCreate: return PGServerCreateVerb;
+        case PGServerDelete: return PGServerDeleteVerb;
     }
 }
 
@@ -58,13 +93,10 @@ ServerActionDescription(PGServerAction value)
  * Servers.
  */
 @protocol PGServerDelegate <NSObject>
-@required
-- (void)postgreServer:(PGServer *)server willRunAction:(PGServerAction)action;
-- (void)postgreServer:(PGServer *)server didRunAction:(PGServerAction)action;
-- (void)postgreServer:(PGServer *)server didSucceedAction:(PGServerAction)action;
-- (void)postgreServer:(PGServer *)server didFailAction:(PGServerAction)action error:(NSString *)error;
-@optional
-// None
+- (void)server:(PGServer *)server willRunAction:(PGServerAction)action;
+- (void)server:(PGServer *)server didRunAction:(PGServerAction)action;
+- (void)server:(PGServer *)server didSucceedAction:(PGServerAction)action;
+- (void)server:(PGServer *)server didFailAction:(PGServerAction)action error:(NSString *)error;
 @end
 
 
@@ -86,7 +118,7 @@ ServerActionDescription(PGServerAction value)
 /**
  * Runs the action on the PostgreSQL server using launchctl
  */
-- (void)runAction:(PGServerAction)action server:(PGServer *)server authorization:(AuthorizationRef)authorization;
+- (void)runAction:(PGServerAction)action server:(PGServer *)server auth:(PGAuth *)auth;
 
 /**
  * Runs the action on the PostgreSQL server using launchctl
@@ -96,7 +128,7 @@ ServerActionDescription(PGServerAction value)
  * with the final succeeded notification only being sent to delegate once all
  * chained actions are finished. Also allows easier handling of failures in some cases.
  */
-- (void)runAction:(PGServerAction)action server:(PGServer *)server authorization:(AuthorizationRef)authorization succeeded:(void(^)(void))succeeded failed:(void(^)(NSString *error))failed;
+- (void)runAction:(PGServerAction)action server:(PGServer *)server auth:(PGAuth *)auth succeeded:(void(^)(void))succeeded failed:(void(^)(NSString *error))failed;
 
 /**
  * Lookup up a server running on the system by pid.

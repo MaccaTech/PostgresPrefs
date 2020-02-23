@@ -1,9 +1,27 @@
 //
-//  PGShell.m
-//  PostgreSQL
+//  PGProcess.m
+//  PostgresPrefs
 //
 //  Created by Francis McKenzie on 5/7/15.
-//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
+//  Copyright (c) 2011-2020 Macca Tech Ltd. (http://macca.tech)
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
 //
 
 #import "PGProcess.h"
@@ -12,7 +30,7 @@
 
 @interface PGProcess ()
 
-- (id)initWithPid:(NSInteger)pid ppid:(NSInteger)ppid command:(NSString *)command;
+- (id)initWithPid:(NSInteger)pid ppid:(NSInteger)ppid user:(PGUser *)user command:(NSString *)command;
 
 /**
  * @return the applescript file that makes it possible to run an executable with authorization
@@ -30,7 +48,7 @@
  * @param output If nil, does not wait for command to complete. Otherwise, captures output.
  * @return YES if succeeded without throwing an exception or authorization error
  */
-+ (BOOL)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString **)output error:(NSString **)error;
++ (BOOL)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args auth:(PGAuth *)auth output:(NSString **)output error:(NSString **)error;
 
 /**
  * Runs executable without authorization and either returns output or returns immediately with no output
@@ -40,7 +58,7 @@
 /**
  * Runs executable with authorization and either returns output or returns immediately with no output
  */
-+ (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus waitForOutput:(BOOL)waitForOutput;
++ (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args auth:(PGAuth *)auth waitForOutput:(BOOL)waitForOutput;
 
 @end
 
@@ -52,12 +70,13 @@
 
 #pragma mark Running Processes
 
-- (id)initWithPid:(NSInteger)pid ppid:(NSInteger)ppid command:(NSString *)command
+- (id)initWithPid:(NSInteger)pid ppid:(NSInteger)ppid user:(PGUser *)user command:(NSString *)command
 {
     self = [super init];
     if (self) {
         _pid = pid;
         _ppid = ppid;
+        _user = user;
         _command = command;
     }
     return self;
@@ -72,25 +91,29 @@
 {
     if (!NonBlank(output)) return nil;
     
-    static NSRegularExpression *regex = nil;
-    if (!regex) regex = [NSRegularExpression regularExpressionWithPattern:@"\\A\\s*([\\d]+)\\s*([\\d]+)\\s*(.*?)\\s*\\z" options:0 error:nil];
+    static NSRegularExpression *regex;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        regex = [NSRegularExpression regularExpressionWithPattern:@"\\A\\s*(\\d+)\\s+(\\d+)\\s+(\\S+)\\s+(.*?)\\s*\\z" options:0 error:nil];
+    });
     
     NSTextCheckingResult *match = [regex firstMatchInString:output options:0 range:NSMakeRange(0,output.length)];
-    if (match.numberOfRanges != 4) return nil;
+    if (match.numberOfRanges != 5) return nil;
     
     NSString *pid = [output substringWithRange:[match rangeAtIndex:1]];
     NSString *ppid = [output substringWithRange:[match rangeAtIndex:2]];
-    NSString *command = [output substringWithRange:[match rangeAtIndex:3]];
-    return [[PGProcess alloc] initWithPid:pid.integerValue ppid:ppid.integerValue command:command];
+    NSString *user = [output substringWithRange:[match rangeAtIndex:3]];
+    NSString *command = [output substringWithRange:[match rangeAtIndex:4]];
+    return [[PGProcess alloc] initWithPid:pid.integerValue ppid:ppid.integerValue user:[PGUser userWithUsername:user] command:command];
 }
 + (PGProcess *)runningProcessWithPid:(NSInteger)pid
 {
-    NSString *command = [NSString stringWithFormat:@"ps -o pid,ppid,command -p %@ | grep %@", @(pid), @(pid)];
+    NSString *command = [NSString stringWithFormat:@"ps -o pid=,ppid=,user=,command= -p %@", @(pid)];
     return [self processFromPsCommandOutput:[self runShellCommand:command error:nil]];
 }
 + (NSArray *)runningProcessesWithNameLike:(NSString *)pattern
 {
-    NSString *command = [NSString stringWithFormat:@"ps -eao pid,ppid,command | grep -v grep | grep -i '%@'", pattern];
+    NSString *command = [NSString stringWithFormat:@"ps -eao pid=,ppid=,user=,command= | grep -v grep | grep -i '%@'", pattern];
     NSArray *lines = [[self runShellCommand:command error:nil] componentsSeparatedByString:@"\n"];
     if (lines.count == 0) return nil;
     
@@ -102,12 +125,12 @@
     return result.count == 0 ? nil : [NSArray arrayWithArray:result];
 }
 
-+ (BOOL)kill:(NSInteger)pid forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
++ (BOOL)kill:(NSInteger)pid forRootUser:(BOOL)root auth:(PGAuth *)auth error:(NSString *__autoreleasing *)error
 {
     if (pid <= 0) return NO;
     
     NSString *command = [NSString stringWithFormat:@"kill %@", @(pid)];
-    return [self runShellCommand:command forRootUser:root authorization:authorization authStatus:authStatus error:error];
+    return [self runShellCommand:command forRootUser:root auth:auth error:error];
 }
 
 
@@ -154,37 +177,41 @@
     command = TrimToNil(command);
     if (!command) return NO;
     
-    return [self runExecutable:@"/bin/bash" withArgs:@[@"-c", command] authorization:nil authStatus:nil output:output error:error];
+    return [self runExecutable:@"/bin/bash" withArgs:@[@"-c", command] auth:nil output:output error:error];
 }
-+ (BOOL)startShellCommand:(NSString *)command forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
++ (BOOL)startShellCommand:(NSString *)command forRootUser:(BOOL)root auth:(PGAuth *)auth error:(NSString *__autoreleasing *)error
 {
-    return [self runShellCommand:command forRootUser:root authorization:authorization authStatus:authStatus output:nil error:error];
+    return [self runShellCommand:command forRootUser:root auth:auth output:nil error:error];
 }
-+ (BOOL)runShellCommand:(NSString *)command forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
++ (BOOL)runShellCommand:(NSString *)command forRootUser:(BOOL)root auth:(PGAuth *)auth error:(NSString *__autoreleasing *)error
 {
     NSString *output = nil;
-    if (![self runShellCommand:command forRootUser:root authorization:authorization authStatus:authStatus output:&output error:error]) return NO;
-    if (output) {
-        if (error) *error = output;
-        return NO;
-    }
-    return YES;
+    if (![self runShellCommand:command forRootUser:root auth:auth output:&output error:error]) return NO;
+    if (error) *error = output;
+    return !output;
 }
-+ (BOOL)runShellCommand:(NSString *)command forRootUser:(BOOL)root authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString *__autoreleasing *)output error:(NSString *__autoreleasing *)error
++ (BOOL)runShellCommand:(NSString *)command forRootUser:(BOOL)root auth:(PGAuth *)auth output:(NSString *__autoreleasing *)output error:(NSString *__autoreleasing *)outerr
 {
     command = TrimToNil(command);
     if (!command) return NO;
     
-    // No authorization provided - run unauthorized or abort
-    if (!authorization) {
-        if (root) return NO;
-        else return [self runShellCommand:command output:output error:error];
+    // Run unauthorized
+    if (!root) {
+        return [self runShellCommand:command output:output error:outerr];
     }
     
+    // Authorization required
+    AuthorizationRef authorization = [auth authorize:self.rights];
+
+    if (!authorization) {
+        if (outerr) { *outerr = [NSString stringWithFormat:@"Authorization required to run command: %@", command]; }
+        return NO;
+    }
+
     // Program error - authorization script missing!
     NSString *authorizingScript = [self authorizingScript];
     if (!authorizingScript) {
-        if (authStatus) *authStatus = errAuthorizationInternal;
+        [auth invalidate:errAuthorizationInternal];
         return NO;
     }
     
@@ -198,7 +225,7 @@
     }
     
     // Execute
-    return [self runExecutable:@"/usr/bin/osascript" withArgs:@[authorizingScript, command] authorization:authorization authStatus:authStatus output:output error:error];
+    return [self runExecutable:@"/usr/bin/osascript" withArgs:@[authorizingScript, command] auth:auth output:output error:outerr];
 }
 
 
@@ -207,58 +234,47 @@
 
 + (BOOL)startExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args error:(NSString *__autoreleasing *)error
 {
-    return [self runExecutable:pathToExecutable withArgs:args authorization:nil authStatus:nil output:nil error:error];
+    return [self runExecutable:pathToExecutable withArgs:args auth:nil output:nil error:error];
 }
 + (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args error:(NSString *__autoreleasing *)error
 {
     NSString *result = nil;
-    [self runExecutable:pathToExecutable withArgs:args authorization:nil authStatus:nil output:&result error:error];
+    [self runExecutable:pathToExecutable withArgs:args auth:nil output:&result error:error];
     return result;
 }
-+ (BOOL)startExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus error:(NSString *__autoreleasing *)error
++ (BOOL)startExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args auth:(PGAuth *)auth error:(NSString *__autoreleasing *)error
 {
-    return [self runExecutable:pathToExecutable withArgs:args authorization:authorization authStatus:authStatus output:nil error:error];
+    return [self runExecutable:pathToExecutable withArgs:args auth:auth output:nil error:error];
 }
-+ (BOOL)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus output:(NSString *__autoreleasing *)output error:(NSString *__autoreleasing *)error
++ (BOOL)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args auth:(PGAuth *)auth output:(NSString *__autoreleasing *)output error:(NSString *__autoreleasing *)error
 {
     BOOL ignoreOutput = !output;
-    BOOL unauthorized = !authorization;
+    BOOL unauthorized = !auth;
     
     NSString *resultOutput = nil;
     NSString *resultError = nil;
-    OSStatus resultAuthStatus = errAuthorizationSuccess;
     
     @try {
         
         // Unauthorized
         if (unauthorized) {
             resultOutput = [self runExecutable:pathToExecutable withArgs:args waitForOutput:!ignoreOutput];
+            return YES;
         
         // Authorized
         } else {
-            resultOutput = [self runExecutable:pathToExecutable withArgs:args authorization:authorization authStatus:&resultAuthStatus waitForOutput:!ignoreOutput];
-            
-            // Pass on auth status
-            if (authorization) {
-                if (authStatus) *authStatus = resultAuthStatus;
-                
-                // User cancelled auth
-                if (resultAuthStatus != errAuthorizationSuccess) return NO;
-            }
+            resultOutput = [self runExecutable:pathToExecutable withArgs:args auth:auth waitForOutput:!ignoreOutput];
+            return auth.status == errAuthorizationSuccess;
         }
-        
-        // Pass on output
-        if (output) *output = resultOutput;
-        
-        return YES;
-    }
-    @catch (NSException *err) {
+            
+    } @catch (NSException *err) {
         resultError = [NSString stringWithFormat:@"%@\n%@", [err name], [err reason]];
         
-        // Pass on error
-        if (error) *error = resultError;
-        
         return NO;
+        
+    } @finally {
+        if (output) { *output = resultOutput; }
+        if (error) { *error = resultError; }
     }
 }
 
@@ -297,10 +313,17 @@
     return result;
 }
 
-+ (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args authorization:(AuthorizationRef)authorization authStatus:(OSStatus *)authStatus waitForOutput:(BOOL)waitForOutput
++ (NSString *)runExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args auth:(PGAuth *)auth waitForOutput:(BOOL)waitForOutput
 {
-    // Pre-check the authorization - it may have timed-out
-    if (![self.rights authorized:authorization authStatus:authStatus]) return nil;
+    // Log
+    if (IsLogging) DLog(@"Running Authorized: %@", [self descriptionForExecutable:pathToExecutable withArgs:args]);
+
+    // Authorize
+    AuthorizationRef authorization = [auth authorize:self.rights];
+    if (!authorization) {
+        DLog(@"Cannot run without authorization!");
+        return [NSString stringWithFormat:@"Cannot run command without auth: %@", [self descriptionForExecutable:pathToExecutable withArgs:args]];
+    }
     
     // Convert command into const char*;
     const char *commandArg = strdup([pathToExecutable UTF8String]);
@@ -318,16 +341,13 @@
     // Pipe for collecting output
     FILE *processOutput = NULL;
     
-    // Log
-    if (IsLogging) DLog(@"Running Authorized: %@", [[@[pathToExecutable] arrayByAddingObjectsFromArray:args] componentsJoinedByString:@" "]);
-    
     // Run command with authorization
     FILE **processOutputRef = waitForOutput ? &processOutput : NULL;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     OSStatus status = AuthorizationExecuteWithPrivileges(authorization, commandArg, kAuthorizationFlagDefaults, (char *const *)argv, processOutputRef);
 #pragma clang diagnostic pop
-    if (authStatus) *authStatus = status;
+    if (status != errAuthorizationSuccess) { [auth invalidate:status]; }
     
     // Release command and args
     free((char*)commandArg);
@@ -358,15 +378,26 @@
     fclose(processOutput);
     
     // Log
-    if (status != errAuthorizationSuccess) {
-        DLog(@"Error: %d", status);
-    } else if (waitForOutput) {
-        DLog(@"Result: %@", result);
-    } else {
-        DLog(@"Done");
+    if (IsLogging) {
+        if (status != errAuthorizationSuccess) {
+            DLog(@"Error: %d", status);
+        } else if (waitForOutput) {
+            if (result) {
+                DLog(@"Result: %@", result);
+            } else {
+                DLog(@"No result");
+            }
+        } else {
+            DLog(@"Done");
+        }
     }
     
     return result;
+}
+
++ (NSString *)descriptionForExecutable:(NSString *)pathToExecutable withArgs:(NSArray *)args
+{
+    return [[@[pathToExecutable] arrayByAddingObjectsFromArray:args] componentsJoinedByString:@" "];
 }
 
 @end

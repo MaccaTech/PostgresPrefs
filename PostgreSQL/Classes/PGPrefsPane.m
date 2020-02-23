@@ -1,9 +1,27 @@
 //
-//  Postgres.m
-//  Postgres
+//  PGPrefsPane.m
+//  PostgresPrefs
 //
 //  Created by Francis McKenzie on 17/12/11.
-//  Copyright (c) 2015 Macca Tech Ltd. All rights reserved.
+//  Copyright (c) 2011-2020 Macca Tech Ltd. (http://macca.tech)
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
 //
 
 #import "PGPrefsPane.h"
@@ -18,7 +36,16 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 
 #pragma mark - Interfaces
 
-@interface PGPrefsPane()
+/**
+ * Apply default styling to attributed string.
+ */
+@interface NSMutableAttributedString (DefaultAttributes)
+- (void)setDefaultFont:(NSFont *)defaultFont;
+- (void)setDefaultColor:(NSColor *)defaultColor;
+- (void)setDefaultAlignment:(NSTextAlignment)alignment;
+@end
+
+@interface PGPrefsPane ()
 
 /// If YES, user events will not be sent to the controller (e.g. select server)
 @property (nonatomic) BOOL updatingDisplay;
@@ -57,6 +84,68 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 
 
 
+#pragma mark - NSMutableAttributedString (DefaultAttributes)
+
+@implementation NSMutableAttributedString (DefaultAttributes)
+- (void)setDefaultFont:(NSFont *)defaultFont
+{
+    if (defaultFont) {
+        [self setDefaultAttribute:NSFontAttributeName usingBlock:^(NSFont *oldFont, NSFont *__autoreleasing *newFont, NSRange range, BOOL *stop) {
+            *newFont = oldFont ?: defaultFont;
+            if ((*newFont).pointSize != defaultFont.pointSize) {
+                *newFont = [NSFontManager.sharedFontManager convertFont:*newFont toSize:defaultFont.pointSize];
+            }
+        }];
+    }
+}
+- (void)setDefaultColor:(NSColor *)defaultColor
+{
+    if (defaultColor) {
+        [self setDefaultAttribute:NSForegroundColorAttributeName usingBlock:^(NSColor *oldColor, NSColor *__autoreleasing *newColor, NSRange range, BOOL *stop) {
+            if (!oldColor) { *newColor = defaultColor; }
+        }];
+    }
+}
+- (void)setDefaultAlignment:(NSTextAlignment)alignment
+{
+    if (alignment) {
+        [self setDefaultAttribute:NSParagraphStyleAttributeName usingBlock:^(NSParagraphStyle *oldStyle, NSParagraphStyle *__autoreleasing *newStyle, NSRange range, BOOL *stop) {
+            if (oldStyle.alignment != alignment) {
+                NSMutableParagraphStyle *mutableStyle = [[NSMutableParagraphStyle alloc] init];
+                [mutableStyle setParagraphStyle:oldStyle];
+                mutableStyle.alignment = alignment;
+                *newStyle = mutableStyle;
+            }
+        }];
+    }
+}
+- (void)setDefaultAttribute:(NSAttributedStringKey)attribute usingBlock:(void(^)(__kindof id oldValue, __kindof id *newValue, NSRange range, BOOL *stop))block
+{
+    NSRange entireRange = NSMakeRange(0, self.length);
+    
+    __block BOOL hasOneAttribute = NO;
+    [self enumerateAttribute:attribute inRange:entireRange options:0 usingBlock:^(id value, NSRange range, BOOL *stop) {
+        hasOneAttribute = YES;
+        id newValue = nil;
+        block(value, &newValue, range, stop);
+        if (newValue != nil && newValue != value) {
+            [self removeAttribute:attribute range:range];
+            [self addAttribute:attribute value:newValue range:range];
+        }
+    }];
+    if (!hasOneAttribute) {
+        id newValue = nil;
+        block(nil, &newValue, entireRange, &hasOneAttribute);
+        if (newValue != nil) {
+            [self removeAttribute:attribute range:entireRange];
+            [self addAttribute:attribute value:newValue range:entireRange];
+        }
+    }
+}
+@end
+
+
+
 #pragma mark - PGPrefsCenteredTextFieldCell
 
 @implementation PGPrefsCenteredTextFieldCell
@@ -74,6 +163,56 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     [super drawInteriorWithFrame:[self adjustedFrameToVerticallyCenterText:frame] inView:view];
 }
 
+@end
+
+
+
+#pragma mark - PGPrefsStoryboardTextView
+
+@implementation PGPrefsStoryboardTextView
+- (instancetype)initWithCoder:(NSCoder *)coder
+{
+    self = [super initWithCoder:coder];
+    if (self) {
+        _storyboardStyle = [self.attributedString attributesAtIndex:0 effectiveRange:nil];
+    }
+    return self;
+}
+- (void)setAttributedStringUsingStoryboardStyle:(NSAttributedString *)attributedString
+{
+    NSMutableAttributedString *mutableString = [[NSMutableAttributedString alloc] initWithAttributedString:attributedString];
+    [mutableString beginEditing];
+    [mutableString setDefaultFont:_storyboardStyle[NSFontAttributeName]];
+    [mutableString setDefaultColor:_storyboardStyle[NSForegroundColorAttributeName]];
+    NSParagraphStyle *paragraphStyle = _storyboardStyle[NSParagraphStyleAttributeName];
+    if (paragraphStyle) {
+        [mutableString setDefaultAlignment:paragraphStyle.alignment];
+    }
+    [mutableString endEditing];
+    [self.textStorage setAttributedString:mutableString];
+}
+@end
+
+
+
+#pragma mark - PGPrefsCenteredTextView
+
+@implementation PGPrefsCenteredTextView
+- (void)layout
+{
+    // This line is required on macOS High Sierra (but not Catalina)
+    // to ensure proper vertical alignment when view is first shown.
+    [self.layoutManager ensureLayoutForGlyphRange:NSMakeRange(0, self.attributedString.length)];
+    
+    NSScrollView *scrollView = (NSScrollView *) self.superview.superview;
+    CGFloat textHeight = [self.layoutManager usedRectForTextContainer:self.textContainer].size.height;
+    CGFloat viewHeight = scrollView.bounds.size.height;
+    CGFloat insetHeight = MAX(0, floor((viewHeight - textHeight) / 2.0));
+    scrollView.hasVerticalScroller = insetHeight < 0.1;
+    self.textContainerInset = CGSizeMake(0, insetHeight);
+
+    [super layout];
+}
 @end
 
 
@@ -113,9 +252,9 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 
 
 
-#pragma mark - PGPrefsErrorWindow
+#pragma mark - PGPrefsInfoWindow
 
-@implementation PGPrefsErrorWindow
+@implementation PGPrefsInfoWindow
 @end
 
 
@@ -183,6 +322,12 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     
     // Call delegate DidLoad method
     [self.controller viewDidLoad];
+    
+    // Fix text color on old macOS (High Sierra)
+    [self setTextInfoColorIfNotCompatibleWithAssetCatalog:self.errorField];
+    [self setTextInfoColorIfNotCompatibleWithAssetCatalog:self.deleteServerWindow.infoField];
+    [self setTextInfoColorIfNotCompatibleWithAssetCatalog:self.errorWindow.titleField];
+    [self setTextInfoColorIfNotCompatibleWithAssetCatalog:self.authInfoWindow.titleField];
 }
 
 - (void)willSelect
@@ -293,7 +438,7 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 {
     if (self.updatingDisplay) return;
  
-    [self.controller performSelector:@selector(userDidChangeServerStartup:) withObject:ServerStartupDescription(self.startup) afterDelay:0.1];
+    [self.controller performSelector:@selector(userDidChangeServerStartup:) withObject:NSStringFromPGServerStartup(self.startup) afterDelay:0.1];
 }
 
 - (IBAction)viewLogClicked:(id)sender
@@ -331,14 +476,27 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     self.authorizationView.autoupdate = self.authorized;
 }
 
-- (AuthorizationRef)authorize
+- (AuthorizationRef)authorize:(PGAuth *)auth
 {
     if (self.authorized) return self.authorizationView.authorization.authorizationRef;
+    
+    if (auth.reason.count > 0) {
+        NSMutableAttributedString *reason = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\n", auth.reason[PGAuthReasonAction]]];
+        [reason appendAttributedString:[[NSAttributedString alloc] initWithString:auth.reason[PGAuthReasonTarget] attributes:@{NSFontAttributeName:[NSFontManager.sharedFontManager convertFont:[NSFont userFixedPitchFontOfSize:self.authInfoWindow.detailsView.font.pointSize] toHaveTrait:NSFontBoldTrait]}]];
+
+        [self showInfoInInfoWindow:self.authInfoWindow details:reason title:@"Authorization is required to:"];
+        [self showInfoWindow:self.authInfoWindow];
+    }
     
     self.authorizationView.flags = kAuthorizationFlagDefaults | kAuthorizationFlagExtendRights | kAuthorizationFlagInteractionAllowed;
     BOOL authorized = [self.authorizationView authorize:self];
     self.authorizationView.flags = authorized ? kAuthorizationFlagDefaults : kAuthorizationFlagDefaults | kAuthorizationFlagExtendRights;
     [self.authorizationView updateStatus:nil];
+    
+    if (auth.reason.count > 0) {
+        [self closeInfoWindow:self.authInfoWindow];
+    }
+    
     return authorized ? self.authorizationView.authorization.authorizationRef : nil;
 }
 
@@ -593,7 +751,7 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     cell.externalIcon.hidden = !server.external;
     
     // Icon & Status
-    NSString *statusText = ServerStatusDescription(server.status);
+    NSString *statusText = NSStringFromPGServerStatus(server.status);
     NSString *imageName = nil;
     switch (server.status) {
         case PGServerStarted:
@@ -853,28 +1011,27 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
              startStopButton:@"PostgreSQL"];
 }
 
-- (void)showError:(NSString *)errMsg
+- (void)showError:(NSString *)details title:(NSString *)title
 {
-    // Color gets reset to black when changing text content...
-    NSColor *textColor = self.errorWindow.errorView.textColor;
-
     // No error
-    if (!errMsg) {
+    if (!details) {
         self.errorField.stringValue = @"";
-        self.errorWindow.errorView.string = @"";
         self.errorView.hidden = YES;
         self.infoField.hidden = NO;
         
     // Error
     } else {
-        self.errorField.stringValue = errMsg;
-        self.errorWindow.errorView.string = errMsg;
+        self.errorField.stringValue = details;
         self.errorView.hidden = NO;
         self.infoField.hidden = YES;
     }
-
-    // Apply original text color to new content
-    self.errorWindow.errorView.textColor = textColor;
+    
+    [self showInfoInInfoWindow:self.errorWindow details:(details ? [[NSAttributedString alloc] initWithString:details] : nil) title:title];
+}
+- (void)showInfoInInfoWindow:(PGPrefsInfoWindow *)window details:(NSAttributedString *)details title:(NSString *)title
+{
+    [window.detailsView setAttributedStringUsingStoryboardStyle:details];
+    window.titleField.stringValue = title ?: @"";
 }
 
 - (void)showDirtyInSettingsWindow:(PGServer *)server
@@ -944,7 +1101,7 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 }
 - (void)showStatusInMainServerView:(PGServer *)server
 {
-    [self showError:server.error];
+    [self showError:server.error title:[NSString stringWithFormat:@"Unable to %@", NSStringFromPGServerActionVerb(server.errorDomain)]];
     [self showSettingsInMainServerView:server]; // Validity might have changed
     
     switch (server.status) {
@@ -1089,21 +1246,40 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     [self.deleteServerWindow orderFront:self];
 }
 
-- (IBAction)showErrorWindowClicked:(id)sender
+- (void)showInfoWindow:(PGPrefsInfoWindow *)window
 {
-    if (self.errorWindow.errorView.string.length == 0) { return; }
-    
     weakify(self);
-    [self.mainView.window beginSheet:self.errorWindow completionHandler:^(NSModalResponse returnCode) {
+    [self.mainView.window beginSheet:window completionHandler:^(NSModalResponse returnCode) {
         strongify(self);
         
-        [self.errorWindow orderOut:self];
+        [window orderOut:self];
     }];
     
-    [self.errorWindow orderFront:self];
+    [window orderFront:self];
+}
+- (void)closeInfoWindow:(PGPrefsInfoWindow *)window
+{
+    [self.mainView.window endSheet:window];
+}
+
+- (IBAction)showErrorWindowClicked:(id)sender
+{
+    if (self.errorWindow.detailsView.string.length == 0) { return; }
+    
+    [self showInfoWindow:self.errorWindow];
 }
 - (IBAction)closeErrorWindowClicked:(id)sender
 {
-    [self.mainView.window endSheet:self.errorWindow];
+    [self closeInfoWindow:self.errorWindow];
 }
+
+// Fix for macOS High Sierra (not compatible with asset catalog colors)
+- (void)setTextInfoColorIfNotCompatibleWithAssetCatalog:(NSTextField *)textField
+{
+    if (textField.textColor.type == NSColorTypeCatalog &&
+        !textField.textColor.colorNameComponent) {
+        textField.textColor = PGServerInfoColor;
+    }
+}
+
 @end

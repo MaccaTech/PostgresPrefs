@@ -18,7 +18,7 @@ codesign --sign "Developer ID Application: Macca Tech Ltd" "$DMG"
 # Notarize
 echo
 echo "Notarizing $DMG ..."
-response=`xcrun altool --notarize-app --primary-bundle-id "com.maccatech.PostgresPrefs" --username "info@maccatech.com" --password "$NOTARIZE_PASSWORD" --file "$DMG"`
+response=`xcrun altool --notarize-app --primary-bundle-id "tech.macca.PostgresPrefs" --username "info@maccatech.com" --password "$NOTARIZE_PASSWORD" --file "$DMG"`
 echo $response
 
 # Extract UUID

@@ -1,5 +1,5 @@
 //
-// Prefix header for all source files of the 'PostgreSQL' target in the 'PostgreSQL' project
+// Prefix header for all source files of the 'PostgreSQL' target in the 'PostgresPrefs' project
 //
 
 #ifdef __OBJC__
