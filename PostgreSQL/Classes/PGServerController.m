@@ -534,29 +534,7 @@ EqualUsernames(NSString *user1, NSString *user2)
 {
     if (!process) return nil;
     
-    NSArray *args = [process.command componentsSeparatedByString:@" "];
-    // Need to fix the problem of spaces in paths
-    // E.g. ~/Library/Application Support/Postgres
-    // This is incorrectly interpreted as 2 args
-    NSMutableArray *programArgs = [NSMutableArray arrayWithCapacity:args.count];
-    NSMutableString *buffer = [NSMutableString string];
-    for (NSString *arg in args) {
-        
-        // New arg type, flush previous one
-        if ([arg hasPrefix:@"-"] && arg.length == 2) {
-            if (buffer.length > 0) {
-                [programArgs addObject:[NSString stringWithString:buffer]];
-                [buffer deleteCharactersInRange:NSMakeRange(0,buffer.length)];
-            }
-            [programArgs addObject:arg];
-            
-        // Append to previous string
-        } else {
-            [buffer appendString:@" "];
-            [buffer appendString:arg];
-        }
-    }
-    if (buffer.length > 0) [programArgs addObject:[NSString stringWithString:buffer]];
+    NSArray<NSString *> *programArgs = [self programArgsFromCommand:process.command];
     
     PGServerSettings *settings = [[PGServerSettings alloc] init];
     [self populateSettings:settings fromProgramArgs:programArgs];
@@ -582,7 +560,7 @@ EqualUsernames(NSString *user1, NSString *user2)
 
 - (PGServer *)serverFromLoadedDaemon:(NSDictionary *)daemon forRootUser:(BOOL)root
 {
-    if (IsLogging) { if (daemon.count > 0) { DLog(@"%@ launchd\n%@", (root ? @"Syatem" : @"User"), daemon); } }
+    if (IsLogging) { if (daemon.count > 0) { DLog(@"%@ launchd\n%@", (root ? @"System" : @"User"), daemon); } }
 
     PGServer *result = [self serverFromDaemon:daemon];
     result.daemonLoadedForAllUsers = root;
@@ -823,8 +801,7 @@ EqualUsernames(NSString *user1, NSString *user2)
 - (void)initServer:(PGServer *)server
 {
     // Internal vs External based on domain
-    server.external = NonBlank(server.domain) &&
-        ![server.domain isEqualToString:PGPrefsAppID];
+    server.external = ![server.domain isEqualToString:PGPrefsAppID];
     
     // Internal
     if (!server.external) {
@@ -1021,6 +998,57 @@ EqualUsernames(NSString *user1, NSString *user2)
             if (server.status != prevStatus) server.error = nil;
         }
     }
+}
+
+- (NSArray<NSString *> *)programArgsFromCommand:(NSString *)command
+{
+    NSArray<NSString *> *args = [command componentsSeparatedByString:@" "];
+    if (args.count == 1) { return args; }
+    
+    // Need to allow for spaces in paths
+    // E.g. ~/Library/Application Support/Postgres
+    // This is incorrectly split into 2 separate args
+    //
+    // If a component doesn't look like an option (starting with a hyphen),
+    // then assume it's a path and join it to the previous component.
+    NSMutableArray<NSString *> *programArgs = [NSMutableArray arrayWithCapacity:args.count];
+    NSMutableString *buffer = [NSMutableString string];
+    for (NSString *arg in args) {
+        
+        BOOL isShortOption = [arg hasPrefix:@"-"] &&
+            arg.length == 2 &&
+            [[NSCharacterSet alphanumericCharacterSet] characterIsMember:[arg characterAtIndex:1]];
+        BOOL isLongOption = !isShortOption &&
+            [arg hasPrefix:@"--"] &&
+            arg.length > 2 &&
+            [[NSCharacterSet alphanumericCharacterSet] characterIsMember:[arg characterAtIndex:2]];
+        
+        // New option, flush buffer containing previous arg
+        if (isShortOption || isLongOption) {
+            if (buffer.length > 0) {
+                [programArgs addObject:[NSString stringWithString:buffer]];
+                [buffer deleteCharactersInRange:NSMakeRange(0,buffer.length)];
+            }
+        }
+        
+        // Short option, arg is complete
+        if (isShortOption) {
+            [programArgs addObject:arg];
+            
+        // Anything else, arg may need to join to next component,
+        // so add to buffer
+        } else {
+            if (buffer.length > 0) { [buffer appendString:@" "]; }
+            [buffer appendString:arg];
+        }
+    }
+    
+    // Final flush buffer
+    if (buffer.length > 0) {
+        [programArgs addObject:[NSString stringWithString:buffer]];
+    }
+
+    return [NSArray arrayWithArray:programArgs];
 }
 
 - (void)populateSettings:(PGServerSettings *)settings fromProgramArgs:(NSArray *)args

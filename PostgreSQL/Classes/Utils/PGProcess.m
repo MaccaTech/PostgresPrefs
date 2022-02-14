@@ -84,7 +84,7 @@
 
 - (NSString *)description
 {
-    return [NSString stringWithFormat:@"%@ %@ %@", @(_pid), @(_ppid), _command];
+    return [NSString stringWithFormat:@"%@ %@ %@ %@", @(_pid), @(_ppid), _user, _command];
 }
 
 + (PGProcess *)processFromPsCommandOutput:(NSString *)output

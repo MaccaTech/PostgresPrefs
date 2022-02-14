@@ -174,12 +174,21 @@
     // Only add running servers that weren't started by launchd
     NSMutableDictionary *pids = [NSMutableDictionary dictionaryWithCapacity:loadedServers.count];
     for (PGServer *server in loadedServers) {
-        if (server.pid > 0) pids[@(server.pid)] = [NSNull null];
+        if (server.pid > 0) pids[@(server.pid)] = server;
     }
     for (PGServer *server in runningServers) {
         if (server.pid <= 0) continue;
-        if (pids[@(server.pid)]) continue;
-        [result addObject:server];
+        
+        PGServer *loadedServer = pids[@(server.pid)];
+        if (loadedServer) {
+            // Add missing properties to loaded server from runing server.
+            if (server.settings.username &&
+                !loadedServer.settings.username) {
+                loadedServer.settings.username = server.settings.username;
+            }
+        } else {
+            [result addObject:server];
+        }
     }
     
     return [NSArray arrayWithArray:result];
@@ -194,12 +203,23 @@
     NSArray *processes = [PGProcess runningProcessesWithNameLike:@".*postgre.*"];
     if (processes.count == 0) return nil;
     
-    NSMutableArray *result = [NSMutableArray arrayWithCapacity:processes.count];
+    NSMutableArray *servers = [NSMutableArray arrayWithCapacity:processes.count];
+    NSUInteger numberOfServers = 0;
+    
     for (PGProcess *process in processes) {
         PGServer *server = [self.serverController serverFromProcess:process];
-        if (server) [result addObject:server];
+        [servers addObject:(server ?: [NSNull null])];
+        if (server) { numberOfServers++; }
     }
-    return result.count == 0 ? nil : [NSArray arrayWithArray:result];
+    
+#ifdef DEBUG
+    DLog(@"Postgres Processes:\n%@\n\nOther Processes:\n%@",
+         [processes objectsAtIndexes:[servers indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) { return obj != [NSNull null]; }]],
+         [processes objectsAtIndexes:[servers indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) { return obj == [NSNull null]; }]]
+    );
+#endif
+    
+    return numberOfServers == 0 ? nil : [servers filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(id obj, NSDictionary *bindings) { return obj != [NSNull null]; }]];
 }
 - (NSArray *)loadedServers
 {
