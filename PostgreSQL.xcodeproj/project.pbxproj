@@ -501,6 +501,7 @@
 				INFOPLIST_PREFIX_HEADER = "";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				OTHER_CFLAGS = "";
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				PRODUCT_NAME = PostgreSQL;
 				SDKROOT = macosx;
 			};
