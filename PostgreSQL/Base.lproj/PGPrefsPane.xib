@@ -38,6 +38,7 @@
                 <outlet property="serversButtons" destination="637" id="696"/>
                 <outlet property="serversMenu" destination="751" id="757"/>
                 <outlet property="serversTableView" destination="723" id="745"/>
+                <outlet property="splashLogo" destination="681" id="bSH-cf-uFC"/>
                 <outlet property="startStopButton" destination="619" id="652"/>
                 <outlet property="startupAtBootCell" destination="898" id="QNR-cD-zbc"/>
                 <outlet property="startupAtLoginCell" destination="897" id="Rsj-4W-Tna"/>
@@ -267,9 +268,9 @@ To get started, add a server configuration by clicking the '+' button on the lef
                                             </textFieldCell>
                                         </textField>
                                         <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="681">
-                                            <rect key="frame" x="231" y="200" width="182" height="40"/>
+                                            <rect key="frame" x="239" y="207" width="180" height="30"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="logo" id="682"/>
+                                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="splashLogo" id="682"/>
                                         </imageView>
                                     </subviews>
                                 </view>
@@ -1272,7 +1273,7 @@ Error Message Line 6</string>
         <image name="NSRemoveTemplate" width="14" height="4"/>
         <image name="NSStatusAvailable" width="16" height="16"/>
         <image name="elephant_big" width="540" height="557"/>
-        <image name="logo" width="200" height="40"/>
+        <image name="splashLogo" width="2340" height="390"/>
         <image name="started" width="480" height="600"/>
         <namedColor name="infoColor">
             <color red="0.0" green="0.47843137254901963" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

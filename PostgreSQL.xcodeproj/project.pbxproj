@@ -15,7 +15,6 @@
 		20079E8B1B4807E200521807 /* PGPrefsRunAsAdmin.applescript in Sources */ = {isa = PBXBuildFile; fileRef = 20079E881B4807E200521807 /* PGPrefsRunAsAdmin.applescript */; };
 		20079E991B48086300521807 /* elephant.png in Resources */ = {isa = PBXBuildFile; fileRef = 20079E8E1B48086300521807 /* elephant.png */; };
 		20079E9A1B48086300521807 /* elephant_big.png in Resources */ = {isa = PBXBuildFile; fileRef = 20079E8F1B48086300521807 /* elephant_big.png */; };
-		20079E9B1B48086300521807 /* logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 20079E901B48086300521807 /* logo.png */; };
 		20079E9C1B48086300521807 /* refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = 20079E911B48086300521807 /* refresh.png */; };
 		20079EA11B48086300521807 /* started.png in Resources */ = {isa = PBXBuildFile; fileRef = 20079E961B48086300521807 /* started.png */; };
 		20079EA21B48086300521807 /* stopped.png in Resources */ = {isa = PBXBuildFile; fileRef = 20079E971B48086300521807 /* stopped.png */; };
@@ -35,6 +34,7 @@
 		209A721F2404B1CE00FCE8FC /* PostgreSQL.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 209A721E2404B1CE00FCE8FC /* PostgreSQL.xcassets */; };
 		209E77861B60C38300E8AF69 /* PGLaunchd.h in Headers */ = {isa = PBXBuildFile; fileRef = 209E77841B60C38300E8AF69 /* PGLaunchd.h */; };
 		209E77871B60C38300E8AF69 /* PGLaunchd.m in Sources */ = {isa = PBXBuildFile; fileRef = 209E77851B60C38300E8AF69 /* PGLaunchd.m */; };
+		209FD4D927BD3FAB00DBD2A2 /* logo_big.png in Resources */ = {isa = PBXBuildFile; fileRef = 209FD4D827BD3FAA00DBD2A2 /* logo_big.png */; };
 		20A43B3F1B5FF7F5000E7D8A /* changing.png in Resources */ = {isa = PBXBuildFile; fileRef = 20A43B3D1B5FF7F5000E7D8A /* changing.png */; };
 		20B628C11B495154003F8557 /* PGServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 20B628BF1B495154003F8557 /* PGServer.h */; };
 		20B628C21B495154003F8557 /* PGServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B628C01B495154003F8557 /* PGServer.m */; };
@@ -61,7 +61,6 @@
 		20079E881B4807E200521807 /* PGPrefsRunAsAdmin.applescript */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.applescript; path = PGPrefsRunAsAdmin.applescript; sourceTree = "<group>"; };
 		20079E8E1B48086300521807 /* elephant.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = elephant.png; sourceTree = "<group>"; };
 		20079E8F1B48086300521807 /* elephant_big.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = elephant_big.png; sourceTree = "<group>"; };
-		20079E901B48086300521807 /* logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo.png; sourceTree = "<group>"; };
 		20079E911B48086300521807 /* refresh.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = refresh.png; sourceTree = "<group>"; };
 		20079E961B48086300521807 /* started.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = started.png; sourceTree = "<group>"; };
 		20079E971B48086300521807 /* stopped.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = stopped.png; sourceTree = "<group>"; };
@@ -90,6 +89,7 @@
 		209A721E2404B1CE00FCE8FC /* PostgreSQL.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = PostgreSQL.xcassets; sourceTree = "<group>"; };
 		209E77841B60C38300E8AF69 /* PGLaunchd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGLaunchd.h; sourceTree = "<group>"; };
 		209E77851B60C38300E8AF69 /* PGLaunchd.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGLaunchd.m; sourceTree = "<group>"; };
+		209FD4D827BD3FAA00DBD2A2 /* logo_big.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo_big.png; sourceTree = "<group>"; };
 		20A43B3D1B5FF7F5000E7D8A /* changing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = changing.png; sourceTree = "<group>"; };
 		20B628BF1B495154003F8557 /* PGServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PGServer.h; sourceTree = "<group>"; };
 		20B628C01B495154003F8557 /* PGServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PGServer.m; sourceTree = "<group>"; };
@@ -178,7 +178,7 @@
 			children = (
 				20079E8E1B48086300521807 /* elephant.png */,
 				20079E8F1B48086300521807 /* elephant_big.png */,
-				20079E901B48086300521807 /* logo.png */,
+				209FD4D827BD3FAA00DBD2A2 /* logo_big.png */,
 				20079E911B48086300521807 /* refresh.png */,
 				20079E961B48086300521807 /* started.png */,
 				20A43B3D1B5FF7F5000E7D8A /* changing.png */,
@@ -335,7 +335,7 @@
 				20A43B3F1B5FF7F5000E7D8A /* changing.png in Resources */,
 				20079EA11B48086300521807 /* started.png in Resources */,
 				20079E9A1B48086300521807 /* elephant_big.png in Resources */,
-				20079E9B1B48086300521807 /* logo.png in Resources */,
+				209FD4D927BD3FAB00DBD2A2 /* logo_big.png in Resources */,
 				20E9698D1B52DA2000013B0E /* unknown.png in Resources */,
 				209A721F2404B1CE00FCE8FC /* PostgreSQL.xcassets in Resources */,
 				2035B19C149C8B83009A2972 /* InfoPlist.strings in Resources */,

@@ -194,6 +194,9 @@
 @property (nonatomic, strong) NSArray *servers;
 @property (nonatomic, strong) NSArray *searchServers;
 
+// Splash screen
+@property (weak) IBOutlet NSImageView *splashLogo;
+
 // Server/No-Server
 @property (weak) IBOutlet NSTabView *serverNoServerTabs;
 

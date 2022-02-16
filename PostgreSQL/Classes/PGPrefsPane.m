@@ -400,6 +400,9 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     [self setTextInfoColorIfNotCompatibleWithAssetCatalog:self.deleteServerWindow.infoField];
     [self setTextInfoColorIfNotCompatibleWithAssetCatalog:self.errorWindow.titleField];
     [self setTextInfoColorIfNotCompatibleWithAssetCatalog:self.authInfoWindow.titleField];
+    
+    // Fix images unsupported on old macOS (High Sierra)
+    [self setImageIfNotCompatibleWithAssetCatalog:self.splashLogo imageName:@"logo_big"];
 }
 
 - (void)willSelect
@@ -1357,6 +1360,14 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     if (textField.textColor.type == NSColorTypeCatalog &&
         !textField.textColor.colorNameComponent) {
         textField.textColor = PGServerInfoColor;
+    }
+}
+
+// Fix for macOS High Sierra (not compatible with asset catalog images)
+- (void)setImageIfNotCompatibleWithAssetCatalog:(NSImageView *)imageView imageName:(NSString *)imageName
+{
+    if (!imageView.image) {
+        imageView.image = [NSImage imageNamed:imageName];
     }
 }
 
