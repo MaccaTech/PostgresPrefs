@@ -163,7 +163,7 @@ NSStringFromPGServerActionVerb(PGServerAction value)
 /**
  * Converts standardised server properties to a server.
  */
-- (PGServer *)serverFromProperties:(NSDictionary *)properties name:(NSString *)name;
+- (PGServer *)serverFromProperties:(NSDictionary *)properties name:(NSString *)name domain:(NSString *)domain;
 
 /**
  * Converts a server to standardised server properties.

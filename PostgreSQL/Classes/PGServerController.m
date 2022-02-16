@@ -696,11 +696,11 @@ EqualUsernames(NSString *user1, NSString *user2)
     return server.properties;
 }
 
-- (PGServer *)serverFromProperties:(NSDictionary *)properties name:(NSString *)name
+- (PGServer *)serverFromProperties:(NSDictionary *)properties name:(NSString *)name domain:(NSString *)domain
 {
     if (![PGServer hasAllKeys:properties]) return nil;
     
-    PGServer *server = [[PGServer alloc] initWithName:name domain:nil];
+    PGServer *server = [[PGServer alloc] initWithName:name domain:domain];
     server.properties = properties;
     
     [self initServer:server];

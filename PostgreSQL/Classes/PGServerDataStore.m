@@ -90,7 +90,7 @@
     for (NSString *name in servers.allKeys) {
         
         // Create the server
-        PGServer *server = [self.serverController serverFromProperties:servers[name] name:name];
+        PGServer *server = [self.serverController serverFromProperties:servers[name] name:name domain:PGPrefsAppID];
         if (!server) continue;
         
         // Cache
