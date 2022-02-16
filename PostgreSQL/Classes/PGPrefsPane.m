@@ -45,6 +45,25 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 - (void)setDefaultAlignment:(NSTextAlignment)alignment;
 @end
 
+/**
+ * Adds autolayout constraints to view for show/hide.
+ */
+@interface PGPrefsHiddenConstraints : NSObject
+@property (weak, readonly) NSView *view;
+@property (readonly) NSLayoutConstraint *zeroWidthConstraint;
+@property (readonly) NSLayoutConstraint *zeroHeightConstraint;
+@property (nonatomic) BOOL active;
+- (instancetype)initWithView:(NSView *)view;
+@end
+
+@interface PGPrefsToggleImageView ()
+@property PGPrefsHiddenConstraints *hiddenConstraints;
+@end
+
+@interface PGPrefsToggleButton ()
+@property PGPrefsHiddenConstraints *hiddenConstraints;
+@end
+
 @interface PGPrefsPane ()
 
 /// If YES, user events will not be sent to the controller (e.g. select server)
@@ -233,6 +252,59 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     // This allows connected menu to popup instantly
     // (because no action is returned for menu button)
     return [self menuForSegment:self.selectedSegment] != nil ? nil : [super action];
+}
+@end
+
+
+
+#pragma mark - PGPrefsToggleViews
+
+@implementation PGPrefsToggleImageView
+- (void)setHidden:(BOOL)hidden
+{
+    if (self.hidden == hidden) { return; }
+    [super setHidden:hidden];
+    if (!_hiddenConstraints) {
+        _hiddenConstraints = [[PGPrefsHiddenConstraints alloc] initWithView:self];
+    }
+    _hiddenConstraints.active = hidden;
+}
+@end
+
+@implementation PGPrefsToggleButton
+- (void)setHidden:(BOOL)hidden
+{
+    if (self.hidden == hidden) { return; }
+    [super setHidden:hidden];
+    if (!_hiddenConstraints) {
+        _hiddenConstraints = [[PGPrefsHiddenConstraints alloc] initWithView:self];
+    }
+    _hiddenConstraints.active = hidden;
+}
+@end
+
+@implementation PGPrefsHiddenConstraints
+- (instancetype)initWithView:(NSView *)view
+{
+    self = [super init];
+    if (self) {
+        _view = view;
+        _zeroWidthConstraint = [NSLayoutConstraint constraintWithItem:view attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:0 constant:0];
+        _zeroHeightConstraint = [NSLayoutConstraint constraintWithItem:view attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:0 constant:0];
+        [_view addConstraints:@[_zeroWidthConstraint, _zeroHeightConstraint]];
+        _zeroWidthConstraint.active = _zeroHeightConstraint.active = _view.hidden;
+    }
+    return self;
+}
+
+- (BOOL)isActive
+{
+    return _zeroWidthConstraint.active || _zeroHeightConstraint.active;
+}
+
+- (void)setActive:(BOOL)active
+{
+    _zeroWidthConstraint.active = _zeroHeightConstraint.active = active;
 }
 @end
 

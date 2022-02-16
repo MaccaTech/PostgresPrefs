@@ -81,6 +81,22 @@
 
 
 
+#pragma mark - PGPrefsToggleViews
+
+/**
+ * An imageview that removes its dimensions from autolayout when it is hidden.
+ */
+@interface PGPrefsToggleImageView : NSImageView
+@end
+
+/**
+ * A button that removes its dimensions from autolayout when it is hidden.
+ */
+@interface PGPrefsToggleButton : NSButton
+@end
+
+
+
 #pragma mark - PGPrefsRenameWindow
 
 /**
@@ -146,7 +162,7 @@
  * The custom header cell used in the Postgre Database Servers table on the preference pane.
  */
 @interface PGPrefsServersHeaderCell : NSTableCellView
-@property (nonatomic, weak) IBOutlet NSButton *refreshButton;
+@property (nonatomic, weak) IBOutlet PGPrefsToggleButton *refreshButton;
 @end
 
 
@@ -158,7 +174,7 @@
  */
 @interface PGPrefsServersCell : NSTableCellView
 @property (nonatomic, weak) IBOutlet NSTextField *statusTextField;
-@property (nonatomic, weak) IBOutlet NSImageView *externalIcon;
+@property (nonatomic, weak) IBOutlet PGPrefsToggleImageView *externalIcon;
 @end
 
 

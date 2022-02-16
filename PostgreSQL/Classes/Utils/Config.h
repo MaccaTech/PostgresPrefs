@@ -80,6 +80,8 @@
 #define PGPrefsViewController        PG(PrefsViewController)
 #define PGPrefsController            PG(PrefsController)
 #define PGPrefsSegmentedControl      PG(PrefsSegmentedControl)
+#define PGPrefsToggleImageView       PG(PrefsToggleImageView)
+#define PGPrefsToggleButton          PG(PrefsToggleButton)
 #define PGPrefsRenameWindow          PG(PrefsRenameWindow)
 #define PGPrefsDeleteWindow          PG(PrefsDeleteWindow)
 #define PGPrefsInfoWindow            PG(PrefsInfoWindow)
