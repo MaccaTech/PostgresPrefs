@@ -1,8 +1,9 @@
 # Postgres Prefs
 
-<a href="https://www.postgresql.org"><img height="64px" src="https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/elephant.png" /></a>
-<a href="https://www.postgresql.org"><img height="40px" src="https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/logo.png" /></a>
-<a href="http://mac.softpedia.com/get/Internet-Utilities/PostgresPrefs.shtml#status"><img align="right" height="112px" src="http://s1.softpedia-static.com/_img/sp100clean.png?1" /></a>
+<a href="https://www.postgresql.org"><img height="64px" src="PostgreSQL/Images/elephant.png" /></a>
+<a href="https://www.postgresql.org#gh-light-mode-only"><img height="40px" hspace="8px" src="PostgreSQL/Images/logo_big.png" /></a>
+<a href="https://www.postgresql.org#gh-dark-mode-only"><img height="40px" hspace="8px" src="PostgreSQL/Images/logo_big_dark.png" /></a>
+<a href="http://mac.softpedia.com/get/Internet-Utilities/PostgresPrefs.shtml#status"><img align="right" height="112px" src="PostgreSQL/Images/clean_download.png" /></a>
 
 [![build](https://travis-ci.org/MaccaTech/PostgresPrefs.svg?branch=master)](https://travis-ci.org/MaccaTech/PostgresPrefs)
 
@@ -31,15 +32,15 @@ Features include:
 
 ### Main Screen
 
-![alt text](https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/screenshot_v2_main.png "Main Screen")
+![alt text](PostgreSQL/Images/screenshot_v2_main.png "Main Screen")
 
 ### Change Settings
 
-![alt text](https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/screenshot_v2_settings.png "Settings Screen")
+![alt text](PostgreSQL/Images/screenshot_v2_settings.png "Settings Screen")
 
 ### Log
 
-![alt text](https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/screenshot_v2_log.png "Log Screen")
+![alt text](PostgreSQL/Images/screenshot_v2_log.png "Log Screen")
 
 ## Install Instructions
 
@@ -47,15 +48,15 @@ Features include:
 2. Once downloaded, open the `.dmg` file by double-clicking it, and then either double-click the contained `PostgreSQL.prefPane` file, or drag it to System Preferences to install it.
 3. When installing, you will be asked if you want to install it for this user only, or for all users. Choose this user only (either option is fine however).
 
-![alt text](https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/screenshot_install.png "Install Screen")
+![alt text](PostgreSQL/Images/screenshot_install.png "Install Screen")
 
 ## Uninstall Instructions
 
 1. Stop any running PostgreSQL servers:
-    * Open System Preferences, click <img height="24px" src="https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/elephant.png" />, select each running server in turn and click the `Stop PostgreSQL` button
+    * Open System Preferences, click <img height="24px" src="PostgreSQL/Images/elephant.png" />, select each running server in turn and click the `Stop PostgreSQL` button
 
 2. Remove PostgresPrefs from System Preferences:
-    * Right-click <img height="24px" src="https://raw.github.com/MaccaTech/PostgresPrefs/master/PostgreSQL/Images/elephant.png" /> in System Preferences, and click `Remove`
+    * Right-click <img height="24px" src="PostgreSQL/Images/elephant.png" /> in System Preferences, and click `Remove`
     
 3. Delete the PostgresPrefs configuration file, if it exists:
 ```
@@ -112,6 +113,16 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
 </tr>
 </thead>
 <tbody>
+<tr>
+    <td>v2.7</td>
+    <td>16-Feb 2022</td>
+    <td>Bugfix release
+        <ul>
+        <li>Fix detecting PostgreSQL on Monterey / EDB PostgreSQL 13+</li>
+        <li>Fix GUI visual issues</li>
+        </ul>
+    </td>
+</tr>
 <tr>
     <td>v2.6</td>
     <td>28-Feb 2020</td>
