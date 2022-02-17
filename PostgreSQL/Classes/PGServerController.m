@@ -1016,7 +1016,7 @@ EqualUsernames(NSString *user1, NSString *user2)
     for (NSString *arg in args) {
         
         BOOL isShortOption = [arg hasPrefix:@"-"] &&
-            arg.length == 2 &&
+            arg.length > 1 &&
             [[NSCharacterSet alphanumericCharacterSet] characterIsMember:[arg characterAtIndex:1]];
         BOOL isLongOption = !isShortOption &&
             [arg hasPrefix:@"--"] &&
