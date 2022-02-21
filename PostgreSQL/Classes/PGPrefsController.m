@@ -570,11 +570,7 @@
     if (self.authorization) {
         return self.authorization;
     } else {
-        __block AuthorizationRef authRef;
-        MainThread(^{
-            self.authorization = authRef = [self.viewController authorize:auth];
-        });
-        return authRef;
+        return self.authorization = [self.viewController authorizeAndWait:auth];
     }
 }
 

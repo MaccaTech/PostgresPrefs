@@ -97,6 +97,20 @@
 
 
 
+#pragma mark - PGPrefsShowAndWaitPopover
+
+/**
+ * A popover that blocks a background thread waiting until it is shown.
+ */
+@interface PGPrefsShowAndWaitPopover : NSPopover
+- (void)showRelativeToRect:(NSRect)positioningRect
+                    ofView:(NSView *)positioningView
+             preferredEdge:(NSRectEdge)preferredEdge
+ waitUntilShownWithTimeout:(NSTimeInterval)timeout;
+@end
+
+
+
 #pragma mark - PGPrefsRenameWindow
 
 /**
@@ -233,6 +247,8 @@
 @property (weak) IBOutlet NSTextField *errorField;
 @property (strong) IBOutlet PGPrefsInfoWindow *errorWindow;
 @property (strong) IBOutlet PGPrefsInfoWindow *authInfoWindow;
+@property (strong) IBOutlet PGPrefsShowAndWaitPopover *authPopover;
+
 - (IBAction)showErrorWindowClicked:(id)sender;
 - (IBAction)closeErrorWindowClicked:(id)sender;
 
@@ -271,7 +287,7 @@
 
 // Authorization
 @property (nonatomic, weak) IBOutlet SFAuthorizationView *authorizationView;
-- (AuthorizationRef)authorize:(PGAuth *)auth;
+- (AuthorizationRef)authorizeAndWait:(PGAuth *)auth;
 - (void)deauthorize;
 - (BOOL)authorized;
 - (AuthorizationRef)authorization;

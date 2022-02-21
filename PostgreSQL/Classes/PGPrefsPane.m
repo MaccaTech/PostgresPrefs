@@ -46,6 +46,17 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 @end
 
 /**
+ * Category for searching all nested subviews.
+ */
+@interface NSView (Enumerate)
+- (void)enumerateAllSubviewsUsingBlock:(void(^)(NSView *subview, BOOL *stop))block;
+@end
+
+@interface PGPrefsShowAndWaitPopover () <NSPopoverDelegate>
+@property (nonatomic, strong) dispatch_semaphore_t shownSemaphore;
+@end
+
+/**
  * Adds autolayout constraints to view for show/hide.
  */
 @interface PGPrefsHiddenConstraints : NSObject
@@ -76,6 +87,8 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 @property (nonatomic) BOOL logEnabled;
 /// If NO, then the editing server settings will be greyed-out (if server not editable)
 @property (nonatomic) BOOL editEnabled;
+/// Used to darken background when showing authorization popover.
+@property (nonatomic) NSView *authorizationModalMask;
 
 - (void)initAuthorization;
 
@@ -165,6 +178,27 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 
 
 
+#pragma mark - NSView (Enumerate)
+
+@implementation NSView (Enumerate)
+- (void)_enumerateAllSubviewsWithStop:(BOOL *)stop usingBlock:(void (^)(NSView *, BOOL *))block
+{
+    [self.subviews enumerateObjectsUsingBlock:^(NSView *subview, NSUInteger idx, BOOL *stopEnumerating)
+     {
+        block(subview, stop);
+        if (!*stop) { [subview _enumerateAllSubviewsWithStop:stop usingBlock:block]; }
+        *stopEnumerating = *stop;
+    }];
+}
+- (void)enumerateAllSubviewsUsingBlock:(void (^)(NSView *, BOOL *))block
+{
+    BOOL stop = NO;
+    [self _enumerateAllSubviewsWithStop:&stop usingBlock:block];
+}
+@end
+
+
+
 #pragma mark - PGPrefsCenteredTextFieldCell
 
 @implementation PGPrefsCenteredTextFieldCell
@@ -219,16 +253,18 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 @implementation PGPrefsCenteredTextView
 - (void)layout
 {
-    // This line is required on macOS High Sierra (but not Catalina)
-    // to ensure proper vertical alignment when view is first shown.
-    [self.layoutManager ensureLayoutForGlyphRange:NSMakeRange(0, self.attributedString.length)];
-    
-    NSScrollView *scrollView = (NSScrollView *) self.superview.superview;
-    CGFloat textHeight = [self.layoutManager usedRectForTextContainer:self.textContainer].size.height;
-    CGFloat viewHeight = scrollView.bounds.size.height;
-    CGFloat insetHeight = MAX(0, floor((viewHeight - textHeight) / 2.0));
-    scrollView.hasVerticalScroller = insetHeight < 0.1;
-    self.textContainerInset = CGSizeMake(0, insetHeight);
+    if (self.textStorage.length > 0) {
+        // This line is required on macOS High Sierra (but not Catalina)
+        // to ensure proper vertical alignment when view is first shown.
+        [self.layoutManager ensureLayoutForGlyphRange:NSMakeRange(0, self.attributedString.length)];
+
+        NSScrollView *scrollView = (NSScrollView *) self.superview.superview;
+        CGFloat textHeight = [self.layoutManager usedRectForTextContainer:self.textContainer].size.height;
+        CGFloat viewHeight = scrollView.bounds.size.height;
+        CGFloat insetHeight = MAX(0, floor((viewHeight - textHeight) / 2.0));
+        scrollView.hasVerticalScroller = insetHeight < 0.1;
+        self.textContainerInset = CGSizeMake(0, insetHeight);
+    }
 
     [super layout];
 }
@@ -252,6 +288,61 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     // This allows connected menu to popup instantly
     // (because no action is returned for menu button)
     return [self menuForSegment:self.selectedSegment] != nil ? nil : [super action];
+}
+@end
+
+
+
+#pragma mark - PGPrefsShowAndWaitPopover
+
+@implementation PGPrefsShowAndWaitPopover
+- (id)initWithCoder:(NSCoder *)coder
+{
+    self = [super initWithCoder:coder];
+    if (self) {
+        super.delegate = self;
+    }
+    return self;
+}
+- (void)dealloc
+{
+    if (_shownSemaphore) { dispatch_semaphore_signal(_shownSemaphore); }
+}
+- (void)popoverDidShow:(NSNotification *)notification
+{
+    self.shownSemaphore = nil;
+}
+- (void)showRelativeToRect:(NSRect)positioningRect ofView:(NSView *)positioningView preferredEdge:(NSRectEdge)preferredEdge waitUntilShownWithTimeout:(NSTimeInterval)timeout
+{
+    // Create semaphore
+    dispatch_semaphore_t shownSemaphore;
+    if (![NSThread isMainThread]) {
+        self.shownSemaphore = shownSemaphore = dispatch_semaphore_create(0);
+    }
+    
+    // Show popover
+    MainThread(^{
+        [self showRelativeToRect:positioningRect ofView:positioningView preferredEdge:preferredEdge];
+    });
+    
+    // Block waiting for semaphore
+    if (![NSThread isMainThread]) {
+        if (dispatch_semaphore_wait(shownSemaphore, dispatch_time(DISPATCH_TIME_NOW, timeout)) == 0) {
+            // Allow a repaint cycle
+            [NSThread sleepForTimeInterval:0.5];
+        } else {
+            DLog(@"Timed out waiting for popover to appear");
+        }
+    }
+}
+- (void)setShownSemaphore:(dispatch_semaphore_t)shownSemaphore
+{
+    dispatch_semaphore_t oldValue;
+    @synchronized (self) {
+        oldValue = _shownSemaphore;
+        _shownSemaphore = shownSemaphore;
+    }
+    if (oldValue) { dispatch_semaphore_signal(oldValue); }
 }
 @end
 
@@ -549,28 +640,59 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     self.authorizationView.delegate = self;
     [self.authorizationView updateStatus:nil];
     self.authorizationView.autoupdate = self.authorized;
+    
+    // For darkening background when auth popup shows
+    NSView *authorizationModalMask = [[NSView alloc] init];
+    authorizationModalMask.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    authorizationModalMask.frame = self.mainView.bounds;
+    authorizationModalMask.wantsLayer = YES;
+    authorizationModalMask.hidden = YES;
+    authorizationModalMask.layer.opacity = 0.5;
+    authorizationModalMask.layer.backgroundColor = [NSColor blackColor].CGColor;
+    [self.mainView addSubview:authorizationModalMask positioned:NSWindowBelow relativeTo:self.authorizationView];
+    _authorizationModalMask = authorizationModalMask;
 }
 
-- (AuthorizationRef)authorize:(PGAuth *)auth
+- (AuthorizationRef)authorizeAndWait:(PGAuth *)auth
 {
     if (self.authorized) return self.authorizationView.authorization.authorizationRef;
     
     if (auth.reason.count > 0) {
         DLog(@"Authorize: %@ %@", auth.reason[PGAuthReasonAction], auth.reason[PGAuthReasonTarget]);
+        
+        // Prepare content for popover
         NSMutableAttributedString *reason = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\n", auth.reason[PGAuthReasonAction]]];
         [reason appendAttributedString:[[NSAttributedString alloc] initWithString:auth.reason[PGAuthReasonTarget] attributes:@{NSFontAttributeName:[NSFontManager.sharedFontManager convertFont:[NSFont userFixedPitchFontOfSize:self.authInfoWindow.detailsView.font.pointSize] toHaveTrait:NSFontBoldTrait]}]];
 
-        [self showInfoInInfoWindow:self.authInfoWindow details:reason title:@"Authorization is required to:"];
-        [self showInfoWindow:self.authInfoWindow];
+        __block CGRect authorizationViewLockIconFrame;
+        MainThread(^{
+            // Configure popover
+            [self showInfoInInfoWindow:self.authInfoWindow details:reason title:@"Authorization is required to:"];
+            authorizationViewLockIconFrame = [self authorizationViewLockIconFrame];
+
+            // Darken background
+            self.authorizationModalMask.animator.hidden = NO;
+        });
+        
+        // Show popover and block this (background) thread until shown
+        [self.authPopover showRelativeToRect:authorizationViewLockIconFrame ofView:self.authorizationView preferredEdge:NSRectEdgeMaxY waitUntilShownWithTimeout:2.0];
     }
+
+    // Authorize
+    __block BOOL authorized;
+    MainThread(^{
+        self.authorizationView.flags = kAuthorizationFlagDefaults | kAuthorizationFlagExtendRights | kAuthorizationFlagInteractionAllowed;
+        authorized = [self.authorizationView authorize:self];
+        self.authorizationView.flags = authorized ? kAuthorizationFlagDefaults : kAuthorizationFlagDefaults | kAuthorizationFlagExtendRights;
+        [self.authorizationView updateStatus:nil];
+    });
     
-    self.authorizationView.flags = kAuthorizationFlagDefaults | kAuthorizationFlagExtendRights | kAuthorizationFlagInteractionAllowed;
-    BOOL authorized = [self.authorizationView authorize:self];
-    self.authorizationView.flags = authorized ? kAuthorizationFlagDefaults : kAuthorizationFlagDefaults | kAuthorizationFlagExtendRights;
-    [self.authorizationView updateStatus:nil];
-    
+    // Hide popover, remove background darkening
     if (auth.reason.count > 0) {
-        [self closeInfoWindow:self.authInfoWindow];
+        MainThread(^{
+            [self.authPopover close];
+            self.authorizationModalMask.animator.hidden = YES;
+        });
     }
     
     return authorized ? self.authorizationView.authorization.authorizationRef : nil;
@@ -597,6 +719,29 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     self.authorizationView.flags = kAuthorizationFlagDefaults | kAuthorizationFlagExtendRights;
     
     [self.controller viewDidDeauthorize];
+}
+
+- (CGRect)authorizationViewLockIconFrame
+{
+    // Search for lock icon subview
+    __block NSView *lockIcon = nil;
+    [self.authorizationView enumerateAllSubviewsUsingBlock:^(NSView *subview, BOOL *stop) {
+        if ([NSStringFromClass([subview class]) containsString:@"Lock"]) {
+            lockIcon = subview;
+            *stop = YES;
+        }
+    }];
+    
+    // Calculate its frame
+    if (lockIcon) {
+        if (lockIcon.superview == self.authorizationView) {
+            return lockIcon.frame;
+        } else {
+            return [self.authorizationView convertRect:lockIcon.frame toView:lockIcon.superview];
+        }
+    } else {
+        return self.authorizationView.frame;
+    }
 }
 
 

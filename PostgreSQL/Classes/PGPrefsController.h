@@ -40,7 +40,9 @@
  */
 @protocol PGPrefsViewController <NSObject>
 
-- (AuthorizationRef)authorize:(PGAuth *)auth;
+/// Should be called on a background thread so that viewController can block thread until
+/// authorization animations have finished.
+- (AuthorizationRef)authorizeAndWait:(PGAuth *)auth;
 - (void)deauthorize;
 
 - (void)prefsController:(PGPrefsController *)controller willEditServerSettings:(PGServer *)server;

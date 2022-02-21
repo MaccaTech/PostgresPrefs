@@ -13,6 +13,7 @@
                 <outlet property="_initialKeyView" destination="723" id="784"/>
                 <outlet property="_window" destination="12" id="26"/>
                 <outlet property="authInfoWindow" destination="by4-Al-oxW" id="j3h-Fv-UuI"/>
+                <outlet property="authPopover" destination="xJJ-Lr-3h0" id="lwU-kc-TT3"/>
                 <outlet property="authorizationView" destination="786" id="787"/>
                 <outlet property="binDirectoryField" destination="910" id="927"/>
                 <outlet property="changeSettingsButton" destination="629" id="936"/>
@@ -534,10 +535,6 @@ To stop the server, click the Stop PostgreSQL button.</string>
                             </tabViewItem>
                         </tabViewItems>
                     </tabView>
-                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="786" customClass="SFAuthorizationView">
-                        <rect key="frame" x="20" y="15" width="340" height="34"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    </customView>
                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="893">
                         <rect key="frame" x="330" y="18" width="321" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -592,6 +589,10 @@ To stop the server, click the Stop PostgreSQL button.</string>
                                 </textFieldCell>
                             </textField>
                         </subviews>
+                    </customView>
+                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="786" customClass="SFAuthorizationView">
+                        <rect key="frame" x="20" y="15" width="340" height="34"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     </customView>
                 </subviews>
             </view>
@@ -1117,7 +1118,7 @@ Gw
                                     <autoresizingMask key="autoresizingMask"/>
                                     <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" id="S2m-4N-a7T">
                                         <rect key="frame" x="0.0" y="0.0" width="335" height="57"/>
-                                        <autoresizingMask key="autoresizingMask"/>
+                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                         <subviews>
                                             <textView editable="NO" drawsBackground="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="zC7-CL-REf" customClass="TechMaccaPGPrefsCenteredTextView">
                                                 <rect key="frame" x="0.0" y="0.0" width="335" height="84"/>
@@ -1211,7 +1212,7 @@ Error Message Line 6</string>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" id="RMH-WX-bQP">
                                         <rect key="frame" x="0.0" y="0.0" width="350" height="57"/>
-                                        <autoresizingMask key="autoresizingMask"/>
+                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                         <subviews>
                                             <textView editable="NO" drawsBackground="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="7i5-ue-ayT" customClass="TechMaccaPGPrefsCenteredTextView">
                                                 <rect key="frame" x="0.0" y="0.0" width="350" height="57"/>
@@ -1262,6 +1263,16 @@ Error Message Line 6</string>
             </connections>
             <point key="canvasLocation" x="140" y="1996"/>
         </window>
+        <viewController id="CAJ-Ix-RmT" userLabel="Popover View Controller">
+            <connections>
+                <outlet property="view" destination="T8F-Nl-d7B" id="Vub-og-KJh"/>
+            </connections>
+        </viewController>
+        <popover animates="NO" appearance="vibrantLight" behavior="semitransient" id="xJJ-Lr-3h0" customClass="TechMaccaPGPrefsShowAndWaitPopover">
+            <connections>
+                <outlet property="contentViewController" destination="CAJ-Ix-RmT" id="jcw-cC-O1h"/>
+            </connections>
+        </popover>
     </objects>
     <resources>
         <image name="NSActionTemplate" width="15" height="15"/>
