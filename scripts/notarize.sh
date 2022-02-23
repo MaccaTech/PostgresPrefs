@@ -1,4 +1,32 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash -e
+
+# =======================================================================================
+# 
+# Package a PostgreSQL.prefPane in a codesigned and notarized .dmg
+#
+# =======================================================================================
+
+# Check PostgresPrefs has been built
+POSTGRES_PREFS_PKG=./build/Build/Products/Release/PostgreSQL.prefPane
+if [ ! -e "$POSTGRES_PREFS_PKG" ]; then
+    SCRIPT_DIR=$(cd "$(dirname "$BASH_SOURCE")"; cd -P "$(dirname "$(readlink "$BASH_SOURCE" || echo .)")"; pwd)
+    ROOT_DIR=$(dirname "$SCRIPT_DIR")
+    cd "$ROOT_DIR"
+    if [ ! -e "$POSTGRES_PREFS_PKG" ]; then
+        echo "PostgreSQL.prefPane does not exist!" >&2
+        exit 1
+    fi
+fi
+
+# Get name for .dmg file
+if [ -z "$POSTGRES_PREFS_NAME" ]; then
+    POSTGRES_PREFS_VERSION=$(/usr/libexec/Plistbuddy -c "Print :CFBundleShortVersionString" "$POSTGRES_PREFS_PKG/Contents/Info.plist")
+    if [ -z "$POSTGRES_PREFS_VERSION" ]; then
+        echo "Unable to determine version from $POSTGRES_PREFS_PKG" >&2
+        exit 1
+    fi
+    POSTGRES_PREFS_NAME="PostgresPrefs-${POSTGRES_PREFS_VERSION}"
+fi
 
 DMG_DIR="./build/$POSTGRES_PREFS_NAME"
 DMG="$DMG_DIR.dmg"
@@ -9,7 +37,7 @@ rm -f "$DMG"
 
 # Code sign
 mkdir -p "$DMG_DIR"
-cp -R ./build/Build/Products/Release/PostgreSQL.prefPane "$DMG_DIR"
+cp -R "$POSTGRES_PREFS_PKG" "$DMG_DIR"
 echo
 echo "Creating $DMG ..."
 hdiutil create -srcfolder "$DMG_DIR" "$DMG"
@@ -18,6 +46,21 @@ codesign --sign "Developer ID Application: Macca Tech Ltd" "$DMG"
 # Notarize
 echo
 echo "Notarizing $DMG ..."
+
+# Ensure we have a password
+if [ -z "$NOTARIZE_PASSWORD" ]; then
+    echo
+    echo "App password for info@maccatech.com:"
+    read NOTARIZE_PASSWORD
+    if [ -z "$NOTARIZE_PASSWORD" ]; then
+        echo "A password is required" >&2
+        exit 1
+    fi
+    echo
+    echo "Submitting notarize request ..."
+fi
+
+# Submit notarization request
 response=`xcrun altool --notarize-app --primary-bundle-id "tech.macca.PostgresPrefs" --username "info@maccatech.com" --password "$NOTARIZE_PASSWORD" --file "$DMG"`
 echo $response
 

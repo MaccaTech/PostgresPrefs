@@ -2,5 +2,6 @@
 !/.gitignore
 !/.travis.yml
 build
+dist
 xcuserdata
 *.xccheckout
