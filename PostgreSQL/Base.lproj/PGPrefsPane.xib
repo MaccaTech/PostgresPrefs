@@ -1191,7 +1191,7 @@ Error Message Line 6</string>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="109" y="131" width="402" height="148"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1280" height="775"/>
-            <view key="contentView" id="T8F-Nl-d7B">
+            <view key="contentView" id="T8F-Nl-d7B" customClass="TechMaccaPGPrefsDidDrawView">
                 <rect key="frame" x="0.0" y="0.0" width="402" height="148"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>

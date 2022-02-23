@@ -100,9 +100,29 @@
 #pragma mark - PGPrefsShowAndWaitPopover
 
 /**
- * A popover that blocks a background thread waiting until it is shown.
+ * For tracking when a view is drawn.
  */
-@interface PGPrefsShowAndWaitPopover : NSPopover
+@protocol PGPrefsDidDrawViewDelegate <NSObject>
+- (void)viewDidDraw:(NSView *)view;
+@end
+
+/**
+ * Notifies its delegate whenever a draw is done.
+ */
+@interface PGPrefsDidDrawView : NSView
+@property (nonatomic, weak) id<PGPrefsDidDrawViewDelegate> delegate;
+@end
+
+/**
+ * @abstract A popover that blocks a background thread waiting until it is shown.
+ *
+ * On macOS Monterey (not on earlier versions) a popover will fail to appear if a modal
+ * password prompt is shown simultaneously. This class allows us to delay launching
+ * a modal password prompt until the popover is showing on the screen.
+ *
+ * @note This popover's view must be a PGPrefsDidDrawView
+ */
+@interface PGPrefsShowAndWaitPopover : NSPopover <PGPrefsDidDrawViewDelegate>
 - (void)showRelativeToRect:(NSRect)positioningRect
                     ofView:(NSView *)positioningView
              preferredEdge:(NSRectEdge)preferredEdge

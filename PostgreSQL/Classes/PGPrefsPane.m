@@ -52,7 +52,7 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 - (void)enumerateAllSubviewsUsingBlock:(void(^)(NSView *subview, BOOL *stop))block;
 @end
 
-@interface PGPrefsShowAndWaitPopover () <NSPopoverDelegate>
+@interface PGPrefsShowAndWaitPopover ()
 @property (nonatomic, strong) dispatch_semaphore_t shownSemaphore;
 @end
 
@@ -296,27 +296,12 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 #pragma mark - PGPrefsShowAndWaitPopover
 
 @implementation PGPrefsShowAndWaitPopover
-- (id)initWithCoder:(NSCoder *)coder
-{
-    self = [super initWithCoder:coder];
-    if (self) {
-        super.delegate = self;
-    }
-    return self;
-}
-- (void)dealloc
-{
-    if (_shownSemaphore) { dispatch_semaphore_signal(_shownSemaphore); }
-}
-- (void)popoverDidShow:(NSNotification *)notification
-{
-    self.shownSemaphore = nil;
-}
 - (void)showRelativeToRect:(NSRect)positioningRect ofView:(NSView *)positioningView preferredEdge:(NSRectEdge)preferredEdge waitUntilShownWithTimeout:(NSTimeInterval)timeout
 {
     // Create semaphore
     dispatch_semaphore_t shownSemaphore;
     if (![NSThread isMainThread]) {
+        ((PGPrefsDidDrawView *) self.contentViewController.view).delegate = self;
         self.shownSemaphore = shownSemaphore = dispatch_semaphore_create(0);
     }
     
@@ -327,22 +312,52 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     
     // Block waiting for semaphore
     if (![NSThread isMainThread]) {
-        if (dispatch_semaphore_wait(shownSemaphore, dispatch_time(DISPATCH_TIME_NOW, timeout)) == 0) {
-            // Allow a repaint cycle
-            [NSThread sleepForTimeInterval:0.5];
-        } else {
+        intptr_t timedOut = dispatch_semaphore_wait(shownSemaphore, dispatch_time(DISPATCH_TIME_NOW, timeout * NSEC_PER_SEC));
+        if (timedOut) {
             DLog(@"Timed out waiting for popover to appear");
+        } else {
+            // The popover should now be on the screen, but on macOS
+            // Monterey it still isn't visible. Yield control so
+            // UI runloop can finish drawing the popover.
+            [NSThread sleepForTimeInterval:0.3];
         }
     }
 }
+- (void)viewDidDraw:(NSView *)view
+{
+    self.shownSemaphore = nil;
+}
 - (void)setShownSemaphore:(dispatch_semaphore_t)shownSemaphore
 {
-    dispatch_semaphore_t oldValue;
+    dispatch_semaphore_t previousShownSemaphore;
+    
+    if (_shownSemaphore == shownSemaphore) { return; }
     @synchronized (self) {
-        oldValue = _shownSemaphore;
+        if (_shownSemaphore == shownSemaphore) { return; }
+        previousShownSemaphore = _shownSemaphore;
         _shownSemaphore = shownSemaphore;
     }
-    if (oldValue) { dispatch_semaphore_signal(oldValue); }
+    
+    // Signal
+    if (previousShownSemaphore) {
+        dispatch_semaphore_signal(previousShownSemaphore);
+    }
+}
+- (void)dealloc
+{
+    // Signal
+    if (_shownSemaphore) {
+        dispatch_semaphore_signal(_shownSemaphore);
+    }
+}
+@end
+
+@implementation PGPrefsDidDrawView
+- (void)drawRect:(NSRect)dirtyRect
+{
+    [super drawRect:dirtyRect];
+    
+    [self.delegate viewDidDraw:self];
 }
 @end
 

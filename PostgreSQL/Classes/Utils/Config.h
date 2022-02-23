@@ -92,7 +92,9 @@
 #define PGPrefsStoryboardTextView    PG(PrefsStoryboardTextView)
 #define PGPrefsCenteredTextView      PG(PrefsCenteredTextView)
 #define PGPrefsNonClickableTextField PG(PrefsNonClickableTextField)
-#define PGPrefsShowAndWaitPopover               PG(PrefsShowAndWaitPopover)
+#define PGPrefsShowAndWaitPopover    PG(PrefsShowAndWaitPopover)
+#define PGPrefsDidDrawView           PG(PrefsDidDrawView)
+#define PGPrefsDidDrawViewDelegate   PG(PrefsDidDrawViewDelegate)
 
 #define PGServer                     PG(Server)
 #define PGServerSettings             PG(ServerSettings)
