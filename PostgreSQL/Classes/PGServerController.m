@@ -446,7 +446,7 @@ EqualUsernames(NSString *user1, NSString *user2)
 {
     // For authInfo popup
     NSMutableDictionary *reason = [NSMutableDictionary dictionaryWithDictionary:@{
-        PGAuthReasonAction: @"Remove PostgreSQL plist file from",
+        PGAuthReasonAction: @"Remove the PostgreSQL launch file from",
         PGAuthReasonTarget: [server.daemonFile stringByDeletingLastPathComponent]
     }];
     auth.reason = reason;
@@ -475,7 +475,7 @@ EqualUsernames(NSString *user1, NSString *user2)
 {
     // For authInfo popup
     auth.reason = @{
-        PGAuthReasonAction: @"Create PostgreSQL plist file in",
+        PGAuthReasonAction: @"Create the PostgreSQL launch file in",
         PGAuthReasonTarget: server.daemonFile.stringByDeletingLastPathComponent
     };
 
@@ -488,8 +488,8 @@ EqualUsernames(NSString *user1, NSString *user2)
 {
     // For authInfo popup
     auth.reason = @{
-        PGAuthReasonAction: @"Create PostgreSQL agent in",
-        PGAuthReasonTarget: @"temporary directory"
+        PGAuthReasonAction: @"Create the PostgreSQL launch file for",
+        PGAuthReasonTarget: @"system launchd"
     };
 
     NSDictionary *daemon = [self daemonFromServer:server];
@@ -506,7 +506,7 @@ EqualUsernames(NSString *user1, NSString *user2)
 {
     // For authInfo popup
     auth.reason = @{
-        PGAuthReasonAction: @"Create PostgreSQL log file in",
+        PGAuthReasonAction: @"Create the PostgreSQL log file in",
         PGAuthReasonTarget: server.daemonLog.stringByDeletingLastPathComponent
     };
 
