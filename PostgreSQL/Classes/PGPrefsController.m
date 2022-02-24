@@ -290,6 +290,9 @@
             return;
         }
     
+        // Get the new servers list after rename
+        self.servers = self.dataStore.servers;
+        
         [self.viewController prefsController:self didChangeServers:self.servers];
         
         // 2. Create and start (if needed) the new server
