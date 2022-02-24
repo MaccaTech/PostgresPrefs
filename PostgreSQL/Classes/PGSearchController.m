@@ -317,7 +317,7 @@
         PGServerSettings *settings = [[PGServerSettings alloc] initWithUsername:properties[PGServerUsernameKey] binDirectory:properties[PGServerBinDirectoryKey] dataDirectory:properties[PGServerDataDirectoryKey] logFile:nil port:properties[PGServerPortKey] startup:PGServerStartupManual];
         PGServer *server = [self.serverController serverFromSettings:settings name:@"postgresql" domain:@"com.enterprisedb"];
         
-        if (server) [result addObject:server];
+        if (server) { [self addServerUnlessDuplicate:server toServers:result]; }
     }
     
     return result.count == 0 ? nil : result;
@@ -348,7 +348,7 @@
         PGServerSettings *settings = [[PGServerSettings alloc] initWithUsername:nil binDirectory:binDir dataDirectory:dataDir logFile:nil port:nil startup:PGServerStartupManual];
         PGServer *server = [self.serverController serverFromSettings:settings name:name domain:@"postgresapp.com"];
         
-        if (server) [result addObject:server];
+        if (server) { [self addServerUnlessDuplicate:server toServers:result]; }
     }
     
     return result;
@@ -362,7 +362,7 @@
     for (NSString *file in files) {
         PGServer *server = [self.serverController serverFromDaemonFile:file];
         
-        if (server) [result addObject:server];
+        if (server) { [self addServerUnlessDuplicate:server toServers:result]; }
     }
     return result;
 }
@@ -414,7 +414,9 @@
     
     // Servers found - notify delegate
     MainThread(^{
-        [self.mutableServers addObjectsFromArray:servers];
+        for (PGServer *server in servers) {
+            if (server) { [self addServerUnlessDuplicate:server toServers:self.mutableServers]; }
+        }
         [self.delegate didFindMoreServers:self];
     });
 }
@@ -435,6 +437,18 @@
         if ([predicate evaluateWithObject:file]) [result addObject:[dir stringByAppendingPathComponent:file]];
     }
     return result.count > 0 ? result : nil;
+}
+
+- (BOOL)addServerUnlessDuplicate:(PGServer *)newServer toServers:(NSMutableArray *)servers
+{
+    for (PGServer *server in servers) {
+        if ([server.name isEqualToString:newServer.name] &&
+            [server.settings isEqualToSettings:newServer.settings]) { return NO;
+        }
+    }
+    
+    [servers addObject:newServer];
+    return YES;
 }
 
 @end

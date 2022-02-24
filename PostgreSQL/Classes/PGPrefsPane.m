@@ -969,6 +969,7 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
         } else if ([tableColumn.identifier isEqualToString:@"Domain"]) {
             cellIdentifier = @"DomainCell";
             value = server.domain;
+            if (!NonBlank(value)) { value = @"-"; }
             
         // Unknown
         } else return nil;

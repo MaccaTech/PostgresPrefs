@@ -555,6 +555,15 @@ EqualUsernames(NSString *user1, NSString *user2)
     if (IsLogging) { if (daemon.count > 0) { DLog(@"%@\n%@", file, daemon); } }
     
     PGServer *result = [self serverFromDaemon:daemon];
+    
+    // Set domain from filename if not in daemon's contents
+    if (result && !NonBlank(result.domain)) {
+        NSString *daemonName = file.lastPathComponent.stringByDeletingPathExtension;
+        NSString *domain = nil;
+        [self partsBySplittingFullName:daemonName user:nil name:nil domain:&domain];
+        result.domain = domain;
+    }
+    
     return result;
 }
 
