@@ -209,6 +209,7 @@
 @interface PGPrefsServersCell : NSTableCellView
 @property (nonatomic, weak) IBOutlet NSTextField *statusTextField;
 @property (nonatomic, weak) IBOutlet PGPrefsToggleImageView *externalIcon;
+@property (weak) IBOutlet NSLayoutConstraint *externalIconSpacing;
 @end
 
 

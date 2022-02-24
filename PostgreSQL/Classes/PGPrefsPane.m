@@ -907,8 +907,8 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 {
     // Servers
     if (tableView == self.serversTableView) {
-        return row == 0 ? 17 : 36;
-        
+        return row == 0 ? 21 : 40;
+
     // Search servers
     } else if (tableView == self.serverSettingsWindow.serversTableView) {
         return 18;
@@ -985,6 +985,14 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     // Name
     cell.textField.stringValue = server.shortName ?: @"Name Not Found";
     cell.externalIcon.hidden = !server.external;
+    
+    // Fix icon spacing on macOS prior to Big Sur
+    // (because lock image is wider and looks too cramped)
+    if (@available(macOS 11, *)) {
+        // Do nothing
+    } else {
+        cell.externalIconSpacing.constant = server.external ? 5 : 2;
+    }
     
     // Icon & Status
     NSString *statusText = NSStringFromPGServerStatus(server.status);
