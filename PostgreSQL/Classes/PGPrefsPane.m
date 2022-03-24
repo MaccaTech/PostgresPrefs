@@ -301,7 +301,7 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     // Create semaphore
     dispatch_semaphore_t shownSemaphore;
     if (![NSThread isMainThread]) {
-        ((PGPrefsDidDrawView *) self.contentViewController.view).delegate = self;
+        self.delegate = self;
         self.shownSemaphore = shownSemaphore = dispatch_semaphore_create(0);
     }
     
@@ -319,11 +319,12 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
             // The popover should now be on the screen, but on macOS
             // Monterey it still isn't visible. Yield control so
             // UI runloop can finish drawing the popover.
-            [NSThread sleepForTimeInterval:0.3];
+            // Note: Apple developer support recommended this approach
+            [NSThread sleepForTimeInterval:0.5];
         }
     }
 }
-- (void)viewDidDraw:(NSView *)view
+- (void)popoverDidShow:(NSNotification *)notification
 {
     self.shownSemaphore = nil;
 }
@@ -349,15 +350,6 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
     if (_shownSemaphore) {
         dispatch_semaphore_signal(_shownSemaphore);
     }
-}
-@end
-
-@implementation PGPrefsDidDrawView
-- (void)drawRect:(NSRect)dirtyRect
-{
-    [super drawRect:dirtyRect];
-    
-    [self.delegate viewDidDraw:self];
 }
 @end
 

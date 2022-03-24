@@ -861,7 +861,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <clipView key="contentView" id="tsT-i7-LZp">
                             <rect key="frame" x="1" y="1" width="403" height="187"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" rowHeight="18" rowSizeStyle="automatic" headerView="875" viewBased="YES" id="873">
                                     <rect key="frame" x="0.0" y="0.0" width="403" height="170"/>
@@ -884,7 +884,7 @@ Gw
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                             <prototypeCellViews>
                                                 <tableCellView identifier="NameCell" id="881">
-                                                    <rect key="frame" x="1" y="1" width="155" height="18"/>
+                                                    <rect key="frame" x="11" y="1" width="155" height="18"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
                                                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="882">
@@ -917,7 +917,7 @@ Gw
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                             <prototypeCellViews>
                                                 <tableCellView identifier="DomainCell" id="979">
-                                                    <rect key="frame" x="159" y="1" width="213" height="17"/>
+                                                    <rect key="frame" x="169" y="1" width="213" height="17"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
                                                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="980">
@@ -1191,7 +1191,7 @@ Error Message Line 6</string>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="109" y="131" width="402" height="148"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1280" height="775"/>
-            <view key="contentView" id="T8F-Nl-d7B" customClass="TechMaccaPGPrefsDidDrawView">
+            <view key="contentView" id="T8F-Nl-d7B">
                 <rect key="frame" x="0.0" y="0.0" width="402" height="148"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
@@ -1212,7 +1212,7 @@ Error Message Line 6</string>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" id="RMH-WX-bQP">
                                         <rect key="frame" x="0.0" y="0.0" width="350" height="57"/>
-                                        <autoresizingMask key="autoresizingMask"/>
+                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                         <subviews>
                                             <textView editable="NO" drawsBackground="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="7i5-ue-ayT" customClass="TechMaccaPGPrefsCenteredTextView">
                                                 <rect key="frame" x="0.0" y="0.0" width="350" height="57"/>
