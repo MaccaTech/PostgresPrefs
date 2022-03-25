@@ -406,6 +406,13 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 }
 @end
 
+@implementation PGPrefsToggleEventsView
+- (NSView *)hitTest:(NSPoint)point
+{
+    return _ignoresEvents ? nil : [super hitTest:point];
+}
+@end
+
 
 
 #pragma mark - PGPrefsRenameWindow
@@ -664,6 +671,9 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 {
     if (self.authorized) return self.authorizationView.authorization.authorizationRef;
     
+    // Disable clicks / keypresses
+    ((PGPrefsToggleEventsView *) self.mainView).ignoresEvents = YES;
+    
     if (auth.reason.count > 0) {
         DLog(@"Authorize: %@ %@", auth.reason[PGAuthReasonAction], auth.reason[PGAuthReasonTarget]);
         
@@ -701,7 +711,11 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
             self.authorizationModalMask.animator.hidden = YES;
         });
     }
-    
+
+    // Re-enable clicks / keypresses, but discard any stalled while password prompt was shown
+    ((PGPrefsToggleEventsView *) self.mainView).ignoresEvents = NO;
+    [self.mainView.window discardEventsMatchingMask:NSEventMaskAny beforeEvent:nil];
+
     return authorized ? self.authorizationView.authorization.authorizationRef : nil;
 }
 

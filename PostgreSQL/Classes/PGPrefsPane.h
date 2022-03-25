@@ -95,6 +95,13 @@
 @interface PGPrefsToggleButton : NSButton
 @end
 
+/**
+ * A view that can be set to ignore all mouse/keyboard events. Used to simulate a modal state.
+ */
+@interface PGPrefsToggleEventsView : NSView
+@property (nonatomic) BOOL ignoresEvents;
+@end
+
 
 
 #pragma mark - PGPrefsShowAndWaitPopover
