@@ -744,10 +744,10 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
         if (lockIcon.superview == self.authorizationView) {
             return lockIcon.frame;
         } else {
-            return [self.authorizationView convertRect:lockIcon.frame toView:lockIcon.superview];
+            return [lockIcon.superview convertRect:lockIcon.frame toView:self.authorizationView];
         }
     } else {
-        return self.authorizationView.frame;
+        return CGRectZero;
     }
 }
 
