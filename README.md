@@ -120,7 +120,7 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
         <li>Improve popup explaining why a password is needed</li>
         <li>Fix failing to sort servers list after renaming a server</li>
         <li>Fix duplicates in existing PostgreSQLs list when changing settings</li>
-        <li>Fix incorrectly assuming all ```pg_env.sh``` files are PostgreSQL-related</li>
+        <li>Fix incorrectly assuming all "pg_env.sh" files are PostgreSQL-related</li>
         <li>Fix minor GUI issues</li>
         </ul>
     </td>
