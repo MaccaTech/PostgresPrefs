@@ -1268,7 +1268,7 @@ Error Message Line 6</string>
                 <outlet property="view" destination="T8F-Nl-d7B" id="Vub-og-KJh"/>
             </connections>
         </viewController>
-        <popover animates="NO" appearance="vibrantLight" behavior="semitransient" id="xJJ-Lr-3h0" customClass="TechMaccaPGPrefsShowAndWaitPopover">
+        <popover animates="NO" appearance="aqua" behavior="semitransient" id="xJJ-Lr-3h0" customClass="TechMaccaPGPrefsShowAndWaitPopover">
             <connections>
                 <outlet property="contentViewController" destination="CAJ-Ix-RmT" id="jcw-cC-O1h"/>
             </connections>
