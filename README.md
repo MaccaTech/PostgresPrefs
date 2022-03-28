@@ -115,13 +115,14 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
 <tbody>
 <tr>
     <td>v2.7</td>
-    <td>25-Mar 2022</td>
+    <td>28-Mar 2022</td>
     <td>Bugfix release
         <ul>
-        <li>Fix issues detecting PostgreSQL if using EDB PostgreSQL version 13 or later</li>
-        <li>Fix/improve popup explaining why a password is needed</li>
+        <li>Fix issues detecting PostgreSQL if using EnterpriseDB v13 or later</li>
+        <li>Improve popup explaining why a password is needed</li>
         <li>Fix failing to sort servers list after renaming a server</li>
         <li>Fix duplicates in existing PostgreSQLs list when changing settings</li>
+        <li>Fix incorrectly assuming all ```pg_env.sh``` files are PostgreSQL-related</li>
         <li>Fix minor GUI issues (lock icon alignment, sharper logo & dark mode version)</li>
         </ul>
     </td>
