@@ -299,8 +299,18 @@
     NSMutableArray *result = [NSMutableArray arrayWithCapacity:files.count];
     for (NSString *file in files) {
         
+        // Security: do not execute pg_env.sh unless it and all its parent folders
+        // are owned by root.
+        NSString *pgenvPath = [[file stringByResolvingSymlinksInPath] stringByExpandingTildeInPath];
+        if (![self pathIsOwnedByRoot:pgenvPath]) { continue; }
+        
+        // Security: do not execute pg_env.sh unless it looks like it is part
+        // of a standard EDB installation
+        NSString *pgenvDir = [pgenvPath stringByDeletingLastPathComponent];
+        if (![self pathIsPostgreSQLInstallDir:pgenvDir]) { continue; }
+        
         // Execute pg_env.sh in shell and print environment variables.
-        NSString *json = [PGProcess runShellCommand:[NSString stringWithFormat:command, file] error:nil];
+        NSString *json = [PGProcess runShellCommand:[NSString stringWithFormat:command, pgenvPath] error:nil];
         DLog(@"RESULT: %@", json);
         if (!NonBlank(json)) continue;
         
@@ -314,8 +324,10 @@
         if (properties.count == 0) continue;
         
         // Create server
+        NSString *name = [self nameFromPostgreSQLInstallDir:pgenvDir];
+        NSString *domain = @"com.enterprisedb";
         PGServerSettings *settings = [[PGServerSettings alloc] initWithUsername:properties[PGServerUsernameKey] binDirectory:properties[PGServerBinDirectoryKey] dataDirectory:properties[PGServerDataDirectoryKey] logFile:nil port:properties[PGServerPortKey] startup:PGServerStartupManual];
-        PGServer *server = [self.serverController serverFromSettings:settings name:@"postgresql" domain:@"com.enterprisedb"];
+        PGServer *server = [self.serverController serverFromSettings:settings name:name domain:domain];
         
         if (server) { [self addServerUnlessDuplicate:server toServers:result]; }
     }
@@ -449,6 +461,55 @@
     
     [servers addObject:newServer];
     return YES;
+}
+
+- (BOOL)pathIsOwnedByRoot:(NSString *)path
+{
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    do {
+        // Ensure path owned by root
+        NSError *error;
+        NSDictionary *attributes = [fileManager attributesOfItemAtPath:path error:&error];
+        if (error) { return NO; }
+        if (!attributes) { return NO; }
+        if (![[attributes fileOwnerAccountID] isEqualToNumber:@(0)]) { return NO; }
+        
+        // Set to parent dir
+        NSString *parentDir = [path stringByDeletingLastPathComponent];
+        if (path.length == parentDir.length) { break; }
+        path = parentDir;
+    } while (true);
+    return YES;
+}
+
+- (BOOL)pathIsPostgreSQLInstallDir:(NSString *)path
+{
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    BOOL isDir1, isDir2, isDir3, exists1, exists2, exists3;
+    exists1 = [fileManager fileExistsAtPath:[[path stringByAppendingPathComponent:@"include"] stringByAppendingPathComponent:@"postgresql"] isDirectory:&isDir1];
+    exists2 = [fileManager fileExistsAtPath:[[path stringByAppendingPathComponent:@"lib"] stringByAppendingPathComponent:@"postgresql"] isDirectory:&isDir2];
+    exists3 = [fileManager fileExistsAtPath:[[path stringByAppendingPathComponent:@"share"] stringByAppendingPathComponent:@"postgresql"] isDirectory:&isDir3];
+    if (!(exists1 && exists2 && exists3)) { return NO; }
+    if (!(isDir1 && isDir2 && isDir3)) { return NO; }
+    return YES;
+}
+
+- (NSString *)nameFromPostgreSQLInstallDir:(NSString *)path
+{
+    // Try to deduce a sensible name from install dir, e.g.:
+    //   /Library/PostgreSQL/12 -> "PostgreSQL 12"
+    //   /Library/MyDifferentName -> "MyDifferentName"
+    NSString *dirname = [path lastPathComponent];
+    if ([[dirname lowercaseString] containsString:@"ostgre"]) {
+        return dirname;
+    } else {
+        NSString *parentDirname = [[path stringByDeletingLastPathComponent] lastPathComponent];
+        if ([[parentDirname lowercaseString] containsString:@"ostgre"]) {
+            return [NSString stringWithFormat:@"%@ %@", parentDirname, dirname];
+        } else {
+            return dirname;
+        }
+    }
 }
 
 @end
