@@ -5,8 +5,6 @@
 <a href="https://www.postgresql.org#gh-dark-mode-only"><img height="40px" hspace="8px" src="PostgreSQL/Images/logo_big_dark.png" /></a>
 <a href="http://mac.softpedia.com/get/Internet-Utilities/PostgresPrefs.shtml#status"><img align="right" height="112px" src="PostgreSQL/Images/clean_download.png" /></a>
 
-[![build](https://travis-ci.org/MaccaTech/PostgresPrefs.svg?branch=master)](https://travis-ci.org/MaccaTech/PostgresPrefs)
-
 ## Contents
 
 * [Overview](#Overview)
@@ -123,7 +121,7 @@ However, from version 2.1 onwards, Postgre Preferences automatically detects and
         <li>Fix failing to sort servers list after renaming a server</li>
         <li>Fix duplicates in existing PostgreSQLs list when changing settings</li>
         <li>Fix incorrectly assuming all ```pg_env.sh``` files are PostgreSQL-related</li>
-        <li>Fix minor GUI issues (lock icon alignment, sharper logo & dark mode version)</li>
+        <li>Fix minor GUI issues</li>
         </ul>
     </td>
 </tr>

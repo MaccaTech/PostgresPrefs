@@ -320,7 +320,7 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
             // Monterey it still isn't visible. Yield control so
             // UI runloop can finish drawing the popover.
             // Note: Apple developer support recommended this approach
-            [NSThread sleepForTimeInterval:0.5];
+            [NSThread sleepForTimeInterval:0.8];
         }
     }
 }
@@ -892,7 +892,16 @@ NSInteger const PGDeleteServerDeleteFileButton = 3456;
 
 - (IBAction)deleteServerDeleteFileClicked:(id)sender
 {
-    [self.mainView.window endSheet:self.deleteServerWindow returnCode:PGDeleteServerDeleteFileButton];
+    NSAlert *confirmDeleteAlert = [[NSAlert alloc] init];
+    confirmDeleteAlert.alertStyle = NSAlertStyleCritical;
+    confirmDeleteAlert.icon = [[NSImage alloc] initByReferencingFile:[[NSBundle bundleForClass:[self class]] pathForResource:@"elephant" ofType:@"png"]];
+    confirmDeleteAlert.messageText = @"Are you sure?";
+    confirmDeleteAlert.informativeText = @"Deleting this file cannot be undone";
+    [confirmDeleteAlert addButtonWithTitle:@"Delete File"].keyEquivalent = @"";
+    [confirmDeleteAlert addButtonWithTitle:@"Cancel"].keyEquivalent = @"\r";
+    if ([confirmDeleteAlert runModal] == NSAlertFirstButtonReturn) {
+        [self.mainView.window endSheet:self.deleteServerWindow returnCode:PGDeleteServerDeleteFileButton];
+    }
 }
 
 - (IBAction)deleteServerKeepFileClicked:(id)sender
