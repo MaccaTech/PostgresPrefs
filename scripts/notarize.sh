@@ -25,7 +25,7 @@ if [ -z "$POSTGRES_PREFS_NAME" ]; then
         echo "Unable to determine version from $POSTGRES_PREFS_PKG" >&2
         exit 1
     fi
-    POSTGRES_PREFS_NAME="PostgresPrefs-${POSTGRES_PREFS_VERSION}"
+    POSTGRES_PREFS_NAME="PostgresPrefs-v${POSTGRES_PREFS_VERSION}"
 fi
 
 DMG_DIR="./build/$POSTGRES_PREFS_NAME"
